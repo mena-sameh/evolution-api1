@@ -3,57 +3,58 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EvoFlow Enterprise | نظام الحملات الاحترافي</title>
-
+  <title>EvoFlow Enterprise | إدارة الحملات وصندوق الوارد المباشر</title>
+  
   <!-- SheetJS لمعالجة ملفات Excel -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <!-- Socket.io للاتصال المباشر مع Evolution API -->
+  <!-- مكتبة Socket.io للاتصال المباشر مع Evolution API -->
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  <!-- Lucide Icons -->
+  <!-- Lucide Icons للأيقونات -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <style>
     :root {
-      --bg-base: #f0f4f9;
+      --bg-base: #f8fafc;
       --bg-surface: #ffffff;
       --bg-surface-elevated: #f1f5f9;
       --bg-card: #ffffff;
       --border-subtle: #e2e8f0;
-      --border-focus: #0d9488;
-
-      --primary: #0d9488;
-      --primary-glow: rgba(13, 148, 136, 0.15);
-      --primary-hover: #0f766e;
+      --border-focus: #10b981;
+      
+      --primary: #059669;
+      --primary-glow: rgba(5, 150, 105, 0.12);
+      --primary-hover: #047857;
       --accent: #0284c7;
-
+      
       --text-main: #0f172a;
       --text-muted: #475569;
       --text-subtle: #94a3b8;
-
+      
       --danger: #e11d48;
       --danger-bg: #fff1f2;
       --warning: #d97706;
-      --success: #0d9488;
+      --success: #059669;
       --success-bg: #ecfdf5;
 
-      --radius-sm: 10px;
-      --radius-md: 14px;
-      --radius-lg: 20px;
-      --shadow-saas: 0 4px 12px -2px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.03), 0 0 0 1px var(--border-subtle);
-      --shadow-hover: 0 12px 24px -8px rgba(0, 0, 0, 0.10);
-      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --shadow-saas: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05), 0 0 0 1px var(--border-subtle);
+      --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+      --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, system-ui, sans-serif;
-      background: var(--bg-base);
-      background-image: radial-gradient(at 0% 0%, rgba(13, 148, 136, 0.05) 0px, transparent 50%),
-                        radial-gradient(at 100% 100%, rgba(2, 132, 199, 0.04) 0px, transparent 50%);
+      background-color: var(--bg-base);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.05) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(2, 132, 199, 0.04) 0px, transparent 50%);
       color: var(--text-main);
       min-height: 100vh;
-      padding: 28px 24px;
+      padding: 30px 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -61,160 +62,134 @@
 
     .app-container {
       width: 100%;
-      max-width: 1360px;
+      max-width: 1260px;
       display: flex;
       flex-direction: column;
-      gap: 28px;
+      gap: 24px;
     }
 
-    /* ===== Header ===== */
+    /* Top Navbar */
     .saas-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 18px 28px;
+      padding: 16px 24px;
       background: var(--bg-surface);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-lg);
       box-shadow: var(--shadow-saas);
       flex-wrap: wrap;
       gap: 16px;
-      backdrop-filter: blur(8px);
-      background: rgba(255, 255, 255, 0.85);
     }
     .brand-section {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
     }
     .brand-logo {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      background: linear-gradient(145deg, var(--primary), #0284c7);
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary), #0284c7);
       display: flex;
       align-items: center;
       justify-content: center;
       color: #fff;
-      box-shadow: 0 6px 16px var(--primary-glow);
+      box-shadow: 0 4px 12px var(--primary-glow);
     }
     .brand-title h1 {
-      font-size: 20px;
-      font-weight: 800;
+      font-size: 18px;
+      font-weight: 700;
       letter-spacing: -0.5px;
-      background: linear-gradient(135deg, var(--primary), var(--accent));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
     }
     .brand-title p {
-      font-size: 13px;
+      font-size: 12px;
       color: var(--text-muted);
-      font-weight: 500;
     }
 
     .instance-controls {
       display: flex;
       align-items: center;
-      gap: 14px;
-      flex-wrap: wrap;
+      gap: 10px;
     }
     .instance-select {
       background: #ffffff;
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-sm);
-      padding: 8px 16px;
+      color: var(--text-main);
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-add-account {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background: #ecfdf5;
+      color: var(--primary);
+      border: 1px solid #a7f3d0;
+      border-radius: var(--radius-sm);
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
       transition: var(--transition);
     }
-    .instance-select:hover { border-color: var(--primary); }
-
-    .btn-add-account {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 18px;
-      background: var(--success-bg);
-      color: var(--primary);
-      border: 1px solid #99f6e4;
-      border-radius: var(--radius-sm);
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: var(--transition);
-    }
     .btn-add-account:hover {
       background: var(--primary);
-      color: #fff;
-      border-color: var(--primary);
+      color: #ffffff;
     }
 
     .status-badge {
       display: inline-flex;
       align-items: center;
-      gap: 10px;
-      padding: 6px 18px;
-      border-radius: 30px;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 20px;
       font-size: 12px;
-      font-weight: 700;
+      font-weight: 600;
       background: var(--success-bg);
       color: var(--primary);
-      border: 1px solid rgba(13, 148, 136, 0.25);
+      border: 1px solid rgba(5, 150, 105, 0.2);
     }
     .status-dot {
-      width: 10px;
-      height: 10px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       background: var(--primary);
-      box-shadow: 0 0 12px var(--primary);
+      box-shadow: 0 0 8px var(--primary);
       animation: pulse 2s infinite;
     }
     @keyframes pulse {
       0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(0.8); }
+      50% { opacity: 0.4; transform: scale(0.85); }
     }
 
-    /* ===== KPI Grid ===== */
+    /* Stats Grid */
     .kpi-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      gap: 18px;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
     }
     .kpi-card {
       background: var(--bg-surface);
       border: 1px solid var(--border-subtle);
-      padding: 20px 22px;
+      padding: 18px 20px;
       border-radius: var(--radius-md);
       box-shadow: var(--shadow-saas);
       display: flex;
       align-items: center;
       justify-content: space-between;
       transition: var(--transition);
-      backdrop-filter: blur(4px);
-      background: rgba(255, 255, 255, 0.8);
     }
-    .kpi-card:hover {
-      box-shadow: var(--shadow-hover);
-      transform: translateY(-2px);
-    }
-    .kpi-data span {
-      font-size: 12px;
-      color: var(--text-muted);
-      font-weight: 600;
-      letter-spacing: 0.3px;
-    }
-    .kpi-data h3 {
-      font-size: 26px;
-      font-weight: 800;
-      margin-top: 4px;
-      letter-spacing: -0.5px;
-    }
+    .kpi-card:hover { box-shadow: var(--shadow-hover); }
+    .kpi-data span { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+    .kpi-data h3 { font-size: 24px; font-weight: 700; margin-top: 4px; }
     .kpi-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -223,13 +198,13 @@
       border: 1px solid var(--border-subtle);
     }
 
-    /* ===== Main Grid ===== */
+    /* Main Grid */
     .dashboard-layout {
       display: grid;
-      grid-template-columns: 1.2fr 0.8fr;
-      gap: 28px;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
     }
-    @media (max-width: 1100px) {
+    @media (max-width: 1024px) {
       .dashboard-layout { grid-template-columns: 1fr; }
     }
 
@@ -237,34 +212,29 @@
       background: var(--bg-surface);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-lg);
-      padding: 28px;
+      padding: 24px;
       box-shadow: var(--shadow-saas);
       display: flex;
       flex-direction: column;
-      gap: 22px;
-      backdrop-filter: blur(4px);
-      background: rgba(255, 255, 255, 0.85);
-      transition: var(--transition);
+      gap: 20px;
     }
-    .saas-card:hover { box-shadow: var(--shadow-hover); }
-
     .card-title {
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 700;
+      color: var(--text-main);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 2px solid var(--border-subtle);
-      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 12px;
     }
     .card-title-left {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
     .card-title i { color: var(--primary); }
 
-    /* ===== Forms ===== */
     .form-group {
       display: flex;
       flex-direction: column;
@@ -272,16 +242,17 @@
     }
     .form-group label {
       font-size: 13px;
-      font-weight: 700;
+      font-weight: 600;
       display: flex;
       justify-content: space-between;
-      color: var(--text-main);
     }
+
     input, textarea, select {
-      background: #fff;
-      border: 1px solid #d1d9e6;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
       border-radius: var(--radius-sm);
-      padding: 12px 16px;
+      color: var(--text-main);
+      padding: 12px 14px;
       font-size: 14px;
       font-family: inherit;
       transition: var(--transition);
@@ -289,18 +260,17 @@
     input:focus, textarea:focus, select:focus {
       outline: none;
       border-color: var(--border-focus);
-      box-shadow: 0 0 0 4px var(--primary-glow);
+      box-shadow: 0 0 0 3px var(--primary-glow);
     }
 
-    /* ===== Variables ===== */
     .var-manager-box {
-      background: var(--bg-surface-elevated);
-      border: 1px dashed #b9c7da;
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
       border-radius: var(--radius-md);
-      padding: 18px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 12px;
     }
     .var-badges-container {
       display: flex;
@@ -312,69 +282,88 @@
       align-items: center;
       gap: 6px;
       font-size: 12px;
-      font-weight: 700;
-      padding: 6px 14px;
-      border-radius: 20px;
-      background: #fff;
-      border: 1px solid var(--border-subtle);
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 6px;
     }
-    .v-badge.fixed { border-color: #bae6fd; background: #f0f9ff; color: #0369a1; }
-    .v-badge.special { border-color: #fde68a; background: #fefce8; color: #b45309; }
-    .v-badge.ghost { border-color: #e9d5ff; background: #faf5ff; color: #7e22ce; }
-    .v-badge.custom { border-color: #99f6e4; background: #ecfdf5; color: #0d9488; }
-    .v-badge .del-btn {
-      cursor: pointer;
-      color: var(--danger);
-      margin-right: 4px;
-      transition: var(--transition);
+    .v-badge.fixed {
+      border: 1px solid #bae6fd;
+      background: #f0f9ff;
+      color: #0369a1;
     }
-    .v-badge .del-btn:hover { transform: scale(1.2); }
+    .v-badge.special {
+      border: 1px solid #fde68a;
+      background: #fefce8;
+      color: #b45309;
+    }
+    .v-badge.ghost {
+      border: 1px solid #e9d5ff;
+      background: #faf5ff;
+      color: #7e22ce;
+    }
+    .v-badge.custom {
+      border: 1px solid #a7f3d0;
+      background: #ecfdf5;
+      color: #047857;
+    }
+    .v-badge .del-btn { cursor: pointer; color: var(--danger); margin-right: 4px; }
 
     .var-input-container {
       display: grid;
       grid-template-columns: 1fr 1fr auto;
-      gap: 10px;
+      gap: 8px;
       align-items: center;
     }
 
-    /* ===== File Drop ===== */
     .file-dropzone {
       border: 2px dashed #cbd5e1;
       border-radius: var(--radius-md);
-      padding: 18px;
+      padding: 16px;
       text-align: center;
       background: #f8fafc;
       cursor: pointer;
-      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
     }
-    .file-dropzone:hover {
-      border-color: var(--primary);
-      background: #f0fdf4;
-    }
+    .file-dropzone:hover { border-color: var(--primary); background: #f0fdf4; }
 
-    /* ===== Inbox ===== */
+    /* صندوق الرسائل الواردة Live Inbox */
     .inbox-container {
       background: #f8fafc;
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
       height: 380px;
       overflow-y: auto;
-      padding: 16px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
       gap: 12px;
     }
+    .inbox-empty {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-subtle);
+      gap: 8px;
+    }
     .inbox-card {
-      background: #fff;
+      background: #ffffff;
       border: 1px solid var(--border-subtle);
-      border-right: 5px solid var(--primary);
+      border-right: 4px solid var(--primary);
       border-radius: var(--radius-sm);
-      padding: 14px 18px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+      padding: 12px 16px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
       animation: fadeIn 0.3s ease;
     }
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-8px); }
+      from { opacity: 0; transform: translateY(-6px); }
       to { opacity: 1; transform: translateY(0); }
     }
     .inbox-header {
@@ -388,12 +377,13 @@
       color: var(--text-main);
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
     .sender-phone {
       font-size: 11px;
       color: var(--text-muted);
       font-family: monospace;
+      direction: ltr;
     }
     .inbox-time {
       font-size: 11px;
@@ -402,24 +392,23 @@
     .inbox-body {
       font-size: 13px;
       color: var(--text-muted);
-      line-height: 1.6;
-      margin-top: 6px;
+      line-height: 1.5;
+      word-break: break-word;
     }
 
-    /* ===== Messages ===== */
     .msg-list {
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 12px;
     }
     .msg-item {
       background: #f8fafc;
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
-      padding: 16px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
     .msg-item-header {
       display: flex;
@@ -434,196 +423,146 @@
       border: none;
       color: var(--danger);
       cursor: pointer;
-      transition: var(--transition);
     }
-    .btn-icon-del:hover { transform: scale(1.1); }
 
-    /* ===== Buttons ===== */
+    .mention-dropdown {
+      position: absolute;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: var(--radius-sm);
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15);
+      z-index: 1000;
+      max-height: 220px;
+      overflow-y: auto;
+      display: none;
+      min-width: 250px;
+    }
+    .mention-item {
+      padding: 9px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .mention-item:hover {
+      background: #ecfdf5;
+      color: var(--primary);
+      font-weight: 700;
+    }
+    .mention-val {
+      font-size: 11px;
+      color: var(--text-muted);
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     .btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
-      padding: 12px 22px;
+      gap: 8px;
+      padding: 11px 18px;
       border-radius: var(--radius-sm);
       font-size: 14px;
-      font-weight: 700;
+      font-weight: 600;
       cursor: pointer;
       transition: var(--transition);
       border: none;
     }
     .btn-primary {
       background: var(--primary);
-      color: #fff;
-      box-shadow: 0 4px 16px var(--primary-glow);
+      color: #ffffff;
+      box-shadow: 0 4px 12px var(--primary-glow);
     }
-    .btn-primary:hover { background: var(--primary-hover); transform: translateY(-2px); }
+    .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
     .btn-secondary {
-      background: #fff;
+      background: #ffffff;
       color: var(--text-main);
-      border: 1px solid #d1d9e6;
+      border: 1px solid #cbd5e1;
     }
     .btn-secondary:hover { background: #f8fafc; }
     .btn-danger { background: var(--danger); color: #fff; }
-    .btn-success { background: var(--success); color: #fff; }
     .btn-outline-dashed {
       background: #f0fdf4;
-      border: 2px dashed var(--primary);
+      border: 1px dashed var(--primary);
       color: var(--primary);
       width: 100%;
     }
-    .btn-outline-dashed:hover { background: var(--primary); color: #fff; }
 
-    /* ===== Progress ===== */
     .progress-wrapper {
       background: #f8fafc;
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
-      padding: 16px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
       gap: 8px;
     }
     .progress-bar-bg {
-      height: 10px;
+      height: 8px;
       background: #e2e8f0;
-      border-radius: 6px;
+      border-radius: 4px;
       overflow: hidden;
     }
     .progress-bar-fill {
       height: 100%;
       width: 0%;
       background: linear-gradient(90deg, var(--primary), var(--accent));
-      transition: width 0.4s ease;
+      transition: width 0.3s ease;
     }
 
-    /* ===== Terminal ===== */
     .terminal-console {
       background: #0f172a;
+      border: 1px solid #1e293b;
       border-radius: var(--radius-md);
-      height: 160px;
-      padding: 14px;
+      height: 180px;
+      padding: 12px;
       overflow-y: auto;
-      font-family: 'Fira Code', monospace;
+      font-family: 'Fira Code', 'Consolas', monospace;
       font-size: 12px;
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 6px;
     }
-    .log-line { display: flex; gap: 10px; line-height: 1.5; }
-    .log-time { color: #64748b; min-width: 70px; }
+    .log-line { display: flex; gap: 8px; line-height: 1.4; }
+    .log-time { color: #64748b; min-width: 65px; }
     .log-msg-success { color: #34d399; }
     .log-msg-error { color: #f87171; }
     .log-msg-info { color: #38bdf8; }
     .log-msg-warning { color: #fbbf24; }
     .log-msg-default { color: #cbd5e1; }
 
-    /* ===== Shield ===== */
-    .shield-box {
-      background: #f8fafc;
-      border: 1px solid #d1d9e6;
-      border-radius: var(--radius-md);
-      padding: 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
     .toggle-row {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       cursor: pointer;
       font-size: 13px;
     }
-    .toggle-row input { accent-color: var(--primary); width: 18px; height: 18px; }
+    .toggle-row input { accent-color: var(--primary); width: 16px; height: 16px; }
 
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-    }
-
-    /* ===== Report Section ===== */
-    .report-section {
-      margin-top: 8px;
-      border-top: 2px solid var(--border-subtle);
-      padding-top: 20px;
-    }
-    .report-header {
+    .shield-box {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: var(--radius-md);
+      padding: 14px;
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-    .report-header h4 {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--text-main);
-      display: flex;
-      align-items: center;
+      flex-direction: column;
       gap: 10px;
     }
-    .report-table-wrap {
-      max-height: 260px;
-      overflow-y: auto;
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-sm);
-    }
-    .report-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-    .report-table th {
-      background: #f1f5f9;
-      color: var(--text-muted);
-      font-weight: 700;
-      padding: 12px 14px;
-      border-bottom: 2px solid var(--border-subtle);
-      text-align: right;
-      position: sticky;
-      top: 0;
-      z-index: 2;
-    }
-    .report-table td {
-      padding: 10px 14px;
-      border-bottom: 1px solid var(--border-subtle);
-    }
-    .report-table tr:hover td { background: #f8fafc; }
-    .status-success { color: var(--success); font-weight: 700; }
-    .status-failed { color: var(--danger); font-weight: 700; }
-    .status-pending { color: var(--warning); font-weight: 700; }
 
-    .report-summary {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: 12px;
-      background: #f8fafc;
-      padding: 14px 18px;
-      border-radius: var(--radius-sm);
-      margin-top: 12px;
-      border: 1px solid var(--border-subtle);
-    }
-    .summary-item {
-      text-align: center;
-    }
-    .summary-item span {
-      font-size: 12px;
-      color: var(--text-muted);
-      display: block;
-    }
-    .summary-item strong {
-      font-size: 20px;
-      font-weight: 800;
-      color: var(--text-main);
-    }
-
-    /* ===== Modal ===== */
+    /* Modal */
     .modal-overlay {
       position: fixed;
       inset: 0;
       background: rgba(15, 23, 42, 0.6);
-      backdrop-filter: blur(6px);
+      backdrop-filter: blur(4px);
       z-index: 2000;
       display: none;
       align-items: center;
@@ -631,842 +570,1028 @@
       padding: 20px;
     }
     .modal-card {
-      background: #fff;
+      background: #ffffff;
       border-radius: var(--radius-lg);
-      padding: 32px;
+      padding: 26px;
       width: 100%;
-      max-width: 460px;
-      box-shadow: 0 24px 48px -12px rgba(0,0,0,0.25);
+      max-width: 440px;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
       border: 1px solid var(--border-subtle);
-    }
-    .modal-header {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 18px;
+      flex-direction: column;
+      gap: 16px;
+      text-align: center;
     }
-    .modal-header h3 { font-size: 20px; font-weight: 800; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; }
+    .modal-header h3 { font-size: 18px; font-weight: 700; }
     .close-modal-btn { background: none; border: none; cursor: pointer; color: var(--text-muted); }
     .qr-container {
       background: #f8fafc;
       border: 2px dashed #cbd5e1;
       border-radius: var(--radius-md);
-      padding: 24px;
+      padding: 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      min-height: 220px;
       justify-content: center;
+      min-height: 250px;
     }
-    .qr-container img { max-width: 200px; border-radius: 10px; }
-
-    /* Responsive */
-    @media (max-width: 600px) {
-      .form-row { grid-template-columns: 1fr; }
-      .var-input-container { grid-template-columns: 1fr; }
-      body { padding: 16px; }
-      .saas-header { flex-direction: column; align-items: stretch; }
-    }
+    .qr-container img { max-width: 220px; border-radius: 8px; }
   </style>
 </head>
 <body>
 
-<div class="app-container">
+  <div class="app-container">
 
-  <!-- Header -->
-  <header class="saas-header">
-    <div class="brand-section">
-      <div class="brand-logo"><i data-lucide="zap"></i></div>
-      <div class="brand-title">
-        <h1>EvoFlow Campaign Engine</h1>
-        <p>لوحة التحكم الذكية • نظام إدارة السيرفر السحابي 24/7</p>
-      </div>
-    </div>
-    <div class="instance-controls">
-      <label style="font-size:13px;font-weight:700;">الحساب النشط:</label>
-      <select id="activeInstanceSelect" class="instance-select" onchange="switchInstance()"></select>
-      <button type="button" class="btn-add-account" onclick="openAddAccountModal()">
-        <i data-lucide="plus-circle" style="width:18px;height:18px;"></i> إضافة حساب
-      </button>
-      <div class="status-badge">
-        <span class="status-dot"></span>
-        <span id="currentStatusText">الحساب: Mon</span>
-      </div>
-    </div>
-  </header>
-
-  <!-- KPI -->
-  <section class="kpi-grid">
-    <div class="kpi-card"><div class="kpi-data"><span>الرسائل المستلمة</span><h3 id="kpiReceived" style="color:var(--accent);">0</h3></div><div class="kpi-icon" style="color:var(--accent);"><i data-lucide="inbox"></i></div></div>
-    <div class="kpi-card"><div class="kpi-data"><span>المستلمين</span><h3 id="kpiTotal">0</h3></div><div class="kpi-icon"><i data-lucide="users"></i></div></div>
-    <div class="kpi-card"><div class="kpi-data"><span>الرسائل الناجحة</span><h3 id="kpiSuccess" style="color:var(--success);">0</h3></div><div class="kpi-icon"><i data-lucide="check-circle-2"></i></div></div>
-    <div class="kpi-card"><div class="kpi-data"><span>تم إرساله اليوم</span><h3 id="kpiDailySent" style="color:#6366f1;">0</h3></div><div class="kpi-icon" style="color:#6366f1;"><i data-lucide="calendar-check-2"></i></div></div>
-    <div class="kpi-card"><div class="kpi-data"><span>فشل / غير مسجل</span><h3 id="kpiFailed" style="color:var(--danger);">0</h3></div><div class="kpi-icon"><i data-lucide="alert-triangle"></i></div></div>
-  </section>
-
-  <!-- Main -->
-  <main class="dashboard-layout">
-
-    <!-- Right: Contacts & Launch -->
-    <div class="saas-card">
-      <div class="card-title">
-        <div class="card-title-left"><i data-lucide="file-spreadsheet"></i><span>بيانات المستلمين والمتغيرات</span></div>
-      </div>
-
-      <!-- Variables -->
-      <div class="var-manager-box">
-        <label style="font-size:12px;font-weight:700;">المتغيرات المتاحة (اكتب @ في الرسالة):</label>
-        <div class="var-badges-container" id="varTagList"></div>
-        <div class="var-input-container">
-          <input type="text" id="newVarName" placeholder="اسم المتغير (مثال: عرض_خاص)">
-          <input type="text" id="newVarVal" placeholder="القيمة (مثال: خصم 20%)">
-          <button type="button" class="btn btn-secondary" onclick="addCustomVariable()">+ إضافة</button>
+    <!-- Header -->
+    <header class="saas-header">
+      <div class="brand-section">
+        <div class="brand-logo">
+          <i data-lucide="zap"></i>
+        </div>
+        <div class="brand-title">
+          <h1>EvoFlow Campaign Engine</h1>
+          <p>لوحة التحكم الذكية | نظام إدارة السيرفر السحابي 24/7</p>
         </div>
       </div>
 
-      <!-- File Upload -->
-      <div class="form-group">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <label>استيراد ملف البيانات:</label>
-          <button type="button" class="btn btn-secondary" style="padding:4px 14px;font-size:12px;" onclick="downloadExcelTemplate()">
-            <i data-lucide="download"></i> قالب Excel
-          </button>
-        </div>
-        <div class="file-dropzone" onclick="document.getElementById('dataFile').click()">
-          <i data-lucide="upload-cloud" style="width:26px;height:26px;"></i>
-          <p>اضغط لاختيار أو إسقاط ملف <b>Excel</b> أو <b>CSV</b></p>
-          <span id="selectedFileName">لم يتم اختيار ملف</span>
-        </div>
-        <input type="file" id="dataFile" accept=".xlsx,.xls,.csv,.txt" style="display:none;">
-      </div>
-
-      <div class="form-group">
-        <label>الأرقام والقيم المباشرة:</label>
-        <textarea id="dataInput" rows="4" placeholder="201280471390, مينا, عقارات, 2500000"></textarea>
-      </div>
-
-      <div class="form-group">
-        <label>مرفق وسائط:</label>
-        <input type="file" id="mediaFile">
-        <label class="toggle-row"><input type="checkbox" id="isVoiceNote"><span>إرسال كـ <b>تسجيل صوتي (Voice Note)</b></span></label>
-      </div>
-
-      <!-- Shield -->
-      <div class="shield-box">
-        <span style="font-size:13px;font-weight:700;color:var(--primary);display:flex;align-items:center;gap:6px;">
-          <i data-lucide="shield-check" style="width:18px;height:18px;"></i> خيارات الحماية المتطورة
-        </span>
-        <label class="toggle-row"><input type="checkbox" id="simulateSeen" checked><span><b>محاكاة قراءة الرسائل</b></span></label>
-        <label class="toggle-row"><input type="checkbox" id="simulateTyping" checked><span><b>محاكاة الكتابة والتسجيل</b></span></label>
-        <label class="toggle-row"><input type="checkbox" id="filterWhatsAppNumbers" checked><span><b>فلترة الأرقام غير المسجلة</b></span></label>
-        <label class="toggle-row"><input type="checkbox" id="autoGhostProtection" checked><span><b>حقن أحرف غير مرئية</b></span></label>
-        <div class="form-group"><label style="font-size:12px;"><b>حد التسخين اليومي:</b></label><input type="number" id="dailyLimit" value="50" min="0"></div>
-      </div>
-
-      <!-- Delays -->
-      <div class="form-row">
-        <div class="form-group"><label>أقل فاصل (ثواني):</label><input type="number" id="minDelay" value="10" min="1"></div>
-        <div class="form-group"><label>أقصى فاصل (ثواني):</label><input type="number" id="maxDelay" value="20" min="1"></div>
-      </div>
-      <div class="form-row" style="background:#f8fafc;padding:14px;border-radius:var(--radius-sm);border:1px solid var(--border-subtle);">
-        <div class="form-group"><label>استراحة بعد كل (عدد):</label><input type="number" id="batchCount" value="15" min="0"></div>
-        <div class="form-group"><label>مدة الاستراحة (ثواني):</label><input type="number" id="batchPauseTime" value="60" min="1"></div>
-      </div>
-
-      <div style="display:flex;gap:12px;">
-        <button type="button" class="btn btn-primary" id="sendBtn" onclick="startSending()" style="flex:2;">
-          <i data-lucide="play"></i> إطلاق الحملة
+      <div class="instance-controls">
+        <label style="font-size: 13px; font-weight: 600;">الحساب النشط:</label>
+        <select id="activeInstanceSelect" class="instance-select" onchange="switchInstance()">
+        </select>
+        <button type="button" class="btn-add-account" onclick="openAddAccountModal()">
+          <i data-lucide="plus-circle" style="width: 16px; height: 16px;"></i>
+          <span>إضافة حساب</span>
         </button>
-        <button type="button" class="btn btn-danger" id="stopBtn" onclick="stopSending()" style="flex:1;display:none;">
-          <i data-lucide="square"></i> إيقاف
-        </button>
-      </div>
-
-      <div class="progress-wrapper">
-        <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;">
-          <span>معدل الإنجاز: <b id="progressCount">0 / 0</b></span>
-          <span id="percentText" style="color:var(--primary);">0%</span>
-        </div>
-        <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressBar"></div></div>
-      </div>
-
-      <!-- ===== REPORT SECTION ===== -->
-      <div class="report-section" id="reportSection">
-        <div class="report-header">
-          <h4><i data-lucide="file-text" style="width:20px;height:20px;color:var(--primary);"></i> تقرير الحملة التفصيلي</h4>
-          <button type="button" class="btn btn-success" onclick="exportReportExcel()" style="padding:6px 16px;font-size:13px;">
-            <i data-lucide="file-spreadsheet"></i> تصدير Excel
-          </button>
-        </div>
-        <div class="report-table-wrap">
-          <table class="report-table" id="reportTable">
-            <thead>
-              <tr><th>#</th><th>الرقم</th><th>الاسم</th><th>الحالة</th><th>الرسالة</th></tr>
-            </thead>
-            <tbody id="reportBody">
-              <tr><td colspan="5" style="text-align:center;color:var(--text-subtle);padding:20px;">لا توجد بيانات حملة حتى الآن</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="report-summary" id="reportSummary">
-          <div class="summary-item"><span>الإجمالي</span><strong id="sumTotal">0</strong></div>
-          <div class="summary-item"><span>ناجح</span><strong id="sumSuccess" style="color:var(--success);">0</strong></div>
-          <div class="summary-item"><span>فشل</span><strong id="sumFailed" style="color:var(--danger);">0</strong></div>
-          <div class="summary-item"><span>قيد الانتظار</span><strong id="sumPending" style="color:var(--warning);">0</strong></div>
+        <div class="status-badge">
+          <span class="status-dot"></span>
+          <span id="currentStatusText">الحساب: Mon</span>
         </div>
       </div>
-    </div>
+    </header>
 
-    <!-- Left: Inbox & Messages -->
-    <div style="display:flex;flex-direction:column;gap:24px;">
-      <!-- Inbox -->
+    <!-- Top KPI Cards -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-data">
+          <span>الرسائل المستلمة</span>
+          <h3 id="kpiReceived" style="color: var(--accent);">0</h3>
+        </div>
+        <div class="kpi-icon" style="color: var(--accent);"><i data-lucide="inbox"></i></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-data">
+          <span>المستلمين في القائمة</span>
+          <h3 id="kpiTotal">0</h3>
+        </div>
+        <div class="kpi-icon"><i data-lucide="users"></i></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-data">
+          <span>الرسائل الناجحة</span>
+          <h3 id="kpiSuccess" style="color: var(--success);">0</h3>
+        </div>
+        <div class="kpi-icon"><i data-lucide="check-circle-2"></i></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-data">
+          <span>تم إرساله اليوم (Warm-up)</span>
+          <h3 id="kpiDailySent" style="color: #6366f1;">0</h3>
+        </div>
+        <div class="kpi-icon" style="color: #6366f1;"><i data-lucide="calendar-check-2"></i></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-data">
+          <span>عمليات الفشل / غير مسجل</span>
+          <h3 id="kpiFailed" style="color: var(--danger);">0</h3>
+        </div>
+        <div class="kpi-icon"><i data-lucide="alert-triangle"></i></div>
+      </div>
+    </section>
+
+    <!-- Main Workspace Layout -->
+    <main class="dashboard-layout">
+      
+      <!-- Right: Contacts & Launch -->
       <div class="saas-card">
         <div class="card-title">
-          <div class="card-title-left"><i data-lucide="mail" style="color:var(--accent);"></i><span>صندوق الوارد المباشر</span></div>
-          <button type="button" class="btn btn-secondary" style="padding:4px 12px;font-size:11px;" onclick="clearInbox()">مسح</button>
+          <div class="card-title-left">
+            <i data-lucide="file-spreadsheet"></i>
+            <span>بيانات المستلمين والمستندات</span>
+          </div>
         </div>
-        <div class="inbox-container" id="inboxContainer">
-          <div class="inbox-empty" id="inboxEmpty" style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-subtle);">
-            <i data-lucide="inbox" style="width:40px;height:40px;"></i><p>في انتظار الرسائل الواردة...</p>
+
+        <!-- صندوق إدارة المتغيرات -->
+        <div class="var-manager-box">
+          <label style="font-size: 12px; font-weight: 700;">المتغيرات المتاحة (اكتب @ في الرسالة لاختيارها):</label>
+          <div class="var-badges-container" id="varTagList"></div>
+          
+          <div class="var-input-container">
+            <input type="text" id="newVarName" placeholder="اسم المتغير (مثال: عَرْضٌ_خَاصّ)">
+            <input type="text" id="newVarVal" placeholder="قيمة المتغير (مثال: خصم 20% مُمَيَّز!)">
+            <button type="button" class="btn btn-secondary" onclick="addCustomVariable()">+ إضافة</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <label>استيراد ملف البيانات:</label>
+            <button type="button" class="btn btn-secondary" style="padding: 4px 10px; font-size: 12px;" onclick="downloadExcelTemplate()">
+              <i data-lucide="download"></i> تحميل قالب Excel
+            </button>
+          </div>
+          <div class="file-dropzone" onclick="document.getElementById('dataFile').click()">
+            <i data-lucide="upload-cloud" style="width: 24px; height: 24px;"></i>
+            <p>اضغط لاختيار أو إسقاط ملف <b>Excel</b> أو <b>CSV</b></p>
+            <span id="selectedFileName">لم يتم اختيار ملف</span>
+          </div>
+          <input type="file" id="dataFile" accept=".xlsx,.xls,.csv,.txt" style="display: none;">
+        </div>
+
+        <div class="form-group">
+          <label>الأرقام والقيم المباشرة:</label>
+          <textarea id="dataInput" rows="4" placeholder="201280471390, مينا, عِقَارَاتٌ, 2500000"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>مرفق وسائط:</label>
+          <input type="file" id="mediaFile">
+          <label class="toggle-row" style="margin-top: 4px;">
+            <input type="checkbox" id="isVoiceNote">
+            <span>إرسال كـ <b>تسجيل صوتي رسمي (Voice Note / PTT)</b></span>
+          </label>
+        </div>
+
+        <!-- منظومة حماية الحساب -->
+        <div class="shield-box">
+          <span style="font-size: 13px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 6px;">
+            <i data-lucide="shield-check" style="width: 16px; height: 16px;"></i>
+            خيارات الحماية المتطورة من الحظر
+          </span>
+          <label class="toggle-row">
+            <input type="checkbox" id="simulateSeen" checked>
+            <span><b>محاكاة قراءة الرسائل السابقة (Seen الفعلي):</b> قراءة آخر رسالة واردة من العميل</span>
+          </label>
+          <label class="toggle-row">
+            <input type="checkbox" id="simulateTyping" checked>
+            <span><b>محاكاة الكتابة والتسجيل:</b> إرسال مؤشر (يكتب الآن... / يسجل مقطعاً) لعدة ثوانٍ</span>
+          </label>
+          <label class="toggle-row">
+            <input type="checkbox" id="filterWhatsAppNumbers" checked>
+            <span><b>فلترة مسبقة للأرقام:</b> تخطي أي رقم غير مسجل على واتساب تلقائياً</span>
+          </label>
+          <label class="toggle-row">
+            <input type="checkbox" id="autoGhostProtection" checked>
+            <span><b>حقن أحرف غير مرئية:</b> كسر تشابه الـ Hash بين الرسائل</span>
+          </label>
+          
+          <div class="form-group" style="margin-top: 6px;">
+            <label style="font-size: 12px;"><b>حد التسخين اليومي الأقصى (Daily Warm-up Cap):</b></label>
+            <input type="number" id="dailyLimit" value="50" min="0" placeholder="0 لإلغاء الحد">
+          </div>
+        </div>
+
+        <!-- إعدادات التأخير العشوائي -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>أقل فاصل عشوائي (ثواني):</label>
+            <input type="number" id="minDelay" value="10" min="1">
+          </div>
+          <div class="form-group">
+            <label>أقصى فاصل عشوائي (ثواني):</label>
+            <input type="number" id="maxDelay" value="20" min="1">
+          </div>
+        </div>
+
+        <!-- إعدادات الراحة المؤقتة بعد كل عدد رسائل -->
+        <div class="form-row" style="background: #f8fafc; padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+          <div class="form-group">
+            <label>استراحة بعد كل (عدد رسائل):</label>
+            <input type="number" id="batchCount" value="15" min="0" placeholder="مثال: 15 (0 لإلغاء الميزة)">
+          </div>
+          <div class="form-group">
+            <label>مدة الاستراحة (ثواني):</label>
+            <input type="number" id="batchPauseTime" value="60" min="1" placeholder="مثال: 60">
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <button type="button" class="btn btn-primary" id="sendBtn" onclick="startSending()" style="flex: 2;">
+            <i data-lucide="play"></i> إطلاق الحملة على السيرفر (خلفية 24/7)
+          </button>
+          <button type="button" class="btn btn-danger" id="stopBtn" onclick="stopSending()" style="flex: 1; display: none;">
+            <i data-lucide="square"></i> إيقاف مؤقت
+          </button>
+        </div>
+
+        <div class="progress-wrapper">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700;">
+            <span>معدل الإنجاز: <b id="progressCount">0 / 0</b></span>
+            <span id="percentText" style="color: var(--primary);">0%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="progressBar"></div>
           </div>
         </div>
       </div>
 
-      <!-- Messages -->
-      <div class="saas-card">
-        <div class="card-title">
-          <div class="card-title-left"><i data-lucide="message-square"></i><span>إعداد الرسائل</span></div>
+      <!-- Left: Live Incoming Messages & Message Setup -->
+      <div style="display: flex; flex-direction: column; gap: 24px;">
+
+        <!-- مربع الرسائل المستلمة الواردة (Live Inbox) -->
+        <div class="saas-card">
+          <div class="card-title">
+            <div class="card-title-left">
+              <i data-lucide="mail" style="color: var(--accent);"></i>
+              <span>صندوق الوارد المباشر (الرسائل المستلمة)</span>
+            </div>
+            <button type="button" class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="clearInbox()">
+              مسح الصندوق
+            </button>
+          </div>
+
+          <div class="inbox-container" id="inboxContainer">
+            <div class="inbox-empty" id="inboxEmpty">
+              <i data-lucide="inbox" style="width: 36px; height: 36px;"></i>
+              <p>في انتظار الرسائل الواردة من العملاء...</p>
+            </div>
+          </div>
         </div>
-        <div class="form-group">
-          <label>قائمة الرسائل (اكتب @ للمتغيرات):</label>
-          <div class="msg-list" id="messagesContainer">
-            <div class="msg-item" id="msg-box-1">
-              <div class="msg-item-header"><span>الرسالة رقم 1</span></div>
-              <textarea class="msg-text" rows="3" placeholder="نص الرسالة...">مرحبًا @wa_name،
+
+        <!-- نصوص الرسائل والتحكم -->
+        <div class="saas-card">
+          <div class="card-title">
+            <div class="card-title-left">
+              <i data-lucide="message-square"></i>
+              <span>إعداد الرسائل والطرفية</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>قائمة الرسائل (اكتب @ لاختيار المتغيرات):</label>
+            <div class="msg-list" id="messagesContainer">
+              <div class="msg-item" id="msg-box-1">
+                <div class="msg-item-header">
+                  <span>الرسالة رقم 1</span>
+                </div>
+                <textarea class="msg-text" rows="3" placeholder="اكتب نص الرسالة هنا...">مَرْحَبًا @wa_name،
 طلبك رقم: @Randomcode
 الخدمة: @service
 السعر: @price ج.م
 @invisible</textarea>
+              </div>
+            </div>
+            <button type="button" class="btn btn-outline-dashed" onclick="addMessageField()" style="margin-top: 6px;">
+              <i data-lucide="plus-circle"></i> إضافة قالب رسالة أخرى
+            </button>
+          </div>
+
+          <!-- Console Terminal -->
+          <div class="terminal-console" id="logBox">
+            <div class="log-line">
+              <span class="log-time">[00:00:00]</span>
+              <span class="log-msg-info">جاري الاتصال بنظام السيرفر الخلفي...</span>
             </div>
           </div>
-          <button type="button" class="btn btn-outline-dashed" onclick="addMessageField()">
-            <i data-lucide="plus-circle"></i> إضافة قالب رسالة
-          </button>
         </div>
 
-        <!-- Terminal -->
-        <div class="terminal-console" id="logBox">
-          <div class="log-line"><span class="log-time">[00:00:00]</span><span class="log-msg-info">جاري الاتصال بالسيرفر...</span></div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Mention Dropdown -->
+  <div class="mention-dropdown" id="mentionDropdown"></div>
+
+  <!-- Add Account Modal -->
+  <div class="modal-overlay" id="addAccountModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>إضافة حساب واتساب جديد</h3>
+        <button type="button" class="close-modal-btn" onclick="closeAddAccountModal()">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div id="createStep">
+        <div class="form-group" style="text-align: right;">
+          <label>اسم الحساب الجديد (بالإنجليزية وبدون مسافات):</label>
+          <input type="text" id="newInstanceName" placeholder="مثال: sales2 أو mena_support">
+        </div>
+        <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 12px;" onclick="generateInstanceQR()">
+          <i data-lucide="qr-code"></i> توليد رمز الاستجابة السريعة (QR Code)
+        </button>
+      </div>
+
+      <div id="qrStep" style="display: none;">
+        <div class="qr-container">
+          <img id="qrCodeImage" src="" alt="WhatsApp QR Code" style="display: none;">
+          <div id="qrLoader">
+            <p style="font-size: 13px; color: var(--text-muted);">جاري الاتصال بالسيرفر وتوليد الكود...</p>
+          </div>
+        </div>
+        <div style="font-size: 13px; color: var(--text-muted); margin-top: 8px;" id="qrStatusText">
+          امسح الكود الآن من تطبيق واتساب (الأجهزة المرتبطة)
         </div>
       </div>
     </div>
-
-  </main>
-</div>
-
-<!-- Mention Dropdown -->
-<div class="mention-dropdown" id="mentionDropdown" style="position:absolute;background:#fff;border:1px solid #cbd5e1;border-radius:var(--radius-sm);box-shadow:0 12px 30px -8px rgba(0,0,0,0.15);z-index:1000;max-height:200px;overflow-y:auto;display:none;min-width:220px;"></div>
-
-<!-- Add Account Modal -->
-<div class="modal-overlay" id="addAccountModal">
-  <div class="modal-card">
-    <div class="modal-header"><h3>إضافة حساب واتساب</h3><button type="button" class="close-modal-btn" onclick="closeAddAccountModal()"><i data-lucide="x"></i></button></div>
-    <div id="createStep">
-      <div class="form-group"><label>اسم الحساب (بالإنجليزية):</label><input type="text" id="newInstanceName" placeholder="مثال: sales2"></div>
-      <button type="button" class="btn btn-primary" style="width:100%;" onclick="generateInstanceQR()"><i data-lucide="qr-code"></i> توليد QR Code</button>
-    </div>
-    <div id="qrStep" style="display:none;">
-      <div class="qr-container"><img id="qrCodeImage" src="" style="display:none;max-width:200px;"><div id="qrLoader"><p style="color:var(--text-muted);">جاري التوليد...</p></div></div>
-      <div style="font-size:13px;color:var(--text-muted);margin-top:8px;" id="qrStatusText">امسح الكود من واتساب</div>
-    </div>
   </div>
-</div>
 
-<script>
-  lucide.createIcons();
+  <script>
+    lucide.createIcons();
 
-  // ===== CONFIG =====
-  const API_BASE = 'https://evolution-api-bkwl.onrender.com';
-  const API_KEY = '9SXCq4YxLGPtkufJKM7u+zv2';
+    // عنوان سيرفر Evolution الأساسي ومفتاح الوصول
+    const API_BASE = 'https://evolution-api-bkwl.onrender.com';
+    const API_KEY = '9SXCq4YxLGPtkufJKM7u+zv2';
 
-  let instances = JSON.parse(localStorage.getItem('evo_instances') || '["Mon"]');
-  let currentInstance = localStorage.getItem('evo_current_instance') || 'Mon';
-  let messageCounter = 1;
-  let qrCheckInterval = null;
-  let lastPolledMsgId = null;
-  let receivedCount = 0;
+    let instances = JSON.parse(localStorage.getItem('evo_instances') || '["Mon"]');
+    let currentInstance = localStorage.getItem('evo_current_instance') || 'Mon';
 
-  const defaultVars = ['wa_name', 'phone_name', 'name', 'phone'];
-  let customVars = [
-    { name: 'service', value: 'استشارة هندسية' },
-    { name: 'price', value: '2500' }
-  ];
-  let activeTextarea = null;
+    let messageCounter = 1;
+    let qrCheckInterval = null;
+    let lastPolledMsgId = null;
 
-  // ===== Report Data =====
-  let reportData = [];
+    let receivedCount = 0;
 
-  // ===== Helpers =====
-  function getTodayKey() {
-    const today = new Date().toISOString().slice(0, 10);
-    return `evo_sent_count_${currentInstance}_${today}`;
-  }
-  function getDailySentCount() { return parseInt(localStorage.getItem(getTodayKey()) || '0'); }
-  function incrementDailySentCount() {
-    const c = getDailySentCount() + 1;
-    localStorage.setItem(getTodayKey(), c.toString());
-    updateDailyCountUI();
-    return c;
-  }
-  function updateDailyCountUI() { document.getElementById('kpiDailySent').innerText = getDailySentCount(); }
-  function generateRandomCode() { return `#${Math.floor(100000 + Math.random() * 900000)}`; }
-  function generateInvisibleGhostString(l=6) {
-    const chars = ['\u200B','\u200C','\u200D','\u2060','\uFEFF'];
-    return Array.from({length:l}, ()=>chars[Math.floor(Math.random()*chars.length)]).join('');
-  }
-  function escapeRegExp(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+    const defaultVars = ['wa_name', 'phone_name', 'name', 'phone'];
+    let customVars = [
+      { name: 'service', value: 'استشارة هندسية' },
+      { name: 'price', value: '2500' }
+    ];
+    let activeTextarea = null;
 
-  // ===== Instance =====
-  async function fetchServerInstances() {
-    try {
-      const res = await fetch(`${API_BASE}/instance/fetchInstances`, { headers: { 'apikey': API_KEY } });
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        const serverList = data.map(item => item.name || item.instance?.instanceName || item.instanceName).filter(Boolean);
-        if (serverList.length > 0) {
-          instances = serverList;
-          localStorage.setItem('evo_instances', JSON.stringify(instances));
-          if (!instances.includes(currentInstance)) { currentInstance = instances[0]; localStorage.setItem('evo_current_instance', currentInstance); }
-        }
+    function getTodayKey() {
+      const today = new Date().toISOString().slice(0, 10);
+      return `evo_sent_count_${currentInstance}_${today}`;
+    }
+
+    function getDailySentCount() {
+      return parseInt(localStorage.getItem(getTodayKey()) || '0');
+    }
+
+    function incrementDailySentCount() {
+      const current = getDailySentCount() + 1;
+      localStorage.setItem(getTodayKey(), current.toString());
+      updateDailyCountUI();
+      return current;
+    }
+
+    function updateDailyCountUI() {
+      const count = getDailySentCount();
+      const el = document.getElementById('kpiDailySent');
+      if (el) el.innerText = count;
+    }
+
+    function generateRandomCode() {
+      return `#${Math.floor(100000 + Math.random() * 900000)}`;
+    }
+
+    function generateInvisibleGhostString(length = 6) {
+      const ghostChars = ['\u200B', '\u200C', '\u200D', '\u2060', '\uFEFF'];
+      let result = '';
+      for (let i = 0; i < length; i++) {
+        result += ghostChars[Math.floor(Math.random() * ghostChars.length)];
       }
-    } catch(e) {}
-    renderInstanceSelect();
-  }
+      return result;
+    }
 
-  function renderInstanceSelect() {
-    const select = document.getElementById('activeInstanceSelect');
-    select.innerHTML = '';
-    instances.forEach(inst => {
-      const opt = document.createElement('option');
-      opt.value = inst;
-      opt.innerText = `حساب: ${inst}`;
-      if (inst === currentInstance) opt.selected = true;
-      select.appendChild(opt);
-    });
-    document.getElementById('currentStatusText').innerText = `الحساب: ${currentInstance}`;
-    updateDailyCountUI();
-    startInboxPolling();
-  }
+    function generateObjTag() {
+      return '\uFFFC' + generateInvisibleGhostString(2);
+    }
 
-  function switchInstance() {
-    const select = document.getElementById('activeInstanceSelect');
-    currentInstance = select.value;
-    localStorage.setItem('evo_current_instance', currentInstance);
-    document.getElementById('currentStatusText').innerText = `الحساب: ${currentInstance}`;
-    updateDailyCountUI();
-    addLog(`التبديل إلى [${currentInstance}]`, 'log-msg-info');
-    startInboxPolling();
-  }
+    function escapeRegExp(string) {
+      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
 
-  async function initInstances() {
-    renderInstanceSelect();
-    await fetchServerInstances();
-  }
-
-  // ===== Inbox Polling =====
-  function startInboxPolling() {
-    if (window.inboxPollTimer) clearInterval(window.inboxPollTimer);
-    addLog(`✔ تفعيل استماع صندوق الوارد [${currentInstance}]`, 'log-msg-success');
-    window.inboxPollTimer = setInterval(async () => {
+    // جلب الحسابات المسجلة من السيرفر
+    async function fetchServerInstances() {
       try {
-        const res = await fetch(`${API_BASE}/chat/findMessages/${currentInstance}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
-          body: JSON.stringify({ where: { key: { fromMe: false } }, take: 5 })
+        const res = await fetch(`${API_BASE}/instance/fetchInstances`, {
+          headers: { 'apikey': API_KEY }
         });
-        if (res.ok) {
-          const data = await res.json();
-          const records = data.records || data.messages || (Array.isArray(data) ? data : []);
-          if (records.length > 0) {
-            const latest = records[records.length - 1];
-            const msgId = latest.key?.id;
-            if (msgId && msgId !== lastPolledMsgId) {
-              lastPolledMsgId = msgId;
-              handleIncomingMessage({ data: latest });
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const serverList = data.map(item => item.name || item.instance?.instanceName || item.instanceName).filter(Boolean);
+          if (serverList.length > 0) {
+            instances = serverList;
+            localStorage.setItem('evo_instances', JSON.stringify(instances));
+            if (!instances.includes(currentInstance)) {
+              currentInstance = instances[0];
+              localStorage.setItem('evo_current_instance', currentInstance);
             }
           }
         }
-      } catch(e) {}
-    }, 4000);
-  }
+      } catch (err) {}
+      renderInstanceSelect();
+    }
 
-  function handleIncomingMessage(payload) {
-    if (!payload) return;
-    const msgData = payload.data || (payload.messages && payload.messages[0]) || payload;
-    if (!msgData || typeof msgData !== 'object') return;
-    const key = msgData.key || {};
-    if (key.fromMe) return;
-    const remoteJid = key.remoteJid || '';
-    if (remoteJid.includes('@g.us') || remoteJid.includes('status@broadcast')) return;
-    const phone = remoteJid.replace(/[^0-9]/g, '');
-    const pushName = msgData.pushName || 'عميل واتساب';
-    let bodyText = msgData.message?.conversation ||
-      msgData.message?.extendedTextMessage?.text ||
-      (msgData.message?.imageMessage ? '📷 [صورة]' : '') ||
-      (msgData.message?.audioMessage ? '🎙 [تسجيل]' : '') ||
-      (msgData.message?.documentMessage ? `📄 [مستند]` : '') ||
-      (msgData.message?.videoMessage ? '🎥 [فيديو]' : '') ||
-      'رسالة واردة';
-    appendInboxMessage(pushName, phone, bodyText);
-  }
-
-  function appendInboxMessage(name, phone, text) {
-    const container = document.getElementById('inboxContainer');
-    const empty = document.getElementById('inboxEmpty');
-    if (empty) empty.style.display = 'none';
-    receivedCount++;
-    document.getElementById('kpiReceived').innerText = receivedCount;
-    const time = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
-    const card = document.createElement('div');
-    card.className = 'inbox-card';
-    card.innerHTML = `
-      <div class="inbox-header">
-        <div class="sender-name"><i data-lucide="user" style="width:14px;height:14px;color:var(--primary);"></i><span>${name}</span><span class="sender-phone">(${phone})</span></div>
-        <span class="inbox-time">${time}</span>
-      </div>
-      <div class="inbox-body">${text}</div>
-    `;
-    container.prepend(card);
-    lucide.createIcons();
-    addLog(`📩 رسالة من [${name}] (${phone}): "${text.substring(0,30)}..."`, 'log-msg-info');
-  }
-
-  function clearInbox() {
-    const container = document.getElementById('inboxContainer');
-    container.innerHTML = `<div class="inbox-empty" id="inboxEmpty" style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-subtle);"><i data-lucide="inbox" style="width:40px;height:40px;"></i><p>في انتظار الرسائل الواردة...</p></div>`;
-    receivedCount = 0;
-    document.getElementById('kpiReceived').innerText = '0';
-    lucide.createIcons();
-  }
-
-  // ===== Modal =====
-  function openAddAccountModal() {
-    document.getElementById('addAccountModal').style.display = 'flex';
-    document.getElementById('createStep').style.display = 'block';
-    document.getElementById('qrStep').style.display = 'none';
-    document.getElementById('newInstanceName').value = '';
-    if (qrCheckInterval) clearInterval(qrCheckInterval);
-    lucide.createIcons();
-  }
-  function closeAddAccountModal() { document.getElementById('addAccountModal').style.display = 'none'; if (qrCheckInterval) clearInterval(qrCheckInterval); }
-
-  async function generateInstanceQR() {
-    const nameInput = document.getElementById('newInstanceName');
-    const instName = nameInput.value.trim().replace(/[^a-zA-Z0-9_-]/g, '');
-    if (!instName) { alert("يرجى إدخال اسم حساب صالح"); return; }
-    document.getElementById('createStep').style.display = 'none';
-    document.getElementById('qrStep').style.display = 'block';
-    document.getElementById('qrLoader').style.display = 'block';
-    document.getElementById('qrCodeImage').style.display = 'none';
-    document.getElementById('qrStatusText').innerText = "جاري إنشاء الجلسة...";
-    try {
-      const createRes = await fetch(`${API_BASE}/instance/create`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
-        body: JSON.stringify({ instanceName: instName, qrcode: true, integration: 'WHATSAPP-BAILEYS' })
+    function renderInstanceSelect() {
+      const select = document.getElementById('activeInstanceSelect');
+      select.innerHTML = '';
+      instances.forEach(inst => {
+        const opt = document.createElement('option');
+        opt.value = inst;
+        opt.innerText = `حساب: ${inst}`;
+        if (inst === currentInstance) opt.selected = true;
+        select.appendChild(opt);
       });
-      const createData = await createRes.json();
-      let qrBase64 = createData.qrcode?.base64;
-      if (!qrBase64) {
-        const connectRes = await fetch(`${API_BASE}/instance/connect/${instName}`, { headers: { 'apikey': API_KEY } });
-        const connectData = await connectRes.json();
-        qrBase64 = connectData.base64 || connectData.code;
-      }
-      if (qrBase64) {
-        const img = document.getElementById('qrCodeImage');
-        img.src = qrBase64.startsWith('data:image') ? qrBase64 : `data:image/png;base64,${qrBase64}`;
-        img.style.display = 'block';
-        document.getElementById('qrLoader').style.display = 'none';
-        document.getElementById('qrStatusText').innerText = "امسح الكود من واتساب (الأجهزة المرتبطة)";
-        startPollingConnection(instName);
-      } else {
-        document.getElementById('qrStatusText').innerText = "تعذر استلام الكود.";
-      }
-    } catch(err) {
-      document.getElementById('qrStatusText').innerText = `خطأ: ${err.message}`;
-    }
-  }
 
-  function startPollingConnection(instName) {
-    if (qrCheckInterval) clearInterval(qrCheckInterval);
-    qrCheckInterval = setInterval(async () => {
+      document.getElementById('currentStatusText').innerText = `الحساب: ${currentInstance}`;
+      updateDailyCountUI();
+      startInboxPolling();
+    }
+
+    async function initInstances() {
+      renderInstanceSelect();
+      await fetchServerInstances();
+    }
+
+    function switchInstance() {
+      const select = document.getElementById('activeInstanceSelect');
+      currentInstance = select.value;
+      localStorage.setItem('evo_current_instance', currentInstance);
+      document.getElementById('currentStatusText').innerText = `الحساب: ${currentInstance}`;
+      updateDailyCountUI();
+      addLog(`تم التبديل إلى الحساب: [${currentInstance}]`, 'log-msg-info');
+      startInboxPolling();
+    }
+
+    // نظام الاستقبال الدوري المضمون بدلاً من الـ WebSocket لضمان وصول الرسائل دائماً
+    function startInboxPolling() {
+      if (window.inboxPollTimer) clearInterval(window.inboxPollTimer);
+
+      addLog(`✔ تم تفعيل استماع صندوق الوارد المباشر للحساب [${currentInstance}]`, 'log-msg-success');
+
+      window.inboxPollTimer = setInterval(async () => {
+        try {
+          const res = await fetch(`${API_BASE}/chat/findMessages/${currentInstance}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
+            body: JSON.stringify({
+              where: {
+                key: {
+                  fromMe: false
+                }
+              },
+              take: 5
+            })
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            const records = data.records || data.messages || (Array.isArray(data) ? data : []);
+            
+            if (records.length > 0) {
+              const latestMsg = records[records.length - 1];
+              const msgId = latestMsg.key?.id;
+
+              if (msgId && msgId !== lastPolledMsgId) {
+                lastPolledMsgId = msgId;
+                handleIncomingMessage({ data: latestMsg });
+              }
+            }
+          }
+        } catch (e) {}
+      }, 4000);
+    }
+
+    function handleIncomingMessage(payload) {
+      if (!payload) return;
+
+      const msgData = payload.data || (payload.messages && payload.messages[0]) || payload;
+      if (!msgData || typeof msgData !== 'object') return;
+
+      const key = msgData.key || {};
+      if (key.fromMe) return;
+
+      const remoteJid = key.remoteJid || '';
+      if (remoteJid.includes('@g.us') || remoteJid.includes('status@broadcast')) return;
+
+      const phone = remoteJid.replace(/[^0-9]/g, '');
+      const pushName = msgData.pushName || 'عميل واتساب';
+
+      const msg = msgData.message || {};
+      let bodyText = msg.conversation 
+        || msg.extendedTextMessage?.text 
+        || (msg.imageMessage ? '📷 [صورة]' : '')
+        || (msg.audioMessage ? '🎙 [تسجيل صوتي]' : '')
+        || (msg.documentMessage ? `📄 [مستند: ${msg.documentMessage.fileName || 'ملف'}]` : '')
+        || (msg.videoMessage ? '🎥 [فيديو]' : '')
+        || 'رسالة واردة';
+
+      appendInboxMessage(pushName, phone, bodyText);
+    }
+
+    function appendInboxMessage(name, phone, text) {
+      const container = document.getElementById('inboxContainer');
+      const emptyState = document.getElementById('inboxEmpty');
+      if (emptyState) emptyState.style.display = 'none';
+
+      receivedCount++;
+      document.getElementById('kpiReceived').innerText = receivedCount;
+
+      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      const card = document.createElement('div');
+      card.className = 'inbox-card';
+      card.innerHTML = `
+        <div class="inbox-header">
+          <div class="sender-name">
+            <i data-lucide="user" style="width: 14px; height: 14px; color: var(--primary);"></i>
+            <span>${name}</span>
+            <span class="sender-phone">(${phone})</span>
+          </div>
+          <span class="inbox-time">${time}</span>
+        </div>
+        <div class="inbox-body">${text}</div>
+      `;
+
+      container.prepend(card);
+      lucide.createIcons();
+      addLog(`📩 رسالة واردة من [${name}] (${phone}): "${text.substring(0, 30)}..."`, 'log-msg-info');
+    }
+
+    function clearInbox() {
+      const container = document.getElementById('inboxContainer');
+      container.innerHTML = `
+        <div class="inbox-empty" id="inboxEmpty">
+          <i data-lucide="inbox" style="width: 36px; height: 36px;"></i>
+          <p>في انتظار الرسائل الواردة من العملاء...</p>
+        </div>
+      `;
+      receivedCount = 0;
+      document.getElementById('kpiReceived').innerText = '0';
+      lucide.createIcons();
+    }
+
+    function openAddAccountModal() {
+      document.getElementById('addAccountModal').style.display = 'flex';
+      document.getElementById('createStep').style.display = 'block';
+      document.getElementById('qrStep').style.display = 'none';
+      document.getElementById('newInstanceName').value = '';
+      if (qrCheckInterval) clearInterval(qrCheckInterval);
+      lucide.createIcons();
+    }
+
+    function closeAddAccountModal() {
+      document.getElementById('addAccountModal').style.display = 'none';
+      if (qrCheckInterval) clearInterval(qrCheckInterval);
+    }
+
+    async function generateInstanceQR() {
+      const nameInput = document.getElementById('newInstanceName');
+      const instName = nameInput.value.trim().replace(/[^a-zA-Z0-9_-]/g, '');
+
+      if (!instName) {
+        alert("يرجى إدخال اسم حساب صالح (باللغة الإنجليزية وبدون مسافات)");
+        return;
+      }
+
+      document.getElementById('createStep').style.display = 'none';
+      document.getElementById('qrStep').style.display = 'block';
+      document.getElementById('qrLoader').style.display = 'block';
+      document.getElementById('qrCodeImage').style.display = 'none';
+      document.getElementById('qrStatusText').innerText = "جاري إنشاء الجلسة وتوليد رمز QR السحابي...";
+
       try {
-        const res = await fetch(`${API_BASE}/instance/connectionState/${instName}`, { headers: { 'apikey': API_KEY } });
-        const data = await res.json();
-        if (data.instance?.state === 'open' || data.state === 'open') {
-          clearInterval(qrCheckInterval);
-          document.getElementById('qrStatusText').innerText = "✔ تم الاتصال بنجاح!";
-          if (!instances.includes(instName)) { instances.push(instName); localStorage.setItem('evo_instances', JSON.stringify(instances)); }
-          currentInstance = instName;
-          localStorage.setItem('evo_current_instance', currentInstance);
-          setTimeout(() => { closeAddAccountModal(); renderInstanceSelect(); addLog(`تم ربط وتفعيل [${instName}]`, 'log-msg-success'); }, 1500);
+        const createRes = await fetch(`${API_BASE}/instance/create`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
+          body: JSON.stringify({
+            instanceName: instName,
+            qrcode: true,
+            integration: 'WHATSAPP-BAILEYS'
+          })
+        });
+
+        const createData = await createRes.json();
+        let qrBase64 = createData.qrcode?.base64;
+
+        if (!qrBase64) {
+          const connectRes = await fetch(`${API_BASE}/instance/connect/${instName}`, {
+            method: 'GET',
+            headers: { 'apikey': API_KEY }
+          });
+          const connectData = await connectRes.json();
+          qrBase64 = connectData.base64 || connectData.code;
         }
-      } catch(e) {}
-    }, 3000);
-  }
 
-  // ===== Variables =====
-  function renderVariableBadges() {
-    const container = document.getElementById('varTagList');
-    container.innerHTML = '';
-    defaultVars.forEach(v => { const b = document.createElement('div'); b.className = 'v-badge fixed'; b.innerHTML = `@${v}`; container.appendChild(b); });
-    const r = document.createElement('div'); r.className = 'v-badge special'; r.title = "رقم عشوائي 6 أرقام"; r.innerHTML = `@Randomcode <small style="font-weight:normal;">(#123456)</small>`; container.appendChild(r);
-    const g = document.createElement('div'); g.className = 'v-badge ghost'; g.title = "أحرف مخفية"; g.innerHTML = `@invisible <small style="font-weight:normal;">(مخفي)</small>`; container.appendChild(g);
-    const o = document.createElement('div'); o.className = 'v-badge ghost'; o.title = "كائن غير مرئي"; o.innerHTML = `@obj <small style="font-weight:normal;">(OBJ)</small>`; container.appendChild(o);
-    customVars.forEach((item, idx) => {
-      const b = document.createElement('div'); b.className = 'v-badge custom';
-      b.innerHTML = `<span>@${item.name}</span>${item.value ? `<span style="opacity:0.7;font-size:11px;">(${item.value})</span>` : ''}<i data-lucide="x" class="del-btn" style="width:14px;height:14px;" onclick="removeCustomVariable(${idx})"></i>`;
-      container.appendChild(b);
+        if (qrBase64) {
+          const img = document.getElementById('qrCodeImage');
+          img.src = qrBase64.startsWith('data:image') ? qrBase64 : `data:image/png;base64,${qrBase64}`;
+          img.style.display = 'block';
+          document.getElementById('qrLoader').style.display = 'none';
+          document.getElementById('qrStatusText').innerText = "امسح الكود الآن من تطبيق واتساب (الأجهزة المرتبطة)";
+          startPollingConnection(instName);
+        } else {
+          document.getElementById('qrStatusText').innerText = "تعذر استلام الكود. تأكد من عمل السيرفر.";
+        }
+      } catch (err) {
+        document.getElementById('qrStatusText').innerText = `خطأ: ${err.message}`;
+      }
+    }
+
+    function startPollingConnection(instName) {
+      if (qrCheckInterval) clearInterval(qrCheckInterval);
+
+      qrCheckInterval = setInterval(async () => {
+        try {
+          const res = await fetch(`${API_BASE}/instance/connectionState/${instName}`, {
+            headers: { 'apikey': API_KEY }
+          });
+          const data = await res.json();
+
+          if (data.instance?.state === 'open' || data.state === 'open') {
+            clearInterval(qrCheckInterval);
+            document.getElementById('qrStatusText').innerText = "✔ تم الاتصال بنجاح!";
+
+            if (!instances.includes(instName)) {
+              instances.push(instName);
+              localStorage.setItem('evo_instances', JSON.stringify(instances));
+            }
+            currentInstance = instName;
+            localStorage.setItem('evo_current_instance', currentInstance);
+
+            setTimeout(() => {
+              closeAddAccountModal();
+              renderInstanceSelect();
+              addLog(`تم ربط وتفعيل الحساب: [${instName}] بنجاح!`, 'log-msg-success');
+            }, 1500);
+          }
+        } catch (e) {}
+      }, 3000);
+    }
+
+    function renderVariableBadges() {
+      const container = document.getElementById('varTagList');
+      container.innerHTML = '';
+
+      defaultVars.forEach(v => {
+        const badge = document.createElement('div');
+        badge.className = 'v-badge fixed';
+        badge.innerHTML = `@${v}`;
+        container.appendChild(badge);
+      });
+
+      const randomBadge = document.createElement('div');
+      randomBadge.className = 'v-badge special';
+      randomBadge.title = "يولد # ورقم عشوائي من 6 أرقام لكل رسالة";
+      randomBadge.innerHTML = `@Randomcode <small style="font-weight: normal; margin-right: 4px;">(#123456)</small>`;
+      container.appendChild(randomBadge);
+
+      const ghostBadge = document.createElement('div');
+      ghostBadge.className = 'v-badge ghost';
+      ghostBadge.title = "أحرف مخفية تماماً تمنع حظر الرسائل وتغير بصمة النص";
+      ghostBadge.innerHTML = `@invisible <small style="font-weight: normal; margin-right: 4px;">(مخفي)</small>`;
+      container.appendChild(ghostBadge);
+
+      const objBadge = document.createElement('div');
+      objBadge.className = 'v-badge ghost';
+      objBadge.title = "حرف استبدال الكائن OBJ غير المرئي";
+      objBadge.innerHTML = `@obj <small style="font-weight: normal; margin-right: 4px;">([OBJ] خفي)</small>`;
+      container.appendChild(objBadge);
+
+      customVars.forEach((item, index) => {
+        const badge = document.createElement('div');
+        badge.className = 'v-badge custom';
+        badge.innerHTML = `
+          <span>@${item.name}</span>
+          ${item.value ? `<span style="opacity: 0.8; font-size: 11px;">(${item.value})</span>` : ''}
+          <i data-lucide="x" class="del-btn" style="width: 14px; height: 14px;" onclick="removeCustomVariable(${index})"></i>
+        `;
+        container.appendChild(badge);
+      });
+      lucide.createIcons();
+    }
+
+    function addCustomVariable() {
+      const nameInput = document.getElementById('newVarName');
+      const valInput = document.getElementById('newVarVal');
+      
+      const name = nameInput.value.trim().replace(/[^\p{L}\p{M}0-9_\-]/gu, '');
+      const val = valInput.value.trim();
+
+      if (!name) {
+        alert("يرجى إدخال اسم متغير صحيح.");
+        return;
+      }
+      const reserved = [...defaultVars, 'randomcode', 'invisible', 'obj'];
+      if (reserved.includes(name.toLowerCase()) || customVars.some(v => v.name === name)) {
+        alert("هذا المتغير محجوز أو موجود مسبقاً!");
+        return;
+      }
+
+      customVars.push({ name: name, value: val });
+      nameInput.value = '';
+      valInput.value = '';
+      renderVariableBadges();
+    }
+
+    function removeCustomVariable(index) {
+      customVars.splice(index, 1);
+      renderVariableBadges();
+    }
+
+    function downloadExcelTemplate() {
+      const headers = ['Phone', 'Name', ...customVars.map(v => v.name)];
+      const sampleRow = ['201280471390', 'مينا سامح', ...customVars.map(v => v.value || 'قيمة تجريبية')];
+      const wsData = [headers, sampleRow];
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Campaign_Data");
+      XLSX.writeFile(wb, "whatsapp_campaign_template.xlsx");
+      addLog("تم تصدير وتحميل قالب Excel بنجاح.", "log-msg-info");
+    }
+
+    document.getElementById('dataFile').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      document.getElementById('selectedFileName').innerText = file.name;
+      const fileName = file.name.toLowerCase();
+
+      if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          const data = new Uint8Array(evt.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+          const dataRows = rows.slice(1).filter(r => r.length > 0 && r[0]);
+          const formattedLines = dataRows.map(r => r.join(', '));
+          document.getElementById('dataInput').value = formattedLines.join('\n');
+          updateKpiTotal();
+          addLog(`تم استيراد ${dataRows.length} جهة اتصال من ملف الإكسيل.`, "log-msg-info");
+        };
+        reader.readAsArrayBuffer(file);
+      } else {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          document.getElementById('dataInput').value = evt.target.result.trim();
+          updateKpiTotal();
+          addLog("تمت قراءة البيانات من الملف.", "log-msg-info");
+        };
+        reader.readAsText(file);
+      }
     });
-    lucide.createIcons();
-  }
 
-  function addCustomVariable() {
-    const nameInput = document.getElementById('newVarName');
-    const valInput = document.getElementById('newVarVal');
-    const name = nameInput.value.trim().replace(/[^\p{L}\p{M}0-9_\-]/gu, '');
-    const val = valInput.value.trim();
-    if (!name) { alert("يرجى إدخال اسم متغير"); return; }
-    const reserved = [...defaultVars, 'randomcode','invisible','obj'];
-    if (reserved.includes(name.toLowerCase()) || customVars.some(v => v.name === name)) { alert("هذا المتغير محجوز أو موجود"); return; }
-    customVars.push({ name, value: val });
-    nameInput.value = ''; valInput.value = '';
-    renderVariableBadges();
-  }
-  function removeCustomVariable(index) { customVars.splice(index, 1); renderVariableBadges(); }
+    document.getElementById('dataInput').addEventListener('input', updateKpiTotal);
 
-  // ===== Template =====
-  function downloadExcelTemplate() {
-    const headers = ['Phone', 'Name', ...customVars.map(v => v.name)];
-    const sampleRow = ['201280471390', 'مينا سامح', ...customVars.map(v => v.value || 'قيمة')];
-    const ws = XLSX.utils.aoa_to_sheet([headers, sampleRow]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Campaign_Data");
-    XLSX.writeFile(wb, "whatsapp_campaign_template.xlsx");
-    addLog("تم تصدير قالب Excel.", "log-msg-info");
-  }
-
-  document.getElementById('dataFile').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    document.getElementById('selectedFileName').innerText = file.name;
-    const fileName = file.name.toLowerCase();
-    if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        const data = new Uint8Array(evt.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-        const dataRows = rows.slice(1).filter(r => r.length > 0 && r[0]);
-        document.getElementById('dataInput').value = dataRows.map(r => r.join(', ')).join('\n');
-        updateKpiTotal();
-        addLog(`استيراد ${dataRows.length} جهة اتصال.`, "log-msg-info");
-      };
-      reader.readAsArrayBuffer(file);
-    } else {
-      const reader = new FileReader();
-      reader.onload = function(evt) { document.getElementById('dataInput').value = evt.target.result.trim(); updateKpiTotal(); addLog("تمت قراءة البيانات.", "log-msg-info"); };
-      reader.readAsText(file);
+    function updateKpiTotal() {
+      const raw = document.getElementById('dataInput').value.trim();
+      if (!raw) {
+        document.getElementById('kpiTotal').innerText = '0';
+        return;
+      }
+      const count = raw.split(/\r?\n/).filter(l => l.trim().length > 0).length;
+      document.getElementById('kpiTotal').innerText = count;
     }
-  });
 
-  document.getElementById('dataInput').addEventListener('input', updateKpiTotal);
-  function updateKpiTotal() {
-    const raw = document.getElementById('dataInput').value.trim();
-    if (!raw) { document.getElementById('kpiTotal').innerText = '0'; return; }
-    document.getElementById('kpiTotal').innerText = raw.split(/\r?\n/).filter(l => l.trim().length > 0).length;
-  }
+    const dropdown = document.getElementById('mentionDropdown');
 
-  // ===== Mention =====
-  const dropdown = document.getElementById('mentionDropdown');
-  function attachMentionEvents(textarea) {
-    textarea.addEventListener('keyup', handleMention);
-    textarea.addEventListener('click', () => dropdown.style.display = 'none');
-  }
-  function handleMention(e) {
-    activeTextarea = e.target;
-    const text = activeTextarea.value;
-    const cursorPos = activeTextarea.selectionStart;
-    const lastAt = text.lastIndexOf('@', cursorPos - 1);
-    if (lastAt !== -1 && (cursorPos - lastAt) <= 30) {
-      const query = text.substring(lastAt + 1, cursorPos).toLowerCase();
-      const allList = [...defaultVars.map(v => ({ name: v, value: '' })), { name: 'Randomcode', value: '#123456' }, { name: 'invisible', value: '(مخفي)' }, { name: 'obj', value: '(OBJ)' }, ...customVars];
-      const matched = allList.filter(item => item.name.toLowerCase().includes(query));
-      if (matched.length > 0) { showDropdown(matched, lastAt, cursorPos); return; }
+    function attachMentionEvents(textarea) {
+      textarea.addEventListener('keyup', handleMention);
+      textarea.addEventListener('click', () => dropdown.style.display = 'none');
     }
-    dropdown.style.display = 'none';
-  }
-  function showDropdown(items, atIndex, cursorPos) {
-    dropdown.innerHTML = '';
-    items.forEach(item => {
+
+    function handleMention(e) {
+      activeTextarea = e.target;
+      const text = activeTextarea.value;
+      const cursorPos = activeTextarea.selectionStart;
+
+      const lastAt = text.lastIndexOf('@', cursorPos - 1);
+      if (lastAt !== -1 && (cursorPos - lastAt) <= 30) {
+        const query = text.substring(lastAt + 1, cursorPos).toLowerCase();
+        
+        const allList = [
+          ...defaultVars.map(v => ({ name: v, value: '' })),
+          { name: 'Randomcode', value: '#123456 (كود عشوائي)' },
+          { name: 'invisible', value: '(أحرف غير مرئية لتفادي الحظر)' },
+          { name: 'obj', value: '([OBJ] رمز كائن غير مرئي)' },
+          ...customVars
+        ];
+
+        const matched = allList.filter(item => item.name.toLowerCase().includes(query));
+
+        if (matched.length > 0) {
+          showDropdown(matched, lastAt, cursorPos);
+          return;
+        }
+      }
+      dropdown.style.display = 'none';
+    }
+
+    function showDropdown(items, atIndex, cursorPos) {
+      dropdown.innerHTML = '';
+      items.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'mention-item';
+        div.innerHTML = `
+          <span>@${item.name}</span>
+          ${item.value ? `<span class="mention-val">${item.value}</span>` : ''}
+        `;
+        div.onclick = () => insertMention(item.name, atIndex, cursorPos);
+        dropdown.appendChild(div);
+      });
+
+      const rect = activeTextarea.getBoundingClientRect();
+      dropdown.style.top = `${window.scrollY + rect.bottom + 6}px`;
+      dropdown.style.left = `${window.scrollX + rect.left + 20}px`;
+      dropdown.style.display = 'block';
+    }
+
+    function insertMention(varName, atIndex, cursorPos) {
+      const text = activeTextarea.value;
+      const before = text.substring(0, atIndex);
+      const after = text.substring(cursorPos);
+      activeTextarea.value = `${before}@${varName} ${after}`;
+      dropdown.style.display = 'none';
+      activeTextarea.focus();
+      const nextPos = atIndex + varName.length + 2;
+      activeTextarea.setSelectionRange(nextPos, nextPos);
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!dropdown.contains(e.target) && e.target !== activeTextarea) {
+        dropdown.style.display = 'none';
+      }
+    });
+
+    function addMessageField() {
+      messageCounter++;
+      const container = document.getElementById('messagesContainer');
       const div = document.createElement('div');
-      div.className = 'mention-item';
-      div.innerHTML = `<span>@${item.name}</span>${item.value ? `<span class="mention-val">${item.value}</span>` : ''}`;
-      div.onclick = () => insertMention(item.name, atIndex, cursorPos);
-      dropdown.appendChild(div);
-    });
-    const rect = activeTextarea.getBoundingClientRect();
-    dropdown.style.top = `${window.scrollY + rect.bottom + 6}px`;
-    dropdown.style.left = `${window.scrollX + rect.left + 20}px`;
-    dropdown.style.display = 'block';
-  }
-  function insertMention(varName, atIndex, cursorPos) {
-    const text = activeTextarea.value;
-    activeTextarea.value = `${text.substring(0, atIndex)}@${varName} ${text.substring(cursorPos)}`;
-    dropdown.style.display = 'none';
-    activeTextarea.focus();
-    activeTextarea.setSelectionRange(atIndex + varName.length + 2, atIndex + varName.length + 2);
-  }
-  document.addEventListener('click', (e) => {
-    if (!dropdown.contains(e.target) && e.target !== activeTextarea) dropdown.style.display = 'none';
-  });
-
-  function addMessageField() {
-    messageCounter++;
-    const container = document.getElementById('messagesContainer');
-    const div = document.createElement('div');
-    div.className = 'msg-item';
-    div.id = `msg-box-${messageCounter}`;
-    div.innerHTML = `
-      <div class="msg-item-header"><span>الرسالة رقم ${messageCounter}</span><button type="button" class="btn-icon-del" onclick="document.getElementById('${div.id}').remove()"><i data-lucide="trash-2" style="width:16px;height:16px;"></i></button></div>
-      <textarea class="msg-text" rows="3" placeholder="نص الرسالة..."></textarea>
-    `;
-    container.appendChild(div);
-    attachMentionEvents(div.querySelector('textarea'));
-    lucide.createIcons();
-  }
-
-  // ===== Log =====
-  function addLog(text, className = 'log-msg-default') {
-    const logBox = document.getElementById('logBox');
-    const time = new Date().toLocaleTimeString();
-    const line = document.createElement('div');
-    line.className = 'log-line';
-    line.innerHTML = `<span class="log-time">[${time}]</span><span class="${className}">${text}</span>`;
-    logBox.appendChild(line);
-    logBox.scrollTop = logBox.scrollHeight;
-  }
-
-  // ===== File to base64 =====
-  function fileToBase64(file) {
-    return new Promise((res, rej) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => res(reader.result.split(',')[1]);
-      reader.onerror = err => rej(err);
-    });
-  }
-
-  // ===== Progress =====
-  function updateProgress(current, total) {
-    if (total === 0) return;
-    const percent = Math.round((current / total) * 100);
-    document.getElementById('progressBar').style.width = `${percent}%`;
-    document.getElementById('percentText').innerText = `${percent}%`;
-    document.getElementById('progressCount').innerText = `${current} / ${total}`;
-  }
-
-  // ===== Update Report Table =====
-  function updateReportUI(data) {
-    const tbody = document.getElementById('reportBody');
-    if (!data || data.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text-subtle);padding:20px;">لا توجد بيانات حملة</td></tr>`;
-      document.getElementById('sumTotal').innerText = '0';
-      document.getElementById('sumSuccess').innerText = '0';
-      document.getElementById('sumFailed').innerText = '0';
-      document.getElementById('sumPending').innerText = '0';
-      return;
-    }
-    let html = '';
-    let total = 0, success = 0, failed = 0, pending = 0;
-    data.forEach((row, idx) => {
-      total++;
-      if (row.status === 'success') success++;
-      else if (row.status === 'failed') failed++;
-      else pending++;
-      const statusClass = row.status === 'success' ? 'status-success' : row.status === 'failed' ? 'status-failed' : 'status-pending';
-      const statusText = row.status === 'success' ? '✅ ناجح' : row.status === 'failed' ? '❌ فشل' : '⏳ قيد الانتظار';
-      html += `<tr><td>${idx+1}</td><td>${row.phone || ''}</td><td>${row.name || ''}</td><td class="${statusClass}">${statusText}</td><td>${(row.message || '').substring(0, 40)}</td></tr>`;
-    });
-    tbody.innerHTML = html;
-    document.getElementById('sumTotal').innerText = total;
-    document.getElementById('sumSuccess').innerText = success;
-    document.getElementById('sumFailed').innerText = failed;
-    document.getElementById('sumPending').innerText = pending;
-  }
-
-  // ===== Export Report =====
-  function exportReportExcel() {
-    if (!reportData || reportData.length === 0) {
-      alert("لا توجد بيانات حملة لتصديرها.");
-      return;
-    }
-    const headers = ['#', 'الرقم', 'الاسم', 'الحالة', 'الرسالة'];
-    const rows = reportData.map((row, idx) => [
-      idx+1, row.phone || '', row.name || '',
-      row.status === 'success' ? 'ناجح' : row.status === 'failed' ? 'فشل' : 'قيد الانتظار',
-      row.message || ''
-    ]);
-    const wsData = [headers, ...rows];
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "تقرير_الحملة");
-    // ملخص
-    const total = reportData.length;
-    const success = reportData.filter(r => r.status === 'success').length;
-    const failed = reportData.filter(r => r.status === 'failed').length;
-    const pending = reportData.filter(r => r.status === 'pending').length;
-    const summary = [
-      ['ملخص الحملة'],
-      ['الإجمالي', total],
-      ['ناجح', success],
-      ['فشل', failed],
-      ['قيد الانتظار', pending]
-    ];
-    const wsSummary = XLSX.utils.aoa_to_sheet(summary);
-    XLSX.utils.book_append_sheet(wb, wsSummary, "ملخص");
-    XLSX.writeFile(wb, `تقرير_الحملة_${currentInstance}_${new Date().toISOString().slice(0,10)}.xlsx`);
-    addLog("📊 تم تصدير تقرير الحملة إلى Excel.", "log-msg-success");
-  }
-
-  // ===== Campaign Control =====
-  async function startSending() {
-    const rawData = document.getElementById('dataInput').value.trim();
-    const mediaFile = document.getElementById('mediaFile').files[0];
-    const isVoiceNote = document.getElementById('isVoiceNote').checked;
-    const minDelay = parseInt(document.getElementById('minDelay').value) || 10;
-    const maxDelay = parseInt(document.getElementById('maxDelay').value) || 20;
-    const batchCount = parseInt(document.getElementById('batchCount').value) || 0;
-    const batchPauseTime = parseInt(document.getElementById('batchPauseTime').value) || 60;
-    const simulateTyping = document.getElementById('simulateTyping').checked;
-    const filterWhatsApp = document.getElementById('filterWhatsAppNumbers').checked;
-    const dailyLimit = parseInt(document.getElementById('dailyLimit').value) || 0;
-
-    const messageElements = document.querySelectorAll('.msg-text');
-    const rawMessages = Array.from(messageElements).map(el => el.value.trim()).filter(t => t.length > 0);
-
-    const rows = rawData.split(/\r?\n/).map(line => {
-      const parts = line.split(',').map(p => p.trim());
-      const phone = parts[0] ? parts[0].replace(/[^0-9]/g, '') : '';
-      const name = parts[1] || '';
-      const vars = {};
-      customVars.forEach((v, idx) => { vars[v.name] = parts[idx + 2] || ''; });
-      return { phone, name, vars };
-    }).filter(r => r.phone.length >= 8);
-
-    if (rows.length === 0) { alert("يرجى إدخال أرقام صحيحة."); return; }
-    if (rawMessages.length === 0 && !mediaFile) { alert("يرجى كتابة رسالة أو إرفاق ملف."); return; }
-
-    let mediaPayload = null;
-    if (mediaFile) {
-      addLog(`معالجة الملف: ${mediaFile.name}`, 'log-msg-info');
-      const base64 = await fileToBase64(mediaFile);
-      mediaPayload = { base64, fileName: mediaFile.name, mimeType: mediaFile.type, isVoiceNote };
+      div.className = 'msg-item';
+      div.id = `msg-box-${messageCounter}`;
+      div.innerHTML = `
+        <div class="msg-item-header">
+          <span>الرسالة رقم ${messageCounter}</span>
+          <button type="button" class="btn-icon-del" onclick="document.getElementById('${div.id}').remove()">
+            <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+          </button>
+        </div>
+        <textarea class="msg-text" rows="3" placeholder="اكتب نص الرسالة هنا..."></textarea>
+      `;
+      container.appendChild(div);
+      attachMentionEvents(div.querySelector('textarea'));
+      lucide.createIcons();
     }
 
-    const payload = {
-      rows,
-      config: {
-        instance: currentInstance,
-        minDelay, maxDelay, batchCount, batchPauseTime,
-        simulateTyping, filterWhatsApp, dailyLimit,
-        messages: rawMessages,
-        media: mediaPayload
-      }
-    };
+    function addLog(text, className = 'log-msg-default') {
+      const logBox = document.getElementById('logBox');
+      const time = new Date().toLocaleTimeString();
+      const line = document.createElement('div');
+      line.className = 'log-line';
+      line.innerHTML = `<span class="log-time">[${time}]</span><span class="${className}">${text}</span>`;
+      logBox.appendChild(line);
+      logBox.scrollTop = logBox.scrollHeight;
+    }
 
-    try {
-      const res = await fetch('/api/campaign/start', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+    function fileToBase64(file) {
+      return new Promise((res, rej) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => res(reader.result.split(',')[1]);
+        reader.onerror = err => rej(err);
       });
-      if (res.ok) {
-        addLog('🚀 تم تسليم الحملة للسيرفر الخلفي!', 'log-msg-success');
-        document.getElementById('sendBtn').style.display = 'none';
-        document.getElementById('stopBtn').style.display = 'inline-flex';
-        // reset report
-        reportData = rows.map(r => ({ phone: r.phone, name: r.name, status: 'pending', message: rawMessages[0] || '' }));
-        updateReportUI(reportData);
-      } else {
-        const errData = await res.json();
-        alert(`فشل الإطلاق: ${errData.error || 'تأكد من السيرفر'}`);
-      }
-    } catch (err) {
-      addLog(`خطأ: ${err.message}`, 'log-msg-error');
     }
-  }
 
-  async function stopSending() {
-    try {
-      const res = await fetch('/api/campaign/stop', { method: 'POST' });
-      if (res.ok) {
-        addLog('⏸ تم إيقاف الحملة.', 'log-msg-warning');
-        document.getElementById('sendBtn').style.display = 'inline-flex';
-        document.getElementById('stopBtn').style.display = 'none';
+    function updateProgress(current, total) {
+      if (total === 0) return;
+      const percent = Math.round((current / total) * 100);
+      document.getElementById('progressBar').style.width = `${percent}%`;
+      document.getElementById('percentText').innerText = `${percent}%`;
+      document.getElementById('progressCount').innerText = `${current} / ${total}`;
+    }
+
+    // إطلاق الحملة على السيرفر (Background Worker)
+    async function startSending() {
+      const rawData = document.getElementById('dataInput').value.trim();
+      const mediaFile = document.getElementById('mediaFile').files[0];
+      const isVoiceNote = document.getElementById('isVoiceNote').checked;
+
+      const minDelay = parseInt(document.getElementById('minDelay').value) || 10;
+      const maxDelay = parseInt(document.getElementById('maxDelay').value) || 20;
+      const batchCount = parseInt(document.getElementById('batchCount').value) || 0;
+      const batchPauseTime = parseInt(document.getElementById('batchPauseTime').value) || 60;
+      
+      const simulateTyping = document.getElementById('simulateTyping').checked;
+      const filterWhatsApp = document.getElementById('filterWhatsAppNumbers').checked;
+      const dailyLimit = parseInt(document.getElementById('dailyLimit').value) || 0;
+
+      const messageElements = document.querySelectorAll('.msg-text');
+      const rawMessages = Array.from(messageElements).map(el => el.value.trim()).filter(t => t.length > 0);
+
+      const rows = rawData.split(/\r?\n/).map(line => {
+        const parts = line.split(',').map(p => p.trim());
+        const phone = parts[0] ? parts[0].replace(/[^0-9]/g, '') : '';
+        const name = parts[1] || '';
+        const vars = {};
+        customVars.forEach((v, idx) => {
+          vars[v.name] = parts[idx + 2] || '';
+        });
+        return { phone, name, vars };
+      }).filter(r => r.phone.length >= 8);
+
+      if (rows.length === 0) {
+        alert("يرجى إدخال أرقام صحيحة أو استيراد ملف.");
+        return;
       }
-    } catch(e) {}
-  }
 
-  // ===== Track Server Campaign =====
-  function trackServerCampaign() {
-    setInterval(async () => {
-      try {
-        const res = await fetch('/api/campaign/status');
-        if (!res.ok) return;
-        const data = await res.json();
-        document.getElementById('kpiSuccess').innerText = data.successCount || 0;
-        document.getElementById('kpiFailed').innerText = data.failedCount || 0;
-        updateProgress(data.currentIndex || 0, data.total || 0);
+      if (rawMessages.length === 0 && !mediaFile) {
+        alert("يرجى كتابة نص رسالة واحدة على الأقل أو إرفاق ملف.");
+        return;
+      }
 
-        // Update report from server data if available
-        if (data.report && Array.isArray(data.report)) {
-          reportData = data.report;
-          updateReportUI(reportData);
+      let mediaPayload = null;
+      if (mediaFile) {
+        addLog(`معالجة الملف المرفق (${mediaFile.name})...`, 'log-msg-info');
+        const base64 = await fileToBase64(mediaFile);
+        mediaPayload = {
+          base64,
+          fileName: mediaFile.name,
+          mimeType: mediaFile.type,
+          isVoiceNote
+        };
+      }
+
+      const payload = {
+        rows,
+        config: {
+          instance: currentInstance,
+          minDelay,
+          maxDelay,
+          batchCount,
+          batchPauseTime,
+          simulateTyping,
+          filterWhatsApp,
+          dailyLimit,
+          messages: rawMessages,
+          media: mediaPayload
         }
+      };
 
-        if (data.isRunning) {
+      try {
+        const res = await fetch('/api/campaign/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          addLog('🚀 تم تسليم الحملة بنجاح للسيرفر الخلفي! ستستمر في الإرسال 24 ساعة حتى لو أغلقت الصفحة.', 'log-msg-success');
           document.getElementById('sendBtn').style.display = 'none';
           document.getElementById('stopBtn').style.display = 'inline-flex';
         } else {
+          const errData = await res.json();
+          alert(`فشل الإطلاق: ${errData.error || 'تأكد من عمل السيرفر'}`);
+        }
+      } catch (err) {
+        addLog(`تعذر الاتصال بـ API السيرفر: ${err.message}`, 'log-msg-error');
+      }
+    }
+
+    async function stopSending() {
+      try {
+        const res = await fetch('/api/campaign/stop', { method: 'POST' });
+        if (res.ok) {
+          addLog('⏸ تم إرسال أمر إيقاف الحملة للسيرفر.', 'log-msg-warning');
           document.getElementById('sendBtn').style.display = 'inline-flex';
           document.getElementById('stopBtn').style.display = 'none';
         }
-      } catch(e) {}
-    }, 3000);
-  }
+      } catch (e) {}
+    }
 
-  // ===== INIT =====
-  initInstances();
-  document.querySelectorAll('.msg-text').forEach(attachMentionEvents);
-  renderVariableBadges();
-  updateKpiTotal();
-  updateDailyCountUI();
-  trackServerCampaign();
-  // load initial report if any
-  setTimeout(async () => {
-    try {
-      const res = await fetch('/api/campaign/status');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.report && Array.isArray(data.report)) {
-          reportData = data.report;
-          updateReportUI(reportData);
-        }
-      }
-    } catch(e) {}
-  }, 1000);
-</script>
+    // متابعة التقدم المستمر من السيرفر وعرضه في الشاشة والعدادات
+    function trackServerCampaign() {
+      setInterval(async () => {
+        try {
+          const res = await fetch('/api/campaign/status');
+          if (!res.ok) return;
+          const data = await res.json();
+
+          document.getElementById('kpiSuccess').innerText = data.successCount || 0;
+          document.getElementById('kpiFailed').innerText = data.failedCount || 0;
+          updateProgress(data.currentIndex || 0, data.total || 0);
+
+          if (data.isRunning) {
+            document.getElementById('sendBtn').style.display = 'none';
+            document.getElementById('stopBtn').style.display = 'inline-flex';
+          } else {
+            document.getElementById('sendBtn').style.display = 'inline-flex';
+            document.getElementById('stopBtn').style.display = 'none';
+          }
+        } catch (e) {}
+      }, 3000);
+    }
+
+    initInstances();
+    document.querySelectorAll('.msg-text').forEach(attachMentionEvents);
+    renderVariableBadges();
+    updateKpiTotal();
+    updateDailyCountUI();
+    trackServerCampaign();
+  </script>
+
 </body>
 </html>
