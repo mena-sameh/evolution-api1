@@ -51,4 +51,4 @@ ENV PORT=8080
 EXPOSE 8080
 
 # بدء تشغيل سيرفر MySQL محلياً وإنشاء القاعدة ثم إطلاق السيرفر
-CMD ["sh", "-c", "mysql_install_db --user=mysql --datadir=/var/lib/mysql > /dev/null 2>&1 && mysqld --user=mysql --datadir=/var/lib/mysql & until mysqladmin ping --silent; do sleep 1; done && mysql -e 'CREATE DATABASE IF NOT EXISTS evolution;' && npx prisma db push --schema=./prisma/schema.prisma --accept-data-loss --skip-generate || true; node dist/main.js"]
+CMD ["sh", "-c", "mysql_install_db --user=mysql --datadir=/var/lib/mysql > /dev/null 2>&1 && mysqld --user=mysql --datadir=/var/lib/mysql --port=3306 --bind-address=0.0.0.0 --skip-networking=0 & until mysqladmin ping --silent; do sleep 1; done && mysql -e 'CREATE DATABASE IF NOT EXISTS evolution;' && npx prisma db push --schema=./prisma/schema.prisma --accept-data-loss --skip-generate || true; node dist/main.js"]
