@@ -9,17 +9,19 @@ COPY ./package*.json ./
 COPY ./tsconfig.json ./
 COPY ./tsup.config.ts ./
 
-# تثبيت الاعتماديات مع تحديد سقف الذاكرة
 RUN NODE_OPTIONS="--max-old-space-size=460" npm install --no-audit
 
-# نسخ بقية ملفات المشروع
 COPY ./src ./src
 COPY ./public ./public
 COPY ./prisma ./prisma
 COPY ./manager ./manager
 COPY ./.env.example ./.env
+COPY ./Docker ./Docker
 
-# بناء المشروع كحزمة مدمجة لتفادي مشاكل استيراد المكتبات الخارجية
+# توليد ملفات Prisma قبل التجميع
+RUN npx prisma generate
+
+# بناء المشروع CJS
 RUN npx tsup src/main.ts --format cjs --target node20 --no-splitting --clean
 
 FROM node:20-alpine AS final
@@ -37,8 +39,11 @@ COPY --from=builder /evolution/prisma ./prisma
 COPY --from=builder /evolution/manager ./manager
 COPY --from=builder /evolution/public ./public
 COPY --from=builder /evolution/.env ./.env
+COPY --from=builder /evolution/Docker ./Docker
 
 ENV DOCKER_ENV=true
+ENV PORT=8080
 EXPOSE 8080
 
-CMD ["node", "dist/main.js"]
+# توليد Prisma Client عند التشغيل لضمان الربط التام
+CMD ["sh", "-c", "npx prisma generate && node dist/main.js"]
