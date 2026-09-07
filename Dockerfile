@@ -1,7 +1,7 @@
 FROM node:20-alpine AS builder
 
 RUN apk update && \
-    apk add --no-cache git ffmpeg wget curl bash openssl dos2unix
+    apk add --no-cache git ffmpeg wget curl bash openssl
 
 WORKDIR /evolution
 
@@ -18,12 +18,15 @@ COPY ./manager ./manager
 COPY ./.env.example ./.env
 COPY ./Docker ./Docker
 
-# البحث عن ملف الـ schema وتوليد Prisma Client مباشرة
-RUN SCHEMA_FILE=$(find ./prisma -name "*.prisma" | head -n 1) && \
-    echo "Using schema: $SCHEMA_FILE" && \
-    npx prisma generate --schema="$SCHEMA_FILE"
+# توليد Prisma Client لـ SQLite تلقائياً
+RUN if [ -f "./prisma/schema.sqlite.prisma" ]; then \
+        cp ./prisma/schema.sqlite.prisma ./prisma/schema.prisma; \
+    elif [ -f "./Docker/scripts/schema.sqlite.prisma" ]; then \
+        cp ./Docker/scripts/schema.sqlite.prisma ./prisma/schema.prisma; \
+    fi && \
+    npx prisma generate --schema=./prisma/schema.prisma
 
-# بناء المشروع CJS
+# بناء حزمة الكود
 RUN npx tsup src/main.ts --format cjs --target node20 --no-splitting --clean
 
 FROM node:20-alpine AS final
@@ -47,4 +50,4 @@ ENV DOCKER_ENV=true
 ENV PORT=8080
 EXPOSE 8080
 
-CMD ["node", "dist/main.js"]
+CMD ["sh", "-c", "npx prisma db push --accept-data-loss --skip-generate || true; node dist/main.js"]
