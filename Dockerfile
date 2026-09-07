@@ -40,4 +40,4 @@ COPY --from=builder /evolution/.env ./.env
 ENV DOCKER_ENV=true
 EXPOSE 8080
 
-CMD ["node", "dist/main.mjs"]
+CMD ["sh", "-c", "cp /evolution/node_modules/@figuro/chatwoot-sdk/dist/core/request.js /evolution/node_modules/@figuro/chatwoot-sdk/dist/core/request 2>/dev/null || true; node dist/main.mjs"]
