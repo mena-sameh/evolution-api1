@@ -9,22 +9,23 @@ COPY ./package*.json ./
 COPY ./tsconfig.json ./
 COPY ./tsup.config.ts ./
 
-# تثبيت الاعتماديات (بما فيها TypeScript وأدوات البناء) مع ضبط حد الذاكرة
+# تثبيت الاعتماديات مع تحديد سقف الذاكرة
 RUN NODE_OPTIONS="--max-old-space-size=460" npm install --no-audit
 
-# نسخ بقية الملفات اللازمة لعملية البناء
+# نسخ بقية ملفات المشروع
 COPY ./src ./src
 COPY ./public ./public
 COPY ./prisma ./prisma
 COPY ./manager ./manager
 COPY ./.env.example ./.env
 
-# تشغيل البناء بعد توفر الملفات وأداة tsc
-RUN npx tsup
+# بناء المشروع كحزمة مدمجة لتفادي مشاكل استيراد المكتبات الخارجية
+RUN npx tsup src/main.ts --format cjs --target node20 --no-splitting --clean
+
 FROM node:20-alpine AS final
 
 RUN apk update && \
-    apk add tzdata ffmpeg bash openssl
+    apk add --no-cache tzdata ffmpeg bash openssl
 
 WORKDIR /evolution
 
@@ -40,4 +41,4 @@ COPY --from=builder /evolution/.env ./.env
 ENV DOCKER_ENV=true
 EXPOSE 8080
 
-CMD ["sh", "-c", "cp /evolution/node_modules/@figuro/chatwoot-sdk/dist/core/request.js /evolution/node_modules/@figuro/chatwoot-sdk/dist/core/request 2>/dev/null || true; node dist/main.mjs"]
+CMD ["node", "dist/main.js"]
