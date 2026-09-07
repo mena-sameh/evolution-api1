@@ -9,8 +9,7 @@ COPY ./package*.json ./
 COPY ./tsconfig.json ./
 COPY ./tsup.config.ts ./
 
-RUN npm ci --silent
-
+RUN NODE_OPTIONS="--max-old-space-size=460" npm run build
 COPY ./src ./src
 COPY ./public ./public
 COPY ./prisma ./prisma
