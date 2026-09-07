@@ -1,7 +1,7 @@
 FROM node:20-alpine AS builder
 
 RUN apk update && \
-    apk add --no-cache git ffmpeg wget curl bash openssl
+    apk add --no-cache git ffmpeg wget curl bash openssl dos2unix
 
 WORKDIR /evolution
 
@@ -18,13 +18,12 @@ COPY ./manager ./manager
 COPY ./.env.example ./.env
 COPY ./Docker ./Docker
 
-# تحويل نهايات الأسطر وإعطاء صلاحيات التشغيل لسكريبتات الإعداد
-RUN chmod +x ./Docker/scripts/*
+# البحث عن ملف الـ schema وتوليد Prisma Client مباشرة
+RUN SCHEMA_FILE=$(find ./prisma -name "*.prisma" | head -n 1) && \
+    echo "Using schema: $SCHEMA_FILE" && \
+    npx prisma generate --schema="$SCHEMA_FILE"
 
-# تجهيز schema.prisma تلقائياً حسب إعدادات المشروع
-RUN ./Docker/scripts/generate_database.sh
-
-# بناء المشروع كحزمة CJS
+# بناء المشروع CJS
 RUN npx tsup src/main.ts --format cjs --target node20 --no-splitting --clean
 
 FROM node:20-alpine AS final
