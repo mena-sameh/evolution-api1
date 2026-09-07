@@ -18,20 +18,18 @@ COPY ./manager ./manager
 COPY ./.env.example ./.env
 COPY ./Docker ./Docker
 
-# تحويل أي سكيما موجودة تلقائياً إلى sqlite
-RUN SCHEMA_FILE=$(find ./prisma -name "*.prisma" | head -n 1) && \
-    echo "Found schema: $SCHEMA_FILE" && \
-    cp "$SCHEMA_FILE" ./prisma/schema.prisma && \
-    sed -i 's/provider = ".*"/provider = "sqlite"/' ./prisma/schema.prisma && \
+# اعتماد سكيما MySQL وتوليد Prisma Client
+RUN cp ./prisma/mysql-schema.prisma ./prisma/schema.prisma && \
     npx prisma generate --schema=./prisma/schema.prisma
 
-# بناء حزمة الكود بصيغة CommonJS
+# بناء المشروع CJS
 RUN npx tsup src/main.ts --format cjs --target node20 --no-splitting --clean
 
 FROM node:20-alpine AS final
 
+# تثبيت mariadb محلياً داخل الحاوية لإنشاء قاعدة بيانات مدمجة
 RUN apk update && \
-    apk add --no-cache tzdata ffmpeg bash openssl
+    apk add --no-cache tzdata ffmpeg bash openssl mariadb mariadb-client
 
 WORKDIR /evolution
 
@@ -45,8 +43,12 @@ COPY --from=builder /evolution/public ./public
 COPY --from=builder /evolution/.env ./.env
 COPY --from=builder /evolution/Docker ./Docker
 
+# تهيئة مجلد MariaDB
+RUN mkdir -p /run/mysqld && chown -R mysql:mysql /run/mysqld /var/lib/mysql
+
 ENV DOCKER_ENV=true
 ENV PORT=8080
 EXPOSE 8080
 
-CMD ["sh", "-c", "npx prisma db push --accept-data-loss --skip-generate || true; node dist/main.js"]
+# بدء تشغيل سيرفر MySQL محلياً وإنشاء القاعدة ثم إطلاق السيرفر
+CMD ["sh", "-c", "mysql_install_db --user=mysql --datadir=/var/lib/mysql > /dev/null 2>&1 && mysqld --user=mysql --datadir=/var/lib/mysql & until mysqladmin ping --silent; do sleep 1; done && mysql -e 'CREATE DATABASE IF NOT EXISTS evolution;' && npx prisma db push --schema=./prisma/schema.prisma --accept-data-loss --skip-generate || true; node dist/main.js"]
