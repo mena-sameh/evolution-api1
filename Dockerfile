@@ -20,8 +20,7 @@ COPY ./manager ./manager
 COPY ./.env.example ./.env
 
 # تشغيل البناء بعد توفر الملفات وأداة tsc
-RUN NODE_OPTIONS="--max-old-space-size=460" npm run build
-
+RUN npx tsup
 FROM node:20-alpine AS final
 
 RUN apk update && \
