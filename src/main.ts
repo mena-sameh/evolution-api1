@@ -26,6 +26,161 @@ import cors from 'cors';
 import express, { json, NextFunction, Request, Response, urlencoded } from 'express';
 import { join } from 'path';
 
+// ==================== CAMPAIGN WORKER ENGINE (24/7) ====================
+interface CampaignData {
+  isRunning: boolean;
+  currentIndex: number;
+  total: number;
+  successCount: number;
+  failedCount: number;
+  rows: any[];
+  config: any;
+}
+
+let activeCampaign: CampaignData = {
+  isRunning: false,
+  currentIndex: 0,
+  total: 0,
+  successCount: 0,
+  failedCount: 0,
+  rows: [],
+  config: null,
+};
+
+function generateRandomCode() {
+  return `#${Math.floor(100000 + Math.random() * 900000)}`;
+}
+
+function generateInvisibleGhostString(length = 6) {
+  const ghostChars = ['\u200B', '\u200C', '\u200D', '\u2060', '\uFEFF'];
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += ghostChars[Math.floor(Math.random() * ghostChars.length)];
+  }
+  return result;
+}
+
+function replacePlaceholders(template: string, row: any) {
+  let result = template || '';
+  result = result.replace(/@phone/gi, row.phone || '');
+  result = result.replace(/@name/gi, row.name || '');
+  result = result.replace(/@Randomcode/gi, generateRandomCode());
+  result = result.replace(/@invisible/gi, generateInvisibleGhostString(8));
+  result = result.replace(/@obj/gi, '\uFFFC' + generateInvisibleGhostString(2));
+
+  if (row.vars) {
+    for (const [key, val] of Object.entries(row.vars)) {
+      result = result.replace(new RegExp(`@${key}`, 'gui'), String(val));
+    }
+  }
+  return result;
+}
+
+async function runInternalWorker() {
+  const cfg = activeCampaign.config;
+  const globalApiKey = configService.get<Auth>('AUTHENTICATION').API_KEY.KEY;
+  const port = configService.get<HttpServer>('SERVER').PORT || 8080;
+  const baseUrl = `http://localhost:${port}`;
+
+  while (activeCampaign.currentIndex < activeCampaign.rows.length && activeCampaign.isRunning) {
+    const row = activeCampaign.rows[activeCampaign.currentIndex];
+
+    try {
+      // 1. فحص وجود الرقم على واتساب
+      if (cfg.filterWhatsApp) {
+        try {
+          const checkRes = await axios.post(
+            `${baseUrl}/chat/whatsappNumbers/${cfg.instance}`,
+            { numbers: [row.phone] },
+            { headers: { apikey: globalApiKey } }
+          );
+          if (Array.isArray(checkRes.data) && checkRes.data[0] && !checkRes.data[0].exists) {
+            activeCampaign.failedCount++;
+            activeCampaign.currentIndex++;
+            continue;
+          }
+        } catch (e) {}
+      }
+
+      // 2. محاكاة الكتابة / التسجيل الصوتي
+      if (cfg.simulateTyping) {
+        try {
+          await axios.post(
+            `${baseUrl}/chat/sendPresence/${cfg.instance}`,
+            {
+              number: row.phone,
+              presence: cfg.media?.isVoiceNote ? 'recording' : 'composing',
+              delay: 1200,
+            },
+            { headers: { apikey: globalApiKey } }
+          );
+          const typeSec = Math.floor(Math.random() * 3 + 2);
+          await new Promise((r) => setTimeout(r, typeSec * 1000));
+        } catch (e) {}
+      }
+
+      const customMsgs = (cfg.messages || []).map((m: string) => replacePlaceholders(m, row));
+
+      // 3. إرسال المرفقات (إن وجدت)
+      if (cfg.media && cfg.media.base64) {
+        const endpoint = cfg.media.isVoiceNote
+          ? `${baseUrl}/message/sendWhatsAppAudio/${cfg.instance}`
+          : `${baseUrl}/message/sendMedia/${cfg.instance}`;
+
+        const payload = cfg.media.isVoiceNote
+          ? { number: row.phone, audio: cfg.media.base64 }
+          : {
+              number: row.phone,
+              mediatype: cfg.media.mimeType?.startsWith('image/') ? 'image' : 'document',
+              mimetype: cfg.media.mimeType,
+              caption: customMsgs[0] || '',
+              media: cfg.media.base64,
+              fileName: cfg.media.fileName,
+            };
+
+        await axios.post(endpoint, payload, { headers: { apikey: globalApiKey } });
+        if (customMsgs.length > 0) {
+          await new Promise((r) => setTimeout(r, 1500));
+        }
+      }
+
+      // 4. إرسال النصوص
+      for (let m = 0; m < customMsgs.length; m++) {
+        if (!activeCampaign.isRunning) break;
+        await axios.post(
+          `${baseUrl}/message/sendText/${cfg.instance}`,
+          { number: row.phone, text: customMsgs[m] },
+          { headers: { apikey: globalApiKey } }
+        );
+        if (m < customMsgs.length - 1) {
+          await new Promise((r) => setTimeout(r, 1500));
+        }
+      }
+
+      activeCampaign.successCount++;
+    } catch (err) {
+      activeCampaign.failedCount++;
+    }
+
+    activeCampaign.currentIndex++;
+
+    // 5. إدارة الفواصل الزمنية والاستراحات
+    if (activeCampaign.currentIndex < activeCampaign.rows.length && activeCampaign.isRunning) {
+      if (cfg.batchCount > 0 && activeCampaign.currentIndex % cfg.batchCount === 0) {
+        await new Promise((r) => setTimeout(r, (cfg.batchPauseTime || 60) * 1000));
+      } else {
+        const minD = Number(cfg.minDelay) || 10;
+        const maxD = Number(cfg.maxDelay) || 20;
+        const delay = Math.floor(Math.random() * (maxD - minD + 1) + minD);
+        await new Promise((r) => setTimeout(r, delay * 1000));
+      }
+    }
+  }
+
+  activeCampaign.isRunning = false;
+}
+// ======================================================================
+
 async function initWA() {
   await waMonitor.loadInstance();
 }
@@ -70,6 +225,44 @@ async function bootstrap() {
 
   app.use('/store', express.static(join(ROOT_DIR, 'store')));
 
+  // ==================== CAMPAIGN ROUTES ====================
+  app.post('/api/campaign/start', (req: Request, res: Response) => {
+    const { rows, config } = req.body;
+    if (!rows || rows.length === 0) {
+      return res.status(400).json({ error: 'قائمة الأرقام فارغة' });
+    }
+
+    activeCampaign = {
+      isRunning: true,
+      currentIndex: 0,
+      total: rows.length,
+      successCount: 0,
+      failedCount: 0,
+      rows,
+      config,
+    };
+
+    runInternalWorker();
+
+    return res.json({ message: 'Campaign started in background', total: rows.length });
+  });
+
+  app.get('/api/campaign/status', (req: Request, res: Response) => {
+    return res.json({
+      isRunning: activeCampaign.isRunning,
+      currentIndex: activeCampaign.currentIndex,
+      total: activeCampaign.total,
+      successCount: activeCampaign.successCount,
+      failedCount: activeCampaign.failedCount,
+    });
+  });
+
+  app.post('/api/campaign/stop', (req: Request, res: Response) => {
+    activeCampaign.isRunning = false;
+    return res.json({ message: 'Campaign stopped' });
+  });
+  // ==========================================================
+
   app.use('/', router);
 
   app.use(
@@ -78,7 +271,7 @@ async function bootstrap() {
         const webhook = configService.get<Webhook>('WEBHOOK');
 
         if (webhook.EVENTS.ERRORS_WEBHOOK && webhook.EVENTS.ERRORS_WEBHOOK != '' && webhook.EVENTS.ERRORS) {
-          const tzoffset = new Date().getTimezoneOffset() * 60000; //offset in milliseconds
+          const tzoffset = new Date().getTimezoneOffset() * 60000;
           const localISOTime = new Date(Date.now() - tzoffset).toISOString();
           const now = localISOTime;
           const globalApiKey = configService.get<Auth>('AUTHENTICATION').API_KEY.KEY;
@@ -151,9 +344,6 @@ async function bootstrap() {
   const sentryConfig = configService.get<SentryConfig>('SENTRY');
   if (sentryConfig.DSN) {
     logger.info('Sentry - ON');
-
-    // Add this after all routes,
-    // but before any and other error-handling middlewares are defined
     Sentry.setupExpressErrorHandler(app);
   }
 
