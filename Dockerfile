@@ -18,10 +18,13 @@ COPY ./manager ./manager
 COPY ./.env.example ./.env
 COPY ./Docker ./Docker
 
-# توليد ملفات Prisma قبل التجميع
-RUN npx prisma generate
+# تحويل نهايات الأسطر وإعطاء صلاحيات التشغيل لسكريبتات الإعداد
+RUN chmod +x ./Docker/scripts/*
 
-# بناء المشروع CJS
+# تجهيز schema.prisma تلقائياً حسب إعدادات المشروع
+RUN ./Docker/scripts/generate_database.sh
+
+# بناء المشروع كحزمة CJS
 RUN npx tsup src/main.ts --format cjs --target node20 --no-splitting --clean
 
 FROM node:20-alpine AS final
@@ -45,5 +48,4 @@ ENV DOCKER_ENV=true
 ENV PORT=8080
 EXPOSE 8080
 
-# توليد Prisma Client عند التشغيل لضمان الربط التام
-CMD ["sh", "-c", "npx prisma generate && node dist/main.js"]
+CMD ["node", "dist/main.js"]
