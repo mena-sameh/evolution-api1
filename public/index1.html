@@ -1018,42 +1018,128 @@
 
     // نظام الاستقبال الدوري المضمون بدلاً من الـ WebSocket لضمان وصول الرسائل دائماً
     function startInboxPolling() {
-      if (window.inboxPollTimer) clearInterval(window.inboxPollTimer);
+  if (window.inboxPollTimer) {
+    clearInterval(window.inboxPollTimer);
+  }
 
-      addLog(`✔ تم تفعيل استماع صندوق الوارد المباشر للحساب [${currentInstance}]`, 'log-msg-success');
+  // حفظ الرسائل التي تم عرضها بالفعل لمنع التكرار
+  if (!window.seenIncomingMessageIds) {
+    window.seenIncomingMessageIds = new Set();
+  }
 
-      window.inboxPollTimer = setInterval(async () => {
-        try {
-          const res = await fetch(`${API_BASE}/chat/findMessages/${currentInstance}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
-            body: JSON.stringify({
-              where: {
-                key: {
-                  fromMe: false
-                }
-              },
-              take: 5
-            })
-          });
+  addLog(
+    `✔ تم تفعيل استماع صندوق الوارد المباشر للحساب [${currentInstance}]`,
+    'log-msg-success'
+  );
 
-          if (res.ok) {
-            const data = await res.json();
-            const records = data.records || data.messages || (Array.isArray(data) ? data : []);
-            
-            if (records.length > 0) {
-              const latestMsg = records[records.length - 1];
-              const msgId = latestMsg.key?.id;
-
-              if (msgId && msgId !== lastPolledMsgId) {
-                lastPolledMsgId = msgId;
-                handleIncomingMessage({ data: latestMsg });
+  window.inboxPollTimer = setInterval(async () => {
+    try {
+      const res = await fetch(
+        `${API_BASE}/chat/findMessages/${currentInstance}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': API_KEY
+          },
+          body: JSON.stringify({
+            where: {
+              key: {
+                fromMe: false
               }
-            }
-          }
-        } catch (e) {}
-      }, 4000);
+            },
+            take: 50
+          })
+        }
+      );
+
+      if (!res.ok) {
+        console.warn(
+          `Inbox polling failed: ${res.status} ${res.statusText}`
+        );
+        return;
+      }
+
+      const data = await res.json();
+
+      // Evolution API بيرجع:
+      // data.messages.records
+      const records =
+        data?.messages?.records ||
+        data?.records ||
+        (Array.isArray(data?.messages) ? data.messages : []) ||
+        (Array.isArray(data) ? data : []);
+
+      if (!Array.isArray(records) || records.length === 0) {
+        return;
+      }
+
+      // ترتيب الرسائل من الأقدم للأحدث لو timestamp موجود
+      const sortedRecords = [...records].sort((a, b) => {
+        const timeA = Number(a?.messageTimestamp || a?.timestamp || 0);
+        const timeB = Number(b?.messageTimestamp || b?.timestamp || 0);
+
+        return timeA - timeB;
+      });
+
+      for (const msg of sortedRecords) {
+        if (!msg || typeof msg !== 'object') {
+          continue;
+        }
+
+        const key = msg.key || {};
+
+        // تجاهل الرسائل التي أرسلها الحساب نفسه
+        if (key.fromMe === true) {
+          continue;
+        }
+
+        // تجاهل الجروبات وحالات واتساب
+        const remoteJid = key.remoteJid || '';
+
+        if (
+          remoteJid.includes('@g.us') ||
+          remoteJid.includes('status@broadcast')
+        ) {
+          continue;
+        }
+
+        // ID ثابت للرسالة
+        const msgId = key.id || msg.id;
+
+        if (!msgId) {
+          continue;
+        }
+
+        // لو الرسالة اتعرضت قبل كده، تجاهلها
+        if (window.seenIncomingMessageIds.has(msgId)) {
+          continue;
+        }
+
+        // تسجيل الرسالة كمعالجة
+        window.seenIncomingMessageIds.add(msgId);
+
+        // عرض الرسالة في صندوق الوارد
+        handleIncomingMessage({
+          data: msg
+        });
+      }
+
+      // منع Set من النمو بلا حدود
+      // نحتفظ بآخر 1000 رسالة فقط
+      if (window.seenIncomingMessageIds.size > 1000) {
+        const ids = Array.from(window.seenIncomingMessageIds);
+
+        window.seenIncomingMessageIds = new Set(
+          ids.slice(-1000)
+        );
+      }
+
+    } catch (e) {
+      console.error('Inbox polling error:', e);
     }
+  }, 4000);
+}
 
     function handleIncomingMessage(payload) {
       if (!payload) return;
