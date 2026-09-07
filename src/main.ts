@@ -78,24 +78,17 @@ function replacePlaceholders(template: string, row: any) {
 
 async function runInternalWorker() {
   const cfg = activeCampaign.config;
-  
-  // استرجاع الـ API Key من الإعدادات أو البيئة
-  let globalApiKey = '9SXCq4YxLGPtkufJKM7u+zv2';
-  try {
-    globalApiKey = configService.get<Auth>('AUTHENTICATION').API_KEY.KEY || globalApiKey;
-  } catch (e) {}
+  const globalApiKey = '9SXCq4YxLGPtkufJKM7u+zv2';
+  // استخدام الرابط المباشر لضمان الاتصال داخل Render
+  const baseUrl = 'https://evolution-api-bkwl.onrender.com';
 
-  // ضبط منفذ السيرفر المحلي بدقة
-  const port = process.env.PORT || configService.get<HttpServer>('SERVER').PORT || 8080;
-  const baseUrl = `http://127.0.0.1:${port}`;
-
-  console.log(`[Worker] Started campaign on instance [${cfg.instance}] - Total: ${activeCampaign.rows.length}`);
+  console.log(`[Worker] Started campaign on instance [${cfg.instance}] - Total contacts: ${activeCampaign.rows.length}`);
 
   while (activeCampaign.currentIndex < activeCampaign.rows.length && activeCampaign.isRunning) {
     const row = activeCampaign.rows[activeCampaign.currentIndex];
 
     try {
-      // 1. فلترة أرقام واتساب المسبقة
+      // 1. فحص وجود الرقم على واتساب
       if (cfg.filterWhatsApp) {
         try {
           const checkRes = await axios.post(
@@ -110,7 +103,7 @@ async function runInternalWorker() {
             continue;
           }
         } catch (e: any) {
-          console.warn('[Worker] WhatsApp filter check failed or skipped:', e.message);
+          console.warn('[Worker] Filter check warning:', e.message);
         }
       }
 
@@ -126,14 +119,13 @@ async function runInternalWorker() {
             },
             { headers: { apikey: globalApiKey } }
           );
-          const typeSec = Math.floor(Math.random() * 2 + 2);
-          await new Promise((r) => setTimeout(r, typeSec * 1000));
+          await new Promise((r) => setTimeout(r, 2000));
         } catch (e) {}
       }
 
       const customMsgs = (cfg.messages || []).map((m: string) => replacePlaceholders(m, row));
 
-      // 3. إرسال المرفقات (إن وجدت)
+      // 3. إرسال المرفقات (صور/مستندات/صوت)
       if (cfg.media && cfg.media.base64) {
         const endpoint = cfg.media.isVoiceNote
           ? `${baseUrl}/message/sendWhatsAppAudio/${cfg.instance}`
@@ -185,11 +177,11 @@ async function runInternalWorker() {
     // 5. إدارة الفواصل الزمنية والاستراحات
     if (activeCampaign.currentIndex < activeCampaign.rows.length && activeCampaign.isRunning) {
       if (cfg.batchCount > 0 && activeCampaign.currentIndex % cfg.batchCount === 0) {
-        console.log(`[Worker] Taking batch safety pause for ${cfg.batchPauseTime || 60}s...`);
+        console.log(`[Worker] Safety pause for ${cfg.batchPauseTime || 60}s...`);
         await new Promise((r) => setTimeout(r, (cfg.batchPauseTime || 60) * 1000));
       } else {
-        const minD = Number(cfg.minDelay) || 10;
-        const maxD = Number(cfg.maxDelay) || 20;
+        const minD = Number(cfg.minDelay) || 5;
+        const maxD = Number(cfg.maxDelay) || 10;
         const delay = Math.floor(Math.random() * (maxD - minD + 1) + minD);
         await new Promise((r) => setTimeout(r, delay * 1000));
       }
@@ -197,7 +189,7 @@ async function runInternalWorker() {
   }
 
   activeCampaign.isRunning = false;
-  console.log('[Worker] Campaign process ended.');
+  console.log('[Worker] Campaign execution finished.');
 }
 // ======================================================================
 
@@ -245,7 +237,7 @@ async function bootstrap() {
 
   app.use('/store', express.static(join(ROOT_DIR, 'store')));
 
-  // ==================== CAMPAIGN ROUTES ====================
+  // ==================== CAMPAIGN API ROUTES ====================
   app.post('/api/campaign/start', (req: Request, res: Response) => {
     const { rows, config } = req.body;
     if (!rows || rows.length === 0) {
@@ -281,7 +273,7 @@ async function bootstrap() {
     activeCampaign.isRunning = false;
     return res.json({ message: 'Campaign stopped' });
   });
-  // ==========================================================
+  // =============================================================
 
   app.use('/', router);
 
