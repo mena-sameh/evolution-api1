@@ -9,16 +9,18 @@ COPY ./package*.json ./
 COPY ./tsconfig.json ./
 COPY ./tsup.config.ts ./
 
-RUN NODE_OPTIONS="--max-old-space-size=460" npm run build
+# تثبيت الاعتماديات (بما فيها TypeScript وأدوات البناء) مع ضبط حد الذاكرة
+RUN NODE_OPTIONS="--max-old-space-size=460" npm install --no-audit
+
+# نسخ بقية الملفات اللازمة لعملية البناء
 COPY ./src ./src
 COPY ./public ./public
 COPY ./prisma ./prisma
 COPY ./manager ./manager
 COPY ./.env.example ./.env
-COPY ./runWithProvider.js ./
-COPY ./Docker ./Docker
 
-RUN npm run build
+# تشغيل البناء بعد توفر الملفات وأداة tsc
+RUN NODE_OPTIONS="--max-old-space-size=460" npm run build
 
 FROM node:20-alpine AS final
 
