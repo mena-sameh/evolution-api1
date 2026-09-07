@@ -18,15 +18,14 @@ COPY ./manager ./manager
 COPY ./.env.example ./.env
 COPY ./Docker ./Docker
 
-# توليد Prisma Client لـ SQLite تلقائياً
-RUN if [ -f "./prisma/schema.sqlite.prisma" ]; then \
-        cp ./prisma/schema.sqlite.prisma ./prisma/schema.prisma; \
-    elif [ -f "./Docker/scripts/schema.sqlite.prisma" ]; then \
-        cp ./Docker/scripts/schema.sqlite.prisma ./prisma/schema.prisma; \
-    fi && \
+# تحويل أي سكيما موجودة تلقائياً إلى sqlite
+RUN SCHEMA_FILE=$(find ./prisma -name "*.prisma" | head -n 1) && \
+    echo "Found schema: $SCHEMA_FILE" && \
+    cp "$SCHEMA_FILE" ./prisma/schema.prisma && \
+    sed -i 's/provider = ".*"/provider = "sqlite"/' ./prisma/schema.prisma && \
     npx prisma generate --schema=./prisma/schema.prisma
 
-# بناء حزمة الكود
+# بناء حزمة الكود بصيغة CommonJS
 RUN npx tsup src/main.ts --format cjs --target node20 --no-splitting --clean
 
 FROM node:20-alpine AS final
