@@ -5,8 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EvoFlow Enterprise | إدارة الحملات والأوتوميشن ومجموعات الرسائل</title>
   
+  <!-- SheetJS لمعالجة ملفات Excel -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- مكتبة Socket.io للاتصال المباشر مع Evolution API -->
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <!-- Lucide Icons للأيقونات -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <style>
@@ -879,7 +882,7 @@
           </div>
         </div>
 
-        <!-- فاصل بين الرسائل المتتالية لنفس العميل (عند تفعيل نمط المجموعات) -->
+        <!-- فاصل بين الرسائل المتتالية لنفس العميل -->
         <div class="form-row" id="seqDelayRow" style="display: none; background: #f0f9ff; padding: 10px; border-radius: var(--radius-sm); border: 1px solid #bae6fd;">
           <div class="form-group" style="grid-column: span 2;">
             <label style="color: #0369a1;">الفاصل الزمني بين رسائل المجموعة للعميل نفسه (ثواني):</label>
@@ -989,7 +992,7 @@
             </button>
           </div>
 
-          <!-- قسم النمط الفردي الأصلي -->
+          <!-- قسم النمط الفردي -->
           <div id="singleMessagesSection" class="form-group">
             <label>قائمة نماذج الرسائل (اكتب @ لاختيار المتغيرات):</label>
             <div class="msg-list" id="messagesContainer">
@@ -1713,7 +1716,7 @@
     }
 
     // ==========================================
-    // محرك أوتوميشن الردود وإضافة الجروبات
+    // محرك أوتوميشن الردود وإضافة الجروبات المباشرة
     // ==========================================
     let autoRules = JSON.parse(localStorage.getItem('evo_auto_rules')) || [
       {
@@ -1892,7 +1895,7 @@
       }
     }
 
-    // دالة إضافة العضو إلى الجروب بشكل مباشر فقط وبدون إرسال رابط
+    // دالة إضافة العضو إلى الجروب بشكل مباشر فقط وبدون إرسال روابط
     async function addUserToGroup(groupJid, rawJid, extractedPhone) {
       try {
         if (!groupJid) {
@@ -1900,7 +1903,6 @@
           return;
         }
 
-        // استخراج رقم الهاتف الحقيقي للتأكد من قبوله بواتساب
         const phone = (extractedPhone && extractedPhone.length >= 8) 
           ? extractedPhone 
           : rawJid.replace(/@.+$/, '').replace(/[^0-9]/g, '');
@@ -2412,7 +2414,7 @@
     function downloadExcelTemplate() {
       const headers = ['Phone', 'Name', ...customVars.map(v => v.name)];
       const sampleRow = ['201280471390', 'مينا سامح', ...customVars.map(v => v.value || 'قيمة تجريبية')];
-      const wsData = [headers, ...rows];
+      const wsData = [headers, sampleRow];
       const ws = XLSX.utils.aoa_to_sheet(wsData);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Campaign_Data");
