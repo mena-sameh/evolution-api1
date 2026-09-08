@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EvoFlow Enterprise | إدارة الحملات والأوتوميشن الذكي</title>
+  <title>EvoFlow Enterprise | إدارة الحملات والأوتوميشن واستخراج الـ Data</title>
   
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
@@ -479,6 +479,27 @@
       }
     }
 
+    /* أسلوب قسم استخراج الـ Data */
+    .extractor-box {
+      background: #f8fafc;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .extractor-btn-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 600px) {
+      .extractor-btn-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -599,6 +620,52 @@
           <div class="card-title-left">
             <i data-lucide="file-spreadsheet"></i>
             <span>بيانات المستلمين والمستندات</span>
+          </div>
+        </div>
+
+        <!-- أداة استخراج الـ Data -->
+        <div class="extractor-box">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <label style="font-size: 13px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 6px;">
+              <i data-lucide="database-zap" style="width: 16px; height: 16px;"></i>
+              استخراج الـ Data المتقدمة
+            </label>
+            <span id="extractorStatusBadge" style="font-size: 11px; color: var(--text-muted);">جاهز للاستخراج</span>
+          </div>
+
+          <div class="extractor-btn-grid">
+            <button type="button" class="btn btn-secondary" onclick="extractChatListContacts()" style="font-size: 12px; padding: 8px 10px;">
+              <i data-lucide="messages-square" style="width: 15px; height: 15px;"></i> استخراج الـ Chatlists
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="extractSavedContacts()" style="font-size: 12px; padding: 8px 10px;">
+              <i data-lucide="contact-2" style="width: 15px; height: 15px;"></i> الأسماء المسجلة
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="toggleGroupExtractorUI()" style="font-size: 12px; padding: 8px 10px;">
+              <i data-lucide="users-2" style="width: 15px; height: 15px;"></i> استخراج من جروب
+            </button>
+          </div>
+
+          <!-- اختيار الجروب للاستخراج (يظهر عند الضغط على استخراج من جروب) -->
+          <div id="groupExtractorRow" style="display: none; gap: 8px; align-items: center;">
+            <select id="extractorGroupSelect" style="flex: 2; font-size: 12px;">
+              <option value="">-- اختر الجروب المراد سحب أرقامه --</option>
+            </select>
+            <button type="button" class="btn btn-primary" onclick="extractSelectedGroupMembers()" style="flex: 1; font-size: 12px; padding: 8px;">
+              سحب الأرقام
+            </button>
+          </div>
+
+          <!-- شريط الإجراءات بعد الاستخراج -->
+          <div id="extractorActionsBar" style="display: none; justify-content: space-between; align-items: center; background: #ecfdf5; padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid #a7f3d0;">
+            <span id="extractorResultText" style="font-size: 12px; font-weight: 700; color: var(--primary);">تم استخراج 0 رقم</span>
+            <div style="display: flex; gap: 6px;">
+              <button type="button" class="btn btn-primary" onclick="applyExtractedToCampaign()" style="font-size: 11px; padding: 5px 10px;">
+                <i data-lucide="copy-check" style="width: 13px; height: 13px;"></i> نسخ لقائمة الحملة
+              </button>
+              <button type="button" class="btn btn-secondary" onclick="downloadExtractedExcel()" style="font-size: 11px; padding: 5px 10px;">
+                <i data-lucide="file-down" style="width: 13px; height: 13px;"></i> تصدير Excel
+              </button>
+            </div>
           </div>
         </div>
 
@@ -801,6 +868,9 @@
     let receivedCount = 0;
     let qrCheckInterval = null;
 
+    // مصفوفة حفظ البيانات المستخرجة
+    let lastExtractedData = [];
+
     const sessionStartTime = Math.floor(Date.now() / 1000);
 
     const defaultVars = ['wa_name', 'phone_name', 'name', 'phone'];
@@ -808,6 +878,200 @@
       { name: 'service', value: 'استشارة هندسية' },
       { name: 'price', value: '2500' }
     ];
+
+    // ==========================================
+    // محرك استخراج الـ Data (Data Extraction)
+    // ==========================================
+
+    // 1. استخراج الأرقام من المحادثات الفردية (Chatlists)
+    async function extractChatListContacts() {
+      if (!currentInstance) return alert("يرجى اختيار حساب نشط أولاً");
+      setExtractorStatus("جاري فحص واستخراج محادثات الشات...");
+      addLog(`🔍 جاري استخراج جهات الاتصال من الـ Chatlists للحساب [${currentInstance}]...`, 'log-msg-info');
+
+      try {
+        const res = await fetch(`${API_BASE}/chat/findChats/${currentInstance}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': API_KEY
+          },
+          body: JSON.stringify({})
+        });
+
+        if (!res.ok) throw new Error(`كود: ${res.status}`);
+
+        const chats = await res.json();
+        const records = Array.isArray(chats) ? chats : (chats?.records || []);
+
+        const extracted = [];
+        const seenPhones = new Set();
+
+        records.forEach(c => {
+          const jid = c.id || c.remoteJid || '';
+          // استبعاد المجموعات وقنوات البث
+          if (!jid || jid.includes('@g.us') || jid.includes('broadcast')) return;
+
+          const phone = jid.replace(/[^0-9]/g, '');
+          if (phone.length >= 8 && !seenPhones.has(phone)) {
+            seenPhones.add(phone);
+            const name = c.name || c.pushName || c.verifiedName || 'عميل محادثة';
+            extracted.push({ phone, name, source: 'Chatlist' });
+          }
+        });
+
+        handleExtractionSuccess(extracted, 'محادثات الشات (Chatlists)');
+      } catch (err) {
+        addLog(`فشل استخراج الـ Chatlists: ${err.message}`, 'log-msg-error');
+        setExtractorStatus("فشل الاستخراج");
+      }
+    }
+
+    // 2. استخراج الأسماء المسجلة في دفتر العناوين (Contacts)
+    async function extractSavedContacts() {
+      if (!currentInstance) return alert("يرجى اختيار حساب نشط أولاً");
+      setExtractorStatus("جاري جلب جهات الاتصال المسجلة...");
+      addLog(`🔍 جاري استخراج دفتر جهات الاتصال المحفوظة للحساب [${currentInstance}]...`, 'log-msg-info');
+
+      try {
+        const res = await fetch(`${API_BASE}/chat/findContacts/${currentInstance}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': API_KEY
+          },
+          body: JSON.stringify({ where: {} })
+        });
+
+        if (!res.ok) throw new Error(`كود: ${res.status}`);
+
+        const contacts = await res.json();
+        const records = Array.isArray(contacts) ? contacts : (contacts?.records || []);
+
+        const extracted = [];
+        const seenPhones = new Set();
+
+        records.forEach(c => {
+          const jid = c.id || c.remoteJid || '';
+          if (!jid || jid.includes('@g.us') || jid.includes('broadcast')) return;
+
+          const phone = jid.replace(/[^0-9]/g, '');
+          if (phone.length >= 8 && !seenPhones.has(phone)) {
+            seenPhones.add(phone);
+            const name = c.name || c.pushName || c.verifiedName || 'جهة اتصال محفوظة';
+            extracted.push({ phone, name, source: 'Saved Contacts' });
+          }
+        });
+
+        handleExtractionSuccess(extracted, 'جهات الاتصال المسجلة');
+      } catch (err) {
+        addLog(`فشل استخراج جهات الاتصال: ${err.message}`, 'log-msg-error');
+        setExtractorStatus("فشل الاستخراج");
+      }
+    }
+
+    // إظهار/إخفاء قائمة الجروبات للاستخراج
+    function toggleGroupExtractorUI() {
+      const row = document.getElementById('groupExtractorRow');
+      const select = document.getElementById('extractorGroupSelect');
+      if (row.style.display === 'none' || !row.style.display) {
+        row.style.display = 'flex';
+        select.innerHTML = '<option value="">-- اختر الجروب المراد سحب أرقامه --</option>';
+        availableGroups.forEach(g => {
+          select.innerHTML += `<option value="${g.id}">${g.subject}</option>`;
+        });
+      } else {
+        row.style.display = 'none';
+      }
+    }
+
+    // 3. استخراج أعضاء الجروب المختار
+    async function extractSelectedGroupMembers() {
+      const groupJid = document.getElementById('extractorGroupSelect').value;
+      if (!groupJid) return alert("يرجى اختيار مجموعة أولاً");
+
+      setExtractorStatus("جاري سحب أعضاء الجروب...");
+      addLog(`🔍 جاري فحص وسحب أعضاء الجروب [${groupJid}]...`, 'log-msg-info');
+
+      try {
+        const res = await fetch(`${API_BASE}/group/findGroupInfos/${currentInstance}?groupJid=${encodeURIComponent(groupJid)}`, {
+          headers: { 'apikey': API_KEY }
+        });
+
+        if (!res.ok) throw new Error(`كود: ${res.status}`);
+
+        const groupData = await res.json();
+        const participants = groupData.participants || groupData.subscribers || [];
+
+        const extracted = [];
+        const seenPhones = new Set();
+        const groupTitle = groupData.subject || 'جروب واتساب';
+
+        participants.forEach(p => {
+          const jid = p.id || p.jid || '';
+          const phone = jid.replace(/[^0-9]/g, '');
+          if (phone.length >= 8 && !seenPhones.has(phone)) {
+            seenPhones.add(phone);
+            const role = p.admin ? (p.admin === 'superadmin' ? 'منشئ المجموعة' : 'مشرف') : 'عضو';
+            extracted.push({ phone, name: `${groupTitle} (${role})`, source: groupTitle });
+          }
+        });
+
+        handleExtractionSuccess(extracted, `مجموعة: ${groupTitle}`);
+      } catch (err) {
+        addLog(`فشل سحب أعضاء المجموعة: ${err.message}`, 'log-msg-error');
+        setExtractorStatus("فشل السحب");
+      }
+    }
+
+    // معالجة نتيجة الاستخراج وعرض الأزرار
+    function handleExtractionSuccess(list, sourceTitle) {
+      lastExtractedData = list;
+      setExtractorStatus(`تم بنجاح (${list.length})`);
+      addLog(`✔ تم استخراج ${list.length} رقم بنجاح من [${sourceTitle}].`, 'log-msg-success');
+
+      const actionsBar = document.getElementById('extractorActionsBar');
+      const resultText = document.getElementById('extractorResultText');
+      if (actionsBar && resultText) {
+        actionsBar.style.display = 'flex';
+        resultText.innerText = `تم استخراج ${list.length} رقم (${sourceTitle})`;
+      }
+      lucide.createIcons();
+    }
+
+    function setExtractorStatus(text) {
+      const badge = document.getElementById('extractorStatusBadge');
+      if (badge) badge.innerText = text;
+    }
+
+    // نسخ البيانات المستخرجة مباشرة لحقل الأرقام في الحملة
+    function applyExtractedToCampaign() {
+      if (!lastExtractedData || lastExtractedData.length === 0) return;
+      const formattedLines = lastExtractedData.map(item => `${item.phone}, ${item.name}`);
+      const dataInput = document.getElementById('dataInput');
+      
+      if (dataInput.value.trim().length > 0) {
+        dataInput.value += '\n' + formattedLines.join('\n');
+      } else {
+        dataInput.value = formattedLines.join('\n');
+      }
+
+      updateKpiTotal();
+      addLog(`📋 تم إدراج ${lastExtractedData.length} رقم في قائمة الحملة مباشرة.`, 'log-msg-info');
+    }
+
+    // تصدير البيانات المستخرجة لملف Excel
+    function downloadExtractedExcel() {
+      if (!lastExtractedData || lastExtractedData.length === 0) return alert("لا توجد بيانات مستخرجة لتصديرها");
+      const headers = ['Phone', 'Name', 'Source'];
+      const rows = lastExtractedData.map(item => [item.phone, item.name, item.source]);
+      const wsData = [headers, ...rows];
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Extracted_Data");
+      XLSX.writeFile(wb, `whatsapp_extracted_${Date.now()}.xlsx`);
+      addLog("📥 تم تصدير وتحميل ملف Excel بالبيانات المستخرجة بنجاح.", "log-msg-success");
+    }
 
     // ==========================================
     // محرك أوتوميشن الردود وإضافة الجروبات
@@ -948,7 +1212,6 @@
       renderAutomationRules();
     }
 
-    // إرسال الرد
     async function sendAutoReply(recipientJid, text) {
       try {
         let targetRecipient = recipientJid;
@@ -990,7 +1253,6 @@
       }
     }
 
-    // جلب رابط دعوة الجروب
     async function getGroupInviteUrl(groupJid) {
       try {
         const res = await fetch(`${API_BASE}/group/inviteCode/${currentInstance}?groupJid=${encodeURIComponent(groupJid)}`, {
@@ -1007,7 +1269,6 @@
       }
     }
 
-    // إضافة جهة الاتصال إلى الجروب مع خاصية Fallback لرابط الدعوة
     async function addUserToGroup(groupJid, rawJid, extractedPhone) {
       try {
         if (!groupJid) {
@@ -1015,7 +1276,6 @@
           return;
         }
 
-        // إذا كان المتوفر فقط هو LID وليس رقم هاتف حقيقي، نرسل الرابط فوراً
         const isOnlyLid = !extractedPhone || extractedPhone.length < 8 || rawJid.includes('@lid');
 
         if (isOnlyLid) {
@@ -1030,7 +1290,6 @@
           return;
         }
 
-        // محاولة الإضافة المباشرة إذا توفر رقم الهاتف
         const cleanPhone = extractedPhone.replace(/[^0-9]/g, '');
         const participantJid = `${cleanPhone}@s.whatsapp.net`;
 
@@ -1048,7 +1307,6 @@
 
         const data = await res.json();
 
-        // التحقق من نتيجة الإضافة
         let isDirectAdded = false;
         if (res.ok) {
           const statusResult = data?.[0]?.status || data?.status || '';
@@ -1060,11 +1318,10 @@
         if (isDirectAdded) {
           addLog(`👥 [أوتوميشن] تمت إضافة (${cleanPhone}) إلى الجروب بنجاح!`, 'log-msg-success');
         } else {
-          // في حال منع العضو الإضافة بسبب الخصوصية (403 أو غيرها)، نرسل له الرابط فوراً
-          addLog(`⚠️ تعذرت الإضافة المباشرة للرقم (${cleanPhone}) بسبب إعدادات الخصوصية؛ جاري إرسال رابط الدعوة...`, 'log-msg-warning');
+          addLog(`⚠️ تعذرت الإضافة المباشرة للرقم (${cleanPhone})؛ جاري إرسال رابط الدعوة...`, 'log-msg-warning');
           const inviteUrl = await getGroupInviteUrl(groupJid);
           if (inviteUrl) {
-            await sendAutoReply(rawJid, `مرحباً بك! حاولت إضافتك إلى الجروب ولكن إعدادات الخصوصية لديك تمنع ذلك، يمكنك الانضمام عبر هذا الرابط:\n${inviteUrl}`);
+            await sendAutoReply(rawJid, `مرحباً بك! تعذرت إضافتك المباشرة، يمكنك الانضمام عبر هذا الرابط:\n${inviteUrl}`);
             addLog(`🔗 [أوتوميشن] تم إرسال رابط الدعوة بديلاً للإضافة المباشرة بنجاح.`, 'log-msg-success');
           }
         }
@@ -1074,7 +1331,6 @@
       }
     }
 
-    // معالجة الأوتوميشن
     async function processMessageAutomation(targetRecipient, messageText, extractedPhone, timestamp) {
       if (!messageText || autoRules.length === 0) return;
 
@@ -1435,7 +1691,19 @@
       addLog("تم تصدير وتحميل قالب Excel بنجاح.", "log-msg-info");
     }
 
-    // التشغيل
+    function updateKpiTotal() {
+      const raw = document.getElementById('dataInput').value.trim();
+      if (!raw) {
+        document.getElementById('kpiTotal').innerText = '0';
+        return;
+      }
+      const count = raw.split(/\r?\n/).filter(l => l.trim().length > 0).length;
+      document.getElementById('kpiTotal').innerText = count;
+    }
+
+    document.getElementById('dataInput').addEventListener('input', updateKpiTotal);
+
+    // التشغيل المباشر
     renderInstanceSelect();
     fetchServerInstances();
     renderVariableBadges();
