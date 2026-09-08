@@ -623,12 +623,12 @@
           </div>
         </div>
 
-        <!-- أداة استخراج الـ Data -->
+        <!-- أداة استخراج الـ Data المتقدمة والمصححة -->
         <div class="extractor-box">
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <label style="font-size: 13px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 6px;">
               <i data-lucide="database-zap" style="width: 16px; height: 16px;"></i>
-              استخراج الـ Data المتقدمة
+              استخراج الـ Data المتقدمة (أرقام الهواتف الحقيقية)
             </label>
             <span id="extractorStatusBadge" style="font-size: 11px; color: var(--text-muted);">جاهز للاستخراج</span>
           </div>
@@ -645,7 +645,7 @@
             </button>
           </div>
 
-          <!-- اختيار الجروب للاستخراج (يظهر عند الضغط على استخراج من جروب) -->
+          <!-- اختيار الجروب للاستخراج -->
           <div id="groupExtractorRow" style="display: none; gap: 8px; align-items: center;">
             <select id="extractorGroupSelect" style="flex: 2; font-size: 12px;">
               <option value="">-- اختر الجروب المراد سحب أرقامه --</option>
@@ -868,9 +868,7 @@
     let receivedCount = 0;
     let qrCheckInterval = null;
 
-    // مصفوفة حفظ البيانات المستخرجة
     let lastExtractedData = [];
-
     const sessionStartTime = Math.floor(Date.now() / 1000);
 
     const defaultVars = ['wa_name', 'phone_name', 'name', 'phone'];
@@ -880,97 +878,114 @@
     ];
 
     // ==========================================
-    // محرك استخراج الـ Data (Data Extraction)
+    // محرك استخراج الـ Data المصحح
     // ==========================================
 
-    // 1. استخراج الأرقام من المحادثات الفردية (Chatlists)
+    // 1. استخراج محادثات الشات الفردية (Chatlists) بدعم GET / POST المزدوج
     async function extractChatListContacts() {
       if (!currentInstance) return alert("يرجى اختيار حساب نشط أولاً");
-      setExtractorStatus("جاري فحص واستخراج محادثات الشات...");
-      addLog(`🔍 جاري استخراج جهات الاتصال من الـ Chatlists للحساب [${currentInstance}]...`, 'log-msg-info');
+      setExtractorStatus("جاري جلب المحادثات...");
+      addLog(`🔍 جاري استخراج محادثات الشات للحساب [${currentInstance}]...`, 'log-msg-info');
 
       try {
-        const res = await fetch(`${API_BASE}/chat/findChats/${currentInstance}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': API_KEY
-          },
-          body: JSON.stringify({})
+        let res = await fetch(`${API_BASE}/chat/findChats/${currentInstance}`, {
+          method: 'GET',
+          headers: { 'apikey': API_KEY }
         });
 
-        if (!res.ok) throw new Error(`كود: ${res.status}`);
+        // إذا لم يقبل GET نجرب POST
+        if (!res.ok) {
+          res = await fetch(`${API_BASE}/chat/findChats/${currentInstance}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
+            body: JSON.stringify({})
+          });
+        }
 
-        const chats = await res.json();
-        const records = Array.isArray(chats) ? chats : (chats?.records || []);
+        if (!res.ok) throw new Error(`كود الاستجابة: ${res.status}`);
+
+        const data = await res.json();
+        const records = Array.isArray(data) ? data : (data?.records || data?.chats || []);
 
         const extracted = [];
         const seenPhones = new Set();
 
         records.forEach(c => {
-          const jid = c.id || c.remoteJid || '';
-          // استبعاد المجموعات وقنوات البث
-          if (!jid || jid.includes('@g.us') || jid.includes('broadcast')) return;
+          const jid = c.id || c.remoteJid || c.jid || '';
+          
+          // فلترة صارمة: استبعاد الجروبات والـ broadcast ومعرفات الـ LID
+          if (!jid || jid.includes('@g.us') || jid.includes('@broadcast') || jid.includes('@lid')) return;
 
-          const phone = jid.replace(/[^0-9]/g, '');
-          if (phone.length >= 8 && !seenPhones.has(phone)) {
-            seenPhones.add(phone);
-            const name = c.name || c.pushName || c.verifiedName || 'عميل محادثة';
-            extracted.push({ phone, name, source: 'Chatlist' });
+          // التأكد من أنه رقم شخصي حقيقي
+          const cleanPhone = jid.replace(/@.+$/, '').replace(/[^0-9]/g, '');
+          
+          // استبعاد الأرقام القصيرة غير الحقيقية (أقل من 8 أرقام)
+          if (cleanPhone.length >= 8 && !cleanPhone.startsWith('00') && !seenPhones.has(cleanPhone)) {
+            seenPhones.add(cleanPhone);
+            const name = c.pushName || c.name || c.verifiedName || cleanPhone;
+            extracted.push({ phone: cleanPhone, name: name, source: 'Chatlist' });
           }
         });
 
-        handleExtractionSuccess(extracted, 'محادثات الشات (Chatlists)');
+        handleExtractionSuccess(extracted, 'محادثات الشات');
       } catch (err) {
         addLog(`فشل استخراج الـ Chatlists: ${err.message}`, 'log-msg-error');
         setExtractorStatus("فشل الاستخراج");
       }
     }
 
-    // 2. استخراج الأسماء المسجلة في دفتر العناوين (Contacts)
+    // 2. استخراج الأسماء المسجلة (مع فلترة الجروبات والـ LID تماماً)
     async function extractSavedContacts() {
       if (!currentInstance) return alert("يرجى اختيار حساب نشط أولاً");
-      setExtractorStatus("جاري جلب جهات الاتصال المسجلة...");
-      addLog(`🔍 جاري استخراج دفتر جهات الاتصال المحفوظة للحساب [${currentInstance}]...`, 'log-msg-info');
+      setExtractorStatus("جاري جلب الأسماء المسجلة...");
+      addLog(`🔍 جاري استخراج جهات الاتصال المسجلة للحساب [${currentInstance}]...`, 'log-msg-info');
 
       try {
-        const res = await fetch(`${API_BASE}/chat/findContacts/${currentInstance}`, {
+        let res = await fetch(`${API_BASE}/chat/findContacts/${currentInstance}`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': API_KEY
-          },
+          headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
           body: JSON.stringify({ where: {} })
         });
 
-        if (!res.ok) throw new Error(`كود: ${res.status}`);
+        if (!res.ok) {
+          res = await fetch(`${API_BASE}/chat/findContacts/${currentInstance}`, {
+            method: 'GET',
+            headers: { 'apikey': API_KEY }
+          });
+        }
 
-        const contacts = await res.json();
-        const records = Array.isArray(contacts) ? contacts : (contacts?.records || []);
+        if (!res.ok) throw new Error(`كود الاستجابة: ${res.status}`);
+
+        const data = await res.json();
+        const records = Array.isArray(data) ? data : (data?.records || data?.contacts || []);
 
         const extracted = [];
         const seenPhones = new Set();
 
         records.forEach(c => {
-          const jid = c.id || c.remoteJid || '';
-          if (!jid || jid.includes('@g.us') || jid.includes('broadcast')) return;
+          const jid = c.id || c.remoteJid || c.jid || '';
+          
+          // استبعاد الجروبات ومعرفات الـ LID وقنوات واتساب
+          if (!jid || jid.includes('@g.us') || jid.includes('@broadcast') || jid.includes('@lid') || jid.includes('@newsletter')) return;
 
-          const phone = jid.replace(/[^0-9]/g, '');
-          if (phone.length >= 8 && !seenPhones.has(phone)) {
-            seenPhones.add(phone);
-            const name = c.name || c.pushName || c.verifiedName || 'جهة اتصال محفوظة';
-            extracted.push({ phone, name, source: 'Saved Contacts' });
+          // استخراج رقم الهاتف الحقيقي
+          const cleanPhone = jid.replace(/@.+$/, '').replace(/[^0-9]/g, '');
+
+          // استبعاد المعرفات الوهمية (مثل 00701030) والتركيز على أرقام هواتف دولية حقيقية (8 أرقام فأكثر)
+          if (cleanPhone.length >= 8 && !cleanPhone.startsWith('00') && !seenPhones.has(cleanPhone)) {
+            seenPhones.add(cleanPhone);
+            const name = c.pushName || c.name || c.verifiedName || c.notify || cleanPhone;
+            extracted.push({ phone: cleanPhone, name: name, source: 'Saved Contacts' });
           }
         });
 
-        handleExtractionSuccess(extracted, 'جهات الاتصال المسجلة');
+        handleExtractionSuccess(extracted, 'الأسماء المسجلة');
       } catch (err) {
         addLog(`فشل استخراج جهات الاتصال: ${err.message}`, 'log-msg-error');
         setExtractorStatus("فشل الاستخراج");
       }
     }
 
-    // إظهار/إخفاء قائمة الجروبات للاستخراج
     function toggleGroupExtractorUI() {
       const row = document.getElementById('groupExtractorRow');
       const select = document.getElementById('extractorGroupSelect');
@@ -985,50 +1000,74 @@
       }
     }
 
-    // 3. استخراج أعضاء الجروب المختار
+    // 3. استخراج أعضاء الجروب (استخراج رقم الهاتف الحقيقي وتخطي الـ LID ID المشفر)
     async function extractSelectedGroupMembers() {
       const groupJid = document.getElementById('extractorGroupSelect').value;
       if (!groupJid) return alert("يرجى اختيار مجموعة أولاً");
 
-      setExtractorStatus("جاري سحب أعضاء الجروب...");
-      addLog(`🔍 جاري فحص وسحب أعضاء الجروب [${groupJid}]...`, 'log-msg-info');
+      setExtractorStatus("جاري سحب أرقام الجروب...");
+      addLog(`🔍 جاري سحب أرقام أعضاء الجروب [${groupJid}]...`, 'log-msg-info');
 
       try {
         const res = await fetch(`${API_BASE}/group/findGroupInfos/${currentInstance}?groupJid=${encodeURIComponent(groupJid)}`, {
           headers: { 'apikey': API_KEY }
         });
 
-        if (!res.ok) throw new Error(`كود: ${res.status}`);
+        if (!res.ok) throw new Error(`كود الاستجابة: ${res.status}`);
 
         const groupData = await res.json();
         const participants = groupData.participants || groupData.subscribers || [];
+        const groupTitle = groupData.subject || 'جروب واتساب';
 
         const extracted = [];
         const seenPhones = new Set();
-        const groupTitle = groupData.subject || 'جروب واتساب';
 
         participants.forEach(p => {
-          const jid = p.id || p.jid || '';
-          const phone = jid.replace(/[^0-9]/g, '');
-          if (phone.length >= 8 && !seenPhones.has(phone)) {
-            seenPhones.add(phone);
+          // محاولة استخراج رقم الهاتف الحقيقي من الحقول المتاحة في كائن العضو
+          let realPhone = '';
+
+          // 1. فحص حقل phoneNumber الصريح إذا كان متاحاً في السيرفر
+          if (p.phoneNumber) {
+            realPhone = String(p.phoneNumber).replace(/[^0-9]/g, '');
+          }
+          // 2. فحص الـ jid إذا كان ينتهي بـ s.whatsapp.net (رقم هاتف حقيقي)
+          else if (p.id && p.id.includes('@s.whatsapp.net')) {
+            realPhone = p.id.replace(/@.+$/, '').replace(/[^0-9]/g, '');
+          }
+          // 3. فحص خاصية user أو phone
+          else if (p.user && !p.id?.includes('@lid')) {
+            realPhone = String(p.user).replace(/[^0-9]/g, '');
+          }
+
+          // إذا كان العضو ليس له رقم واضح في الكائن وكان عبارة عن LID بحت (15 خانة وأكثر)، نقوم بفحص حقل participantPhone إن وجد
+          if (!realPhone && p.participantPhone) {
+            realPhone = String(p.participantPhone).replace(/[^0-9]/g, '');
+          }
+
+          // إذا وُجد رقم هاتف حقيقي (وليس LID)
+          if (realPhone && realPhone.length >= 8 && !realPhone.startsWith('00') && !seenPhones.has(realPhone)) {
+            seenPhones.add(realPhone);
             const role = p.admin ? (p.admin === 'superadmin' ? 'منشئ المجموعة' : 'مشرف') : 'عضو';
-            extracted.push({ phone, name: `${groupTitle} (${role})`, source: groupTitle });
+            extracted.push({ phone: realPhone, name: `${groupTitle} (${role})`, source: groupTitle });
           }
         });
 
-        handleExtractionSuccess(extracted, `مجموعة: ${groupTitle}`);
+        // في حال كانت أرقام كل المشتركين مخفية بسبب نظام الخصوصية الجديد للجروبات
+        if (extracted.length === 0 && participants.length > 0) {
+          addLog(`⚠️ هذا الجروب مفعل به نظام إخفاء الأرقام من واتساب؛ تم استلام معرفات مشفرة فقط.`, 'log-msg-warning');
+        }
+
+        handleExtractionSuccess(extracted, `جروب: ${groupTitle}`);
       } catch (err) {
-        addLog(`فشل سحب أعضاء المجموعة: ${err.message}`, 'log-msg-error');
+        addLog(`فشل سحب أرقام الجروب: ${err.message}`, 'log-msg-error');
         setExtractorStatus("فشل السحب");
       }
     }
 
-    // معالجة نتيجة الاستخراج وعرض الأزرار
     function handleExtractionSuccess(list, sourceTitle) {
       lastExtractedData = list;
       setExtractorStatus(`تم بنجاح (${list.length})`);
-      addLog(`✔ تم استخراج ${list.length} رقم بنجاح من [${sourceTitle}].`, 'log-msg-success');
+      addLog(`✔ تم استخراج ${list.length} رقم هاتف حقيقي بنجاح من [${sourceTitle}].`, 'log-msg-success');
 
       const actionsBar = document.getElementById('extractorActionsBar');
       const resultText = document.getElementById('extractorResultText');
@@ -1044,7 +1083,6 @@
       if (badge) badge.innerText = text;
     }
 
-    // نسخ البيانات المستخرجة مباشرة لحقل الأرقام في الحملة
     function applyExtractedToCampaign() {
       if (!lastExtractedData || lastExtractedData.length === 0) return;
       const formattedLines = lastExtractedData.map(item => `${item.phone}, ${item.name}`);
@@ -1060,7 +1098,6 @@
       addLog(`📋 تم إدراج ${lastExtractedData.length} رقم في قائمة الحملة مباشرة.`, 'log-msg-info');
     }
 
-    // تصدير البيانات المستخرجة لملف Excel
     function downloadExtractedExcel() {
       if (!lastExtractedData || lastExtractedData.length === 0) return alert("لا توجد بيانات مستخرجة لتصديرها");
       const headers = ['Phone', 'Name', 'Source'];
@@ -1279,13 +1316,13 @@
         const isOnlyLid = !extractedPhone || extractedPhone.length < 8 || rawJid.includes('@lid');
 
         if (isOnlyLid) {
-          addLog(`ℹ️ حساب العميل معرّف بـ LID مشفر؛ جاري توليد رابط انضمام للجروب وإرساله له...`, 'log-msg-info');
+          addLog(`ℹ️ حساب العميل معرّف بـ LID؛ جاري إرسال رابط الانضمام للجروب...`, 'log-msg-info');
           const inviteUrl = await getGroupInviteUrl(groupJid);
           if (inviteUrl) {
             await sendAutoReply(rawJid, `مرحباً بك! تفضل بالانضمام إلى المجموعة من خلال هذا الرابط:\n${inviteUrl}`);
-            addLog(`🔗 [أوتوميشن] تم إرسال رابط الانضمام للعميل بنجاح!`, 'log-msg-success');
+            addLog(`🔗 [أوتوميشن] تم إرسال رابط الانضمام بنجاح!`, 'log-msg-success');
           } else {
-            addLog(`⚠️ تعذر جلب رابط الدعوة، تأكد من صلاحيات المشرف (Admin) في الجروب.`, 'log-msg-warning');
+            addLog(`⚠️ تعذر جلب رابط الدعوة، تأكد من صلاحيات المشرف في الجروب.`, 'log-msg-warning');
           }
           return;
         }
@@ -1306,7 +1343,6 @@
         });
 
         const data = await res.json();
-
         let isDirectAdded = false;
         if (res.ok) {
           const statusResult = data?.[0]?.status || data?.status || '';
