@@ -479,7 +479,6 @@
       }
     }
 
-    /* أسلوب قسم استخراج الـ Data */
     .extractor-box {
       background: #f8fafc;
       border: 1px solid var(--border-subtle);
@@ -623,12 +622,12 @@
           </div>
         </div>
 
-        <!-- أداة استخراج الـ Data المتقدمة -->
+        <!-- أداة استخراج الـ Data -->
         <div class="extractor-box">
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <label style="font-size: 13px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 6px;">
               <i data-lucide="database-zap" style="width: 16px; height: 16px;"></i>
-              استخراج الـ Data المتقدمة (أرقام الهواتف)
+              استخراج الـ Data (أرقام العملاء الحقيقية)
             </label>
             <span id="extractorStatusBadge" style="font-size: 11px; color: var(--text-muted);">جاهز للاستخراج</span>
           </div>
@@ -861,8 +860,8 @@
     const API_BASE = 'https://evolution-api-bkwl.onrender.com';
     const API_KEY = '9SXCq4YxLGPtkufJKM7u+zv2';
 
-    let instances = JSON.parse(localStorage.getItem('evo_instances') || '["vb"]');
-    let currentInstance = localStorage.getItem('evo_current_instance') || 'vb';
+    let instances = JSON.parse(localStorage.getItem('evo_instances') || '["منتالبيس"]');
+    let currentInstance = localStorage.getItem('evo_current_instance') || 'منتالبيس';
 
     let availableGroups = [];
     let receivedCount = 0;
@@ -877,141 +876,143 @@
       { name: 'price', value: '2500' }
     ];
 
-    // دالة مساعدة لتنظيف واستخراج رقم الهاتف النقي
-    function sanitizePhoneNumber(rawJidOrNumber) {
-      if (!rawJidOrNumber) return '';
-      let str = String(rawJidOrNumber);
-      
-      // استبعاد الجروبات والـ broadcast ومعرفات الـ LID
-      if (str.includes('@g.us') || str.includes('@broadcast') || str.includes('@lid') || str.includes('@newsletter')) {
+    // فلترة واستخراج أرقام الهواتف الحقيقية حصراً
+    function extractValidPhoneNumber(jidOrNumber) {
+      if (!jidOrNumber) return '';
+      const str = String(jidOrNumber).trim();
+
+      // استبعاد الجروبات والقنوات والـ broadcast
+      if (str.includes('@g.us') || str.includes('@broadcast') || str.includes('@newsletter')) {
         return '';
       }
 
       // إزالة النطاق وتنظيف أي رموز
-      str = str.replace(/@.+$/, '').replace(/[^0-9]/g, '');
+      const digits = str.replace(/@.+$/, '').replace(/[^0-9]/g, '');
 
-      // الأرقام الدولية تتراوح من 8 إلى 15 خانة
-      if (str.length >= 8 && str.length <= 15) {
-        return str;
+      // الأرقام الدولية الطبيعية تتراوح بين 9 و 14 خانة (أرقام الـ LID الوهمية تكون 15 خانة أو أكثر وتستبعد)
+      if (digits.length >= 9 && digits.length <= 14) {
+        return digits;
       }
       return '';
     }
 
     // ==========================================
-    // محرك استخراج الـ Data الذكي
+    // محرك استخراج الـ Data المعتمد على الرسائل
     // ==========================================
 
-    // 1. استخراج محادثات الشات الفردية (Chatlists) مع نظام بديل مضمون من سجل الرسائل
+    // جلب الرسائل المخزنة وتحويلها إلى قائمة أرقام فريدة وموثوقة
+    async function fetchUniqueContactsFromMessages(takeLimit = 500) {
+      const res = await fetch(`${API_BASE}/chat/findMessages/${encodeURIComponent(currentInstance)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
+        body: JSON.stringify({ take: takeLimit })
+      });
+
+      if (!res.ok) throw new Error(`كود الاستجابة: ${res.status}`);
+
+      const data = await res.json();
+      const records = data?.messages?.records || data?.records || (Array.isArray(data) ? data : []);
+
+      const list = [];
+      const seen = new Set();
+
+      records.forEach(m => {
+        const key = m.key || {};
+        const remoteJid = key.remoteJid || m.remoteJid || '';
+
+        // استبعاد أي رسائل قادمة من الجروبات
+        if (remoteJid.includes('@g.us') || remoteJid.includes('@broadcast')) return;
+
+        // استخراج رقم الهاتف الحقيقي
+        let phone = '';
+        if (key.participant && !key.participant.includes('@lid')) {
+          phone = extractValidPhoneNumber(key.participant);
+        } else if (m.senderPn) {
+          phone = extractValidPhoneNumber(m.senderPn);
+        } else if (m.participantPhone) {
+          phone = extractValidPhoneNumber(m.participantPhone);
+        } else {
+          phone = extractValidPhoneNumber(remoteJid);
+        }
+
+        if (phone && !seen.has(phone)) {
+          seen.add(phone);
+          const name = m.pushName || m.verifiedName || `عميل (${phone})`;
+          list.push({ phone, name, source: 'Chat History' });
+        }
+      });
+
+      return list;
+    }
+
+    // 1. استخراج محادثات الشات (Chatlists)
     async function extractChatListContacts() {
       if (!currentInstance) return alert("يرجى اختيار حساب نشط أولاً");
       setExtractorStatus("جاري فحص المحادثات...");
-      addLog(`🔍 جاري استخراج محادثات الشات للحساب [${currentInstance}]...`, 'log-msg-info');
-
-      const extracted = [];
-      const seenPhones = new Set();
+      addLog(`🔍 جاري فحص واستخراج محادثات الشات للحساب [${currentInstance}]...`, 'log-msg-info');
 
       try {
-        // المسار الأول: استعلام جدول المحادثات
-        const resChats = await fetch(`${API_BASE}/chat/findChats/${currentInstance}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
-          body: JSON.stringify({ where: {} })
-        });
+        const contacts = await fetchUniqueContactsFromMessages(500);
 
-        if (resChats.ok) {
-          const data = await resChats.json();
-          const records = Array.isArray(data) ? data : (data?.records || data?.chats || []);
-
-          records.forEach(c => {
-            const jid = c.id || c.remoteJid || c.jid || '';
-            const phone = sanitizePhoneNumber(jid);
-            if (phone && !seenPhones.has(phone)) {
-              seenPhones.add(phone);
-              const name = c.pushName || c.name || c.verifiedName || phone;
-              extracted.push({ phone, name, source: 'Chatlist' });
-            }
-          });
-        }
-
-        // المسار الثاني المضمون: فحص جدول الرسائل إذا كان جدول المحادثات فارغاً
-        if (extracted.length === 0) {
-          addLog("ℹ️ فحص جدول الرسائل النشطة كبديل لاستخراج أرقام المحادثات...", 'log-msg-info');
-          const resMsgs = await fetch(`${API_BASE}/chat/findMessages/${currentInstance}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
-            body: JSON.stringify({ take: 300 })
-          });
-
-          if (resMsgs.ok) {
-            const dataMsgs = await resMsgs.json();
-            const msgs = dataMsgs?.messages?.records || dataMsgs?.records || (Array.isArray(dataMsgs) ? dataMsgs : []);
-
-            msgs.forEach(m => {
-              const remoteJid = m.key?.remoteJid || m.remoteJid || '';
-              const phone = sanitizePhoneNumber(remoteJid);
-              if (phone && !seenPhones.has(phone)) {
-                seenPhones.add(phone);
-                const name = m.pushName || m.verifiedName || phone;
-                extracted.push({ phone, name, source: 'Chatlist' });
-              }
-            });
-          }
-        }
-
-        if (extracted.length > 0) {
-          handleExtractionSuccess(extracted, 'محادثات الشات');
+        if (contacts.length > 0) {
+          handleExtractionSuccess(contacts, 'محادثات الشات (Chatlists)');
         } else {
           setExtractorStatus("لا توجد محادثات");
-          addLog("⚠️ لم يتم العثور على محادثات فردية في هذا الحساب.", 'log-msg-warning');
+          addLog("⚠️ لم يتم العثور على محادثات فردية مسجلة في سجل الرسائل.", 'log-msg-warning');
         }
-
       } catch (err) {
         addLog(`فشل استخراج الـ Chatlists: ${err.message}`, 'log-msg-error');
         setExtractorStatus("فشل الاستخراج");
       }
     }
 
-    // 2. استخراج الأسماء المسجلة (Contacts)
+    // 2. استخراج الأسماء المسجلة (Saved Contacts)
     async function extractSavedContacts() {
       if (!currentInstance) return alert("يرجى اختيار حساب نشط أولاً");
-      setExtractorStatus("جاري جلب الأسماء المسجلة...");
-      addLog(`🔍 جاري استخراج جهات الاتصال المسجلة للحساب [${currentInstance}]...`, 'log-msg-info');
+      setExtractorStatus("جاري فحص الأسماء المسجلة...");
+      addLog(`🔍 جاري فحص الأسماء المسجلة للحساب [${currentInstance}]...`, 'log-msg-info');
 
       try {
-        const res = await fetch(`${API_BASE}/chat/findContacts/${currentInstance}`, {
+        const res = await fetch(`${API_BASE}/chat/findContacts/${encodeURIComponent(currentInstance)}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
           body: JSON.stringify({ where: {} })
         });
 
-        if (!res.ok) throw new Error(`كود الاستجابة: ${res.status}`);
+        let foundList = [];
+        const seen = new Set();
 
-        const data = await res.json();
-        const records = Array.isArray(data) ? data : (data?.records || data?.contacts || []);
+        if (res.ok) {
+          const data = await res.json();
+          const records = Array.isArray(data) ? data : (data?.records || data?.contacts || []);
 
-        const extracted = [];
-        const seenPhones = new Set();
+          records.forEach(c => {
+            // استبعاد الجروبات تماماً
+            if (c.isGroup === true || c.type === 'group') return;
+            const targetJid = c.remoteJid || c.id || '';
+            if (targetJid.includes('@g.us') || targetJid.includes('@lid')) return;
 
-        records.forEach(c => {
-          // فحص الحقول المحتملة لرقم الهاتف
-          const rawTarget = c.id || c.remoteJid || c.jid || c.number || '';
-          const phone = sanitizePhoneNumber(rawTarget);
-
-          if (phone && !seenPhones.has(phone)) {
-            seenPhones.add(phone);
-            // جلب الاسم المستعار أو الاسم المحفوظ
-            const name = c.pushName || c.name || c.verifiedName || c.notify || phone;
-            extracted.push({ phone, name, source: 'Saved Contacts' });
-          }
-        });
-
-        if (extracted.length > 0) {
-          handleExtractionSuccess(extracted, 'الأسماء المسجلة');
-        } else {
-          setExtractorStatus("لا توجد جهات اتصال");
-          addLog("⚠️ لم يتم العثور على أرقام مسجلة، تأكد من مزامنة جهات الاتصال على هاتفك.", 'log-msg-warning');
+            const phone = extractValidPhoneNumber(targetJid) || extractValidPhoneNumber(c.number);
+            if (phone && phone !== '0' && !seen.has(phone)) {
+              seen.add(phone);
+              const name = c.pushName || c.name || `جهة اتصال (${phone})`;
+              foundList.push({ phone, name, source: 'Saved Contacts' });
+            }
+          });
         }
 
+        // في حال كان جدول جهات الاتصال فارغاً أو لا يحتوي إلا على الجروبات، نقرأ الأسماء من سجل الرسائل كبديل
+        if (foundList.length === 0) {
+          addLog("ℹ️ جدول جهات الاتصال بالسيرفر يحتوي على جروبات فقط؛ جاري جلب الأسماء والعملاء من سجل الرسائل الفردية...", 'log-msg-info');
+          foundList = await fetchUniqueContactsFromMessages(500);
+        }
+
+        if (foundList.length > 0) {
+          handleExtractionSuccess(foundList, 'الأسماء المسجلة');
+        } else {
+          setExtractorStatus("لا توجد أسماء مسجلة");
+          addLog("⚠️ لم يتم العثور على أرقام مسجلة في هذا الحساب.", 'log-msg-warning');
+        }
       } catch (err) {
         addLog(`فشل استخراج جهات الاتصال: ${err.message}`, 'log-msg-error');
         setExtractorStatus("فشل الاستخراج");
@@ -1032,7 +1033,7 @@
       }
     }
 
-    // 3. استخراج أعضاء الجروب (المعمل بنجاح)
+    // 3. استخراج أعضاء الجروب
     async function extractSelectedGroupMembers() {
       const groupJid = document.getElementById('extractorGroupSelect').value;
       if (!groupJid) return alert("يرجى اختيار مجموعة أولاً");
@@ -1041,7 +1042,7 @@
       addLog(`🔍 جاري سحب أرقام أعضاء الجروب [${groupJid}]...`, 'log-msg-info');
 
       try {
-        const res = await fetch(`${API_BASE}/group/findGroupInfos/${currentInstance}?groupJid=${encodeURIComponent(groupJid)}`, {
+        const res = await fetch(`${API_BASE}/group/findGroupInfos/${encodeURIComponent(currentInstance)}?groupJid=${encodeURIComponent(groupJid)}`, {
           headers: { 'apikey': API_KEY }
         });
 
@@ -1057,15 +1058,15 @@
         participants.forEach(p => {
           let realPhone = '';
           if (p.phoneNumber) {
-            realPhone = sanitizePhoneNumber(p.phoneNumber);
+            realPhone = extractValidPhoneNumber(p.phoneNumber);
           } else if (p.id && p.id.includes('@s.whatsapp.net')) {
-            realPhone = sanitizePhoneNumber(p.id);
+            realPhone = extractValidPhoneNumber(p.id);
           } else if (p.user && !p.id?.includes('@lid')) {
-            realPhone = sanitizePhoneNumber(p.user);
+            realPhone = extractValidPhoneNumber(p.user);
           }
 
           if (!realPhone && p.participantPhone) {
-            realPhone = sanitizePhoneNumber(p.participantPhone);
+            realPhone = extractValidPhoneNumber(p.participantPhone);
           }
 
           if (realPhone && !seenPhones.has(realPhone)) {
@@ -1155,7 +1156,7 @@
       try {
         if (notify) addLog(`جاري جلب مجموعات الحساب [${currentInstance}]...`, 'log-msg-info');
         
-        const res = await fetch(`${API_BASE}/group/fetchAllGroups/${currentInstance}?getParticipants=false`, {
+        const res = await fetch(`${API_BASE}/group/fetchAllGroups/${encodeURIComponent(currentInstance)}?getParticipants=false`, {
           headers: { 'apikey': API_KEY }
         });
         
@@ -1282,7 +1283,7 @@
           delay: 1000
         };
 
-        const res = await fetch(`${API_BASE}/message/sendText/${currentInstance}`, {
+        const res = await fetch(`${API_BASE}/message/sendText/${encodeURIComponent(currentInstance)}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -1310,7 +1311,7 @@
 
     async function getGroupInviteUrl(groupJid) {
       try {
-        const res = await fetch(`${API_BASE}/group/inviteCode/${currentInstance}?groupJid=${encodeURIComponent(groupJid)}`, {
+        const res = await fetch(`${API_BASE}/group/inviteCode/${encodeURIComponent(currentInstance)}?groupJid=${encodeURIComponent(groupJid)}`, {
           headers: { 'apikey': API_KEY }
         });
         const data = await res.json();
@@ -1348,7 +1349,7 @@
         const cleanPhone = extractedPhone.replace(/[^0-9]/g, '');
         const participantJid = `${cleanPhone}@s.whatsapp.net`;
 
-        const res = await fetch(`${API_BASE}/group/updateParticipant/${currentInstance}?groupJid=${encodeURIComponent(groupJid)}`, {
+        const res = await fetch(`${API_BASE}/group/updateParticipant/${encodeURIComponent(currentInstance)}?groupJid=${encodeURIComponent(groupJid)}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -1428,7 +1429,7 @@
 
       window.inboxPollTimer = setInterval(async () => {
         try {
-          const res = await fetch(`${API_BASE}/chat/findMessages/${currentInstance}`, {
+          const res = await fetch(`${API_BASE}/chat/findMessages/${encodeURIComponent(currentInstance)}`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -1443,7 +1444,7 @@
           if (!res.ok) return;
 
           const data = await res.json();
-          const records = data?.messages?.records || data?.records || (Array.isArray(data?.messages) ? data.messages : []) || (Array.isArray(data) ? data : []);
+          const records = data?.messages?.records || data?.records || (Array.isArray(data) ? data : []);
 
           if (!Array.isArray(records) || records.length === 0) return;
 
@@ -1708,7 +1709,7 @@
         let qrBase64 = createData.qrcode?.base64;
 
         if (!qrBase64) {
-          const connectRes = await fetch(`${API_BASE}/instance/connect/${instName}`, { headers: { 'apikey': API_KEY } });
+          const connectRes = await fetch(`${API_BASE}/instance/connect/${encodeURIComponent(instName)}`, { headers: { 'apikey': API_KEY } });
           const connectData = await connectRes.json();
           qrBase64 = connectData.base64 || connectData.code;
         }
@@ -1720,7 +1721,7 @@
           document.getElementById('qrLoader').style.display = 'none';
           
           qrCheckInterval = setInterval(async () => {
-            const res = await fetch(`${API_BASE}/instance/connectionState/${instName}`, { headers: { 'apikey': API_KEY } });
+            const res = await fetch(`${API_BASE}/instance/connectionState/${encodeURIComponent(instName)}`, { headers: { 'apikey': API_KEY } });
             const st = await res.json();
             if (st.instance?.state === 'open' || st.state === 'open') {
               clearInterval(qrCheckInterval);
@@ -1737,7 +1738,7 @@
     function downloadExcelTemplate() {
       const headers = ['Phone', 'Name', ...customVars.map(v => v.name)];
       const sampleRow = ['201280471390', 'مينا سامح', ...customVars.map(v => v.value || 'قيمة تجريبية')];
-      const wsData = [headers, sampleRow];
+      const wsData = [headers, ...rows];
       const ws = XLSX.utils.aoa_to_sheet(wsData);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Campaign_Data");
