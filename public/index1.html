@@ -279,6 +279,7 @@
       font-weight: 600;
       padding: 5px 12px;
       border-radius: 6px;
+      cursor: pointer;
     }
     .v-badge.fixed {
       border: 1px solid #bae6fd;
@@ -389,6 +390,70 @@
       word-break: break-word;
     }
 
+    .msg-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .msg-item {
+      background: #f8fafc;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .msg-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .btn-icon-del {
+      background: transparent;
+      border: none;
+      color: var(--danger);
+      cursor: pointer;
+    }
+
+    .mention-dropdown {
+      position: absolute;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: var(--radius-sm);
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15);
+      z-index: 1000;
+      max-height: 220px;
+      overflow-y: auto;
+      display: none;
+      min-width: 250px;
+    }
+    .mention-item {
+      padding: 9px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .mention-item:hover {
+      background: #ecfdf5;
+      color: var(--primary);
+      font-weight: 700;
+    }
+    .mention-val {
+      font-size: 11px;
+      color: var(--text-muted);
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     .btn {
       display: inline-flex;
       align-items: center;
@@ -415,6 +480,34 @@
     }
     .btn-secondary:hover { background: #f8fafc; }
     .btn-danger { background: var(--danger); color: #fff; }
+    .btn-outline-dashed {
+      background: #f0fdf4;
+      border: 1px dashed var(--primary);
+      color: var(--primary);
+      width: 100%;
+    }
+
+    .progress-wrapper {
+      background: #f8fafc;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .progress-bar-bg {
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      transition: width 0.3s ease;
+    }
 
     .terminal-console {
       background: #0f172a;
@@ -622,12 +715,12 @@
           </div>
         </div>
 
-        <!-- أداة استخراج الـ Data -->
+        <!-- أداة استخراج الـ Data المتقدمة -->
         <div class="extractor-box">
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <label style="font-size: 13px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 6px;">
               <i data-lucide="database-zap" style="width: 16px; height: 16px;"></i>
-              استخراج الـ Data (أرقام العملاء الحقيقية)
+              استخراج الـ Data المتقدمة
             </label>
             <span id="extractorStatusBadge" style="font-size: 11px; color: var(--text-muted);">جاهز للاستخراج</span>
           </div>
@@ -644,7 +737,6 @@
             </button>
           </div>
 
-          <!-- اختيار الجروب للاستخراج -->
           <div id="groupExtractorRow" style="display: none; gap: 8px; align-items: center;">
             <select id="extractorGroupSelect" style="flex: 2; font-size: 12px;">
               <option value="">-- اختر الجروب المراد سحب أرقامه --</option>
@@ -654,7 +746,6 @@
             </button>
           </div>
 
-          <!-- شريط الإجراءات بعد الاستخراج -->
           <div id="extractorActionsBar" style="display: none; justify-content: space-between; align-items: center; background: #ecfdf5; padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid #a7f3d0;">
             <span id="extractorResultText" style="font-size: 12px; font-weight: 700; color: var(--primary);">تم استخراج 0 رقم</span>
             <div style="display: flex; gap: 6px;">
@@ -668,13 +759,14 @@
           </div>
         </div>
 
+        <!-- صندوق إدارة المتغيرات -->
         <div class="var-manager-box">
-          <label style="font-size: 12px; font-weight: 700;">المتغيرات المتاحة (اكتب @ في الرسالة لاختيارها):</label>
+          <label style="font-size: 12px; font-weight: 700;">المتغيرات المتاحة (اضغط عليها أو اكتب @ في الرسالة):</label>
           <div class="var-badges-container" id="varTagList"></div>
           
           <div class="var-input-container">
-            <input type="text" id="newVarName" placeholder="اسم المتغير (مثال: خصم)">
-            <input type="text" id="newVarVal" placeholder="قيمة المتغير (مثال: 20%)">
+            <input type="text" id="newVarName" placeholder="اسم المتغير (مثال: عَرْضٌ_خَاصّ)">
+            <input type="text" id="newVarVal" placeholder="قيمة المتغير الافتراضية">
             <button type="button" class="btn btn-secondary" onclick="addCustomVariable()">+ إضافة</button>
           </div>
         </div>
@@ -695,8 +787,8 @@
         </div>
 
         <div class="form-group">
-          <label>الأرقام والقيم المباشرة:</label>
-          <textarea id="dataInput" rows="3" placeholder="201280471390, مينا, عِقَارَاتٌ, 2500000"></textarea>
+          <label>الأرقام والقيم المباشرة (رقم, اسم, متغير1, متغير2...):</label>
+          <textarea id="dataInput" rows="3" placeholder="201280471390, مينا, استشارة, 2500"></textarea>
         </div>
 
         <div class="form-group">
@@ -708,34 +800,28 @@
           </label>
         </div>
 
+        <!-- خيارات الحماية -->
         <div class="shield-box">
           <span style="font-size: 13px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 6px;">
             <i data-lucide="shield-check" style="width: 16px; height: 16px;"></i>
             خيارات الحماية المتطورة من الحظر
           </span>
           <label class="toggle-row">
-            <input type="checkbox" id="simulateSeen" checked>
-            <span><b>محاكاة قراءة الرسائل السابقة (Seen الفعلي):</b> قراءة آخر رسالة واردة</span>
-          </label>
-          <label class="toggle-row">
             <input type="checkbox" id="simulateTyping" checked>
-            <span><b>محاكاة الكتابة والتسجيل:</b> إرسال مؤشر (يكتب الآن...)</span>
-          </label>
-          <label class="toggle-row">
-            <input type="checkbox" id="filterWhatsAppNumbers" checked>
-            <span><b>فلترة مسبقة للأرقام:</b> تخطي أي رقم غير مسجل على واتساب</span>
+            <span><b>محاكاة الكتابة والتسجيل:</b> إرسال مؤشر (يكتب الآن...) لعدة ثوانٍ قبل الإرسال</span>
           </label>
           <label class="toggle-row">
             <input type="checkbox" id="autoGhostProtection" checked>
-            <span><b>حقن أحرف غير مرئية:</b> كسر تشابه الـ Hash</span>
+            <span><b>حقن أحرف غير مرئية تلقائياً:</b> كسر تشابه الـ Hash بين الرسائل</span>
           </label>
           
           <div class="form-group" style="margin-top: 6px;">
-            <label style="font-size: 12px;"><b>حد التسخين اليومي الأقصى (Warm-up):</b></label>
-            <input type="number" id="dailyLimit" value="50" min="0">
+            <label style="font-size: 12px;"><b>حد التسخين اليومي الأقصى (Daily Warm-up):</b></label>
+            <input type="number" id="dailyLimit" value="50" min="0" placeholder="0 لإلغاء الحد">
           </div>
         </div>
 
+        <!-- الفاصل العشوائي بين كل رسالة ورسالة -->
         <div class="form-row">
           <div class="form-group">
             <label>أقل فاصل عشوائي (ثواني):</label>
@@ -747,10 +833,39 @@
           </div>
         </div>
 
+        <!-- فواصل التوقف العشوائية للراحة بعد كل دفعة رسائل -->
+        <div class="form-row" style="background: #f8fafc; padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+          <div class="form-group" style="grid-column: span 2;">
+            <label>توقف مؤقت بعد كل (عدد رسائل X):</label>
+            <input type="number" id="batchCount" value="15" min="0" placeholder="0 لإلغاء الميزة">
+          </div>
+          <div class="form-group">
+            <label>أقل مدة توقف (ثواني):</label>
+            <input type="number" id="batchPauseMin" value="40" min="1">
+          </div>
+          <div class="form-group">
+            <label>أقصى مدة توقف (ثواني):</label>
+            <input type="number" id="batchPauseMax" value="90" min="1">
+          </div>
+        </div>
+
         <div style="display: flex; gap: 10px;">
-          <button type="button" class="btn btn-primary" id="sendBtn" style="flex: 2;">
-            <i data-lucide="play"></i> إطلاق الحملة على السيرفر
+          <button type="button" class="btn btn-primary" id="sendBtn" onclick="startSendingCampaign()" style="flex: 2;">
+            <i data-lucide="play"></i> إطلاق الحملة المباشرة
           </button>
+          <button type="button" class="btn btn-danger" id="stopBtn" onclick="stopSendingCampaign()" style="flex: 1; display: none;">
+            <i data-lucide="square"></i> إيقاف الحملة
+          </button>
+        </div>
+
+        <div class="progress-wrapper">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700;">
+            <span>معدل الإنجاز: <b id="progressCount">0 / 0</b></span>
+            <span id="percentText" style="color: var(--primary);">0%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="progressBar"></div>
+          </div>
         </div>
       </div>
 
@@ -798,19 +913,38 @@
           </div>
         </div>
 
-        <!-- سجل العمليات والطرفية -->
+        <!-- إعداد قوالب الرسائل والطرفية -->
         <div class="saas-card">
           <div class="card-title">
             <div class="card-title-left">
-              <i data-lucide="terminal"></i>
-              <span>سجل العمليات والطرفية المباشرة</span>
+              <i data-lucide="message-square"></i>
+              <span>إعداد قوالب الرسائل والطرفية</span>
             </div>
+          </div>
+
+          <div class="form-group">
+            <label>قائمة نماذج الرسائل (اكتب @ لاختيار المتغيرات):</label>
+            <div class="msg-list" id="messagesContainer">
+              <div class="msg-item" id="msg-box-1">
+                <div class="msg-item-header">
+                  <span>الرسالة رقم 1</span>
+                </div>
+                <textarea class="msg-text" rows="3" placeholder="اكتب نص الرسالة هنا...">مَرْحَبًا @wa_name،
+طلبك رقم: @Randomcode
+الخدمة: @service
+السعر: @price ج.م
+@invisible</textarea>
+              </div>
+            </div>
+            <button type="button" class="btn btn-outline-dashed" onclick="addMessageField()" style="margin-top: 6px;">
+              <i data-lucide="plus-circle"></i> إضافة قالب رسالة آخر (تبديل عشوائي)
+            </button>
           </div>
 
           <div class="terminal-console" id="logBox">
             <div class="log-line">
               <span class="log-time">[00:00:00]</span>
-              <span class="log-msg-info">جاري تهيئة الاتصال...</span>
+              <span class="log-msg-info">جاري تهيئة النظام...</span>
             </div>
           </div>
         </div>
@@ -819,6 +953,9 @@
 
     </main>
   </div>
+
+  <!-- Mention Dropdown -->
+  <div class="mention-dropdown" id="mentionDropdown"></div>
 
   <!-- Modal إضافة حساب -->
   <div class="modal-overlay" id="addAccountModal">
@@ -866,6 +1003,11 @@
     let availableGroups = [];
     let receivedCount = 0;
     let qrCheckInterval = null;
+    let messageCounter = 1;
+    let activeTextarea = null;
+
+    let isCampaignRunning = false;
+    let stopCampaignRequested = false;
 
     let lastExtractedData = [];
     const sessionStartTime = Math.floor(Date.now() / 1000);
@@ -876,89 +1018,295 @@
       { name: 'price', value: '2500' }
     ];
 
-    // فلترة واستخراج أرقام الهواتف الحقيقية حصراً
+    // ==========================================
+    // محرك المتغيرات وبصمات الحماية
+    // ==========================================
+    function getTodayKey() {
+      const today = new Date().toISOString().slice(0, 10);
+      return `evo_sent_count_${currentInstance}_${today}`;
+    }
+
+    function getDailySentCount() {
+      return parseInt(localStorage.getItem(getTodayKey()) || '0');
+    }
+
+    function incrementDailySentCount() {
+      const current = getDailySentCount() + 1;
+      localStorage.setItem(getTodayKey(), current.toString());
+      updateDailyCountUI();
+      return current;
+    }
+
+    function updateDailyCountUI() {
+      const count = getDailySentCount();
+      const el = document.getElementById('kpiDailySent');
+      if (el) el.innerText = count;
+    }
+
+    function generateRandomCode() {
+      return `#${Math.floor(100000 + Math.random() * 900000)}`;
+    }
+
+    function generateInvisibleGhostString(length = 6) {
+      const ghostChars = ['\u200B', '\u200C', '\u200D', '\u2060', '\uFEFF'];
+      let result = '';
+      for (let i = 0; i < length; i++) {
+        result += ghostChars[Math.floor(Math.random() * ghostChars.length)];
+      }
+      return result;
+    }
+
+    function generateObjTag() {
+      return '\uFFFC' + generateInvisibleGhostString(2);
+    }
+
+    // استبدال المتغيرات في الرسالة للعميل المحدد
+    function compileMessageTemplate(template, row) {
+      let text = template;
+      const clientName = row.name || 'عميلنا العزيز';
+      const clientPhone = row.phone || '';
+
+      // استبدال المتغيرات الأساسية
+      text = text.replace(/@wa_name/gi, clientName);
+      text = text.replace(/@name/gi, clientName);
+      text = text.replace(/@phone_name/gi, clientPhone);
+      text = text.replace(/@phone/gi, clientPhone);
+
+      // استبدال المتغيرات الخاصة
+      text = text.replace(/@randomcode/gi, generateRandomCode());
+      text = text.replace(/@invisible/gi, generateInvisibleGhostString(8));
+      text = text.replace(/@obj/gi, generateObjTag());
+
+      // استبدال المتغيرات المخصصة
+      customVars.forEach(v => {
+        const val = (row.vars && row.vars[v.name] !== undefined && row.vars[v.name] !== '') 
+          ? row.vars[v.name] 
+          : (v.value || '');
+        const re = new RegExp(`@${v.name}`, 'gi');
+        text = text.replace(re, val);
+      });
+
+      // الحماية التلقائية بحقن أحرف خفية إذا كان الخيار مفعلاً
+      if (document.getElementById('autoGhostProtection').checked) {
+        text += generateInvisibleGhostString(4);
+      }
+
+      return text;
+    }
+
+    // دالة الانتظار
+    const delayMs = (ms) => new Promise(res => setTimeout(res, ms));
+
+    // ==========================================
+    // محرك إطلاق الحملات الذكي (Campaign Engine)
+    // ==========================================
+    async function startSendingCampaign() {
+      if (isCampaignRunning) return;
+
+      const rawData = document.getElementById('dataInput').value.trim();
+      const minDelay = parseInt(document.getElementById('minDelay').value) || 10;
+      const maxDelay = parseInt(document.getElementById('maxDelay').value) || 20;
+
+      const batchCount = parseInt(document.getElementById('batchCount').value) || 0;
+      const batchPauseMin = parseInt(document.getElementById('batchPauseMin').value) || 40;
+      const batchPauseMax = parseInt(document.getElementById('batchPauseMax').value) || 90;
+
+      const dailyLimit = parseInt(document.getElementById('dailyLimit').value) || 0;
+      const simulateTyping = document.getElementById('simulateTyping').checked;
+
+      // جمع نماذج الرسائل
+      const messageElements = document.querySelectorAll('.msg-text');
+      const templates = Array.from(messageElements).map(el => el.value.trim()).filter(t => t.length > 0);
+
+      if (templates.length === 0) {
+        alert("يرجى كتابة نص رسالة واحدة على الأقل في قوالب الرسائل.");
+        return;
+      }
+
+      // تحليل بيانات العملاء والمتغيرات
+      const rows = rawData.split(/\r?\n/).map(line => {
+        const parts = line.split(',').map(p => p.trim());
+        const phone = parts[0] ? parts[0].replace(/[^0-9]/g, '') : '';
+        const name = parts[1] || '';
+        const vars = {};
+        customVars.forEach((v, idx) => {
+          vars[v.name] = parts[idx + 2] || '';
+        });
+        return { phone, name, vars };
+      }).filter(r => r.phone.length >= 8);
+
+      if (rows.length === 0) {
+        alert("يرجى إدخال أرقام صحيحة في خانة البيانات أو استخدام ميزة الاستخراج.");
+        return;
+      }
+
+      isCampaignRunning = true;
+      stopCampaignRequested = false;
+
+      document.getElementById('sendBtn').style.display = 'none';
+      document.getElementById('stopBtn').style.display = 'inline-flex';
+
+      addLog(`🚀 بدء إطلاق الحملة لعدد (${rows.length}) عميل عبر الحساب [${currentInstance}]...`, 'log-msg-info');
+
+      let successCount = 0;
+      let failedCount = 0;
+
+      for (let i = 0; i < rows.length; i++) {
+        if (stopCampaignRequested) {
+          addLog("⏸ تم إيقاف الحملة بواسطة المستخدم.", 'log-msg-warning');
+          break;
+        }
+
+        // فحص حد التسخين اليومي
+        if (dailyLimit > 0 && getDailySentCount() >= dailyLimit) {
+          addLog(`⚠️ تم الوصول لحد التسخين اليومي الأقصى (${dailyLimit} رسالة). توقف الإرسال حفاظاً على الرقم.`, 'log-msg-warning');
+          break;
+        }
+
+        const row = rows[i];
+        // اختيار قالب عشوائي
+        const template = templates[Math.floor(Math.random() * templates.length)];
+        const compiledText = compileMessageTemplate(template, row);
+
+        updateProgress(i + 1, rows.length);
+
+        try {
+          addLog(`[${i + 1}/${rows.length}] جاري معالجة الإرسال للرقم (${row.phone})...`, 'log-msg-info');
+
+          // محاكاة مؤشر الكتابة
+          if (simulateTyping) {
+            await delayMs(1500);
+          }
+
+          const payload = {
+            number: row.phone,
+            text: compiledText,
+            delay: 1000
+          };
+
+          const res = await fetch(`${API_BASE}/message/sendText/${encodeURIComponent(currentInstance)}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': API_KEY
+            },
+            body: JSON.stringify(payload)
+          });
+
+          const data = await res.json();
+          const isExistsFalse = Array.isArray(data?.response?.message) && data.response.message.some(m => m.exists === false);
+
+          if (res.ok && !isExistsFalse) {
+            successCount++;
+            incrementDailySentCount();
+            document.getElementById('kpiSuccess').innerText = successCount;
+            addLog(`✔ تم إرسال الرسالة بنجاح إلى [${row.name || 'عميل'}] (${row.phone})`, 'log-msg-success');
+          } else {
+            failedCount++;
+            document.getElementById('kpiFailed').innerText = failedCount;
+            addLog(`✖ فشل إرسال الرسالة إلى (${row.phone}): ${data?.response?.message?.[0]?.exists === false ? 'الرقم غير مسجل بواتساب' : 'خطأ سيرفر'}`, 'log-msg-error');
+          }
+        } catch (err) {
+          failedCount++;
+          document.getElementById('kpiFailed').innerText = failedCount;
+          addLog(`خطأ اتصال أثناء الإرسال للرقم (${row.phone}): ${err.message}`, 'log-msg-error');
+        }
+
+        // تطبيق الفاصل العشوائي واستراحة الدفعة إن لم تكن الرسالة الأخيرة
+        if (i < rows.length - 1 && !stopCampaignRequested) {
+          // فحص استراحة الدفعة (Batch Pause)
+          if (batchCount > 0 && (i + 1) % batchCount === 0) {
+            const pauseSeconds = Math.floor(Math.random() * (batchPauseMax - batchPauseMin + 1)) + batchPauseMin;
+            addLog(`☕ تم إرسال دفعة (${batchCount} رسائل). استراحة أمان عشوائية لمدة ${pauseSeconds} ثانية...`, 'log-msg-warning');
+            await countdownDelay(pauseSeconds);
+          } else {
+            // الفاصل العشوائي الطبيعي بين الرسائل
+            const randomDelaySec = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
+            addLog(`⏳ انتظار عشوائي لمدة ${randomDelaySec} ثانية قبل الرسالة التالية...`, 'log-msg-default');
+            await countdownDelay(randomDelaySec);
+          }
+        }
+      }
+
+      addLog(`🏁 اكتملت الحملة! (ناجح: ${successCount} | فشل: ${failedCount})`, 'log-msg-success');
+      isCampaignRunning = false;
+      document.getElementById('sendBtn').style.display = 'inline-flex';
+      document.getElementById('stopBtn').style.display = 'none';
+    }
+
+    function stopSendingCampaign() {
+      stopCampaignRequested = true;
+    }
+
+    async function countdownDelay(seconds) {
+      for (let s = seconds; s > 0; s--) {
+        if (stopCampaignRequested) break;
+        await delayMs(1000);
+      }
+    }
+
+    function updateProgress(current, total) {
+      if (total === 0) return;
+      const percent = Math.round((current / total) * 100);
+      document.getElementById('progressBar').style.width = `${percent}%`;
+      document.getElementById('percentText').innerText = `${percent}%`;
+      document.getElementById('progressCount').innerText = `${current} / ${total}`;
+    }
+
+    // ==========================================
+    // محرك استخراج الـ Data
+    // ==========================================
     function extractValidPhoneNumber(jidOrNumber) {
       if (!jidOrNumber) return '';
       const str = String(jidOrNumber).trim();
-
-      // استبعاد الجروبات والقنوات والـ broadcast
       if (str.includes('@g.us') || str.includes('@broadcast') || str.includes('@newsletter')) {
         return '';
       }
-
-      // إزالة النطاق وتنظيف أي رموز
       const digits = str.replace(/@.+$/, '').replace(/[^0-9]/g, '');
-
-      // الأرقام الدولية الطبيعية تتراوح بين 9 و 14 خانة (أرقام الـ LID الوهمية تكون 15 خانة أو أكثر وتستبعد)
-      if (digits.length >= 9 && digits.length <= 14) {
+      if (digits.length >= 8 && digits.length <= 15) {
         return digits;
       }
       return '';
     }
 
-    // ==========================================
-    // محرك استخراج الـ Data المعتمد على الرسائل
-    // ==========================================
-
-    // جلب الرسائل المخزنة وتحويلها إلى قائمة أرقام فريدة وموثوقة
-    async function fetchUniqueContactsFromMessages(takeLimit = 500) {
-      const res = await fetch(`${API_BASE}/chat/findMessages/${encodeURIComponent(currentInstance)}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
-        body: JSON.stringify({ take: takeLimit })
-      });
-
-      if (!res.ok) throw new Error(`كود الاستجابة: ${res.status}`);
-
-      const data = await res.json();
-      const records = data?.messages?.records || data?.records || (Array.isArray(data) ? data : []);
-
-      const list = [];
-      const seen = new Set();
-
-      records.forEach(m => {
-        const key = m.key || {};
-        const remoteJid = key.remoteJid || m.remoteJid || '';
-
-        // استبعاد أي رسائل قادمة من الجروبات
-        if (remoteJid.includes('@g.us') || remoteJid.includes('@broadcast')) return;
-
-        // استخراج رقم الهاتف الحقيقي
-        let phone = '';
-        if (key.participant && !key.participant.includes('@lid')) {
-          phone = extractValidPhoneNumber(key.participant);
-        } else if (m.senderPn) {
-          phone = extractValidPhoneNumber(m.senderPn);
-        } else if (m.participantPhone) {
-          phone = extractValidPhoneNumber(m.participantPhone);
-        } else {
-          phone = extractValidPhoneNumber(remoteJid);
-        }
-
-        if (phone && !seen.has(phone)) {
-          seen.add(phone);
-          const name = m.pushName || m.verifiedName || `عميل (${phone})`;
-          list.push({ phone, name, source: 'Chat History' });
-        }
-      });
-
-      return list;
-    }
-
-    // 1. استخراج محادثات الشات (Chatlists)
     async function extractChatListContacts() {
       if (!currentInstance) return alert("يرجى اختيار حساب نشط أولاً");
       setExtractorStatus("جاري فحص المحادثات...");
-      addLog(`🔍 جاري فحص واستخراج محادثات الشات للحساب [${currentInstance}]...`, 'log-msg-info');
+      addLog(`🔍 جاري استخراج محادثات الشات للحساب [${currentInstance}]...`, 'log-msg-info');
 
       try {
-        const contacts = await fetchUniqueContactsFromMessages(500);
+        const res = await fetch(`${API_BASE}/chat/findChats/${encodeURIComponent(currentInstance)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
+          body: JSON.stringify({ where: {} })
+        });
 
-        if (contacts.length > 0) {
-          handleExtractionSuccess(contacts, 'محادثات الشات (Chatlists)');
+        if (!res.ok) throw new Error(`كود الاستجابة: ${res.status}`);
+
+        const data = await res.json();
+        const records = Array.isArray(data) ? data : (data?.records || data?.chats || []);
+
+        const extracted = [];
+        const seenPhones = new Set();
+
+        records.forEach(c => {
+          const jid = c.id || c.remoteJid || c.jid || '';
+          if (!jid.endsWith('@s.whatsapp.net')) return;
+          if (jid.includes('@g.us') || jid.includes('@broadcast') || jid.includes('@lid')) return;
+
+          const phone = jid.replace('@s.whatsapp.net', '').replace(/[^0-9]/g, '');
+          if (phone.length >= 8 && !seenPhones.has(phone)) {
+            seenPhones.add(phone);
+            const name = c.pushName || c.name || `عميل (${phone})`;
+            extracted.push({ phone, name, source: 'Chatlist' });
+          }
+        });
+
+        if (extracted.length > 0) {
+          handleExtractionSuccess(extracted, 'محادثات الشات (Chatlists)');
         } else {
           setExtractorStatus("لا توجد محادثات");
-          addLog("⚠️ لم يتم العثور على محادثات فردية مسجلة في سجل الرسائل.", 'log-msg-warning');
+          addLog("⚠️ لم يتم العثور على محادثات فردية صالحة.", 'log-msg-warning');
         }
       } catch (err) {
         addLog(`فشل استخراج الـ Chatlists: ${err.message}`, 'log-msg-error');
@@ -966,52 +1314,56 @@
       }
     }
 
-    // 2. استخراج الأسماء المسجلة (Saved Contacts)
     async function extractSavedContacts() {
       if (!currentInstance) return alert("يرجى اختيار حساب نشط أولاً");
-      setExtractorStatus("جاري فحص الأسماء المسجلة...");
-      addLog(`🔍 جاري فحص الأسماء المسجلة للحساب [${currentInstance}]...`, 'log-msg-info');
+      setExtractorStatus("جاري جلب الأسماء المسجلة...");
+      addLog(`🔍 جاري فحص جهات الاتصال المسجلة للحساب [${currentInstance}]...`, 'log-msg-info');
 
       try {
         const res = await fetch(`${API_BASE}/chat/findContacts/${encodeURIComponent(currentInstance)}`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
+          headers: { 
+            'Content-Type': 'application/json', 
+            'apikey': API_KEY 
+          },
           body: JSON.stringify({ where: {} })
         });
 
-        let foundList = [];
-        const seen = new Set();
+        if (!res.ok) throw new Error(`كود الاستجابة: ${res.status}`);
 
-        if (res.ok) {
-          const data = await res.json();
-          const records = Array.isArray(data) ? data : (data?.records || data?.contacts || []);
+        const data = await res.json();
+        const records = Array.isArray(data) ? data : (data?.records || data?.contacts || []);
 
-          records.forEach(c => {
-            // استبعاد الجروبات تماماً
-            if (c.isGroup === true || c.type === 'group') return;
-            const targetJid = c.remoteJid || c.id || '';
-            if (targetJid.includes('@g.us') || targetJid.includes('@lid')) return;
+        const foundList = [];
+        const seenPhones = new Set();
 
-            const phone = extractValidPhoneNumber(targetJid) || extractValidPhoneNumber(c.number);
-            if (phone && phone !== '0' && !seen.has(phone)) {
-              seen.add(phone);
-              const name = c.pushName || c.name || `جهة اتصال (${phone})`;
-              foundList.push({ phone, name, source: 'Saved Contacts' });
-            }
-          });
-        }
+        records.forEach(contact => {
+          const remoteJid = String(contact.remoteJid || '').trim();
 
-        // في حال كان جدول جهات الاتصال فارغاً أو لا يحتوي إلا على الجروبات، نقرأ الأسماء من سجل الرسائل كبديل
-        if (foundList.length === 0) {
-          addLog("ℹ️ جدول جهات الاتصال بالسيرفر يحتوي على جروبات فقط؛ جاري جلب الأسماء والعملاء من سجل الرسائل الفردية...", 'log-msg-info');
-          foundList = await fetchUniqueContactsFromMessages(500);
-        }
+          if (!remoteJid.endsWith('@s.whatsapp.net')) return;
+          if (remoteJid.includes('@g.us') || remoteJid.includes('@lid') || remoteJid.includes('@broadcast') || remoteJid.includes('@newsletter')) return;
+
+          const phone = remoteJid.replace('@s.whatsapp.net', '').replace(/[^0-9]/g, '');
+
+          if (phone && phone.length >= 8 && phone !== '0' && !seenPhones.has(phone)) {
+            seenPhones.add(phone);
+            const clientName = (contact.pushName && contact.pushName.trim()) 
+              ? contact.pushName.trim() 
+              : ((contact.name && contact.name.trim()) ? contact.name.trim() : `عميل (${phone})`);
+
+            foundList.push({
+              phone: phone,
+              name: clientName,
+              source: 'Saved Contacts'
+            });
+          }
+        });
 
         if (foundList.length > 0) {
           handleExtractionSuccess(foundList, 'الأسماء المسجلة');
         } else {
-          setExtractorStatus("لا توجد أسماء مسجلة");
-          addLog("⚠️ لم يتم العثور على أرقام مسجلة في هذا الحساب.", 'log-msg-warning');
+          setExtractorStatus("لا توجد أرقام صالحة");
+          addLog("⚠️ تم جلب السجلات ولكن لم يتم العثور على أرقام هواتف فردية صالحة.", 'log-msg-warning');
         }
       } catch (err) {
         addLog(`فشل استخراج جهات الاتصال: ${err.message}`, 'log-msg-error');
@@ -1033,7 +1385,6 @@
       }
     }
 
-    // 3. استخراج أعضاء الجروب
     async function extractSelectedGroupMembers() {
       const groupJid = document.getElementById('extractorGroupSelect').value;
       if (!groupJid) return alert("يرجى اختيار مجموعة أولاً");
@@ -1566,6 +1917,168 @@
     }
 
     // ==========================================
+    // إدارة المتغيرات والقوالب
+    // ==========================================
+    function renderVariableBadges() {
+      const container = document.getElementById('varTagList');
+      container.innerHTML = '';
+
+      defaultVars.forEach(v => {
+        const badge = document.createElement('div');
+        badge.className = 'v-badge fixed';
+        badge.innerHTML = `@${v}`;
+        badge.onclick = () => insertVariableIntoActiveTextarea(v);
+        container.appendChild(badge);
+      });
+
+      const randomBadge = document.createElement('div');
+      randomBadge.className = 'v-badge special';
+      randomBadge.innerHTML = `@Randomcode <small style="font-weight: normal; margin-right: 4px;">(#123456)</small>`;
+      randomBadge.onclick = () => insertVariableIntoActiveTextarea('Randomcode');
+      container.appendChild(randomBadge);
+
+      const ghostBadge = document.createElement('div');
+      ghostBadge.className = 'v-badge ghost';
+      ghostBadge.innerHTML = `@invisible <small style="font-weight: normal; margin-right: 4px;">(مخفي)</small>`;
+      ghostBadge.onclick = () => insertVariableIntoActiveTextarea('invisible');
+      container.appendChild(ghostBadge);
+
+      customVars.forEach((item, index) => {
+        const badge = document.createElement('div');
+        badge.className = 'v-badge custom';
+        badge.innerHTML = `
+          <span onclick="insertVariableIntoActiveTextarea('${item.name}')">@${item.name}</span>
+          ${item.value ? `<span style="opacity: 0.8; font-size: 11px;">(${item.value})</span>` : ''}
+          <i data-lucide="x" class="del-btn" style="width: 14px; height: 14px;" onclick="removeCustomVariable(${index})"></i>
+        `;
+        container.appendChild(badge);
+      });
+      lucide.createIcons();
+    }
+
+    function insertVariableIntoActiveTextarea(varName) {
+      if (!activeTextarea) {
+        activeTextarea = document.querySelector('.msg-text');
+      }
+      if (!activeTextarea) return;
+
+      const cursorPos = activeTextarea.selectionStart || activeTextarea.value.length;
+      const text = activeTextarea.value;
+      activeTextarea.value = text.substring(0, cursorPos) + `@${varName} ` + text.substring(cursorPos);
+      activeTextarea.focus();
+      const nextPos = cursorPos + varName.length + 2;
+      activeTextarea.setSelectionRange(nextPos, nextPos);
+    }
+
+    function addCustomVariable() {
+      const nameInput = document.getElementById('newVarName');
+      const valInput = document.getElementById('newVarVal');
+      const name = nameInput.value.trim().replace(/[^\p{L}\p{M}0-9_\-]/gu, '');
+      const val = valInput.value.trim();
+
+      if (!name) return alert("يرجى إدخال اسم متغير صحيح");
+      customVars.push({ name: name, value: val });
+      nameInput.value = '';
+      valInput.value = '';
+      renderVariableBadges();
+    }
+
+    function removeCustomVariable(index) {
+      customVars.splice(index, 1);
+      renderVariableBadges();
+    }
+
+    const dropdown = document.getElementById('mentionDropdown');
+
+    function attachMentionEvents(textarea) {
+      textarea.addEventListener('focus', () => { activeTextarea = textarea; });
+      textarea.addEventListener('keyup', handleMention);
+      textarea.addEventListener('click', () => dropdown.style.display = 'none');
+    }
+
+    function handleMention(e) {
+      activeTextarea = e.target;
+      const text = activeTextarea.value;
+      const cursorPos = activeTextarea.selectionStart;
+
+      const lastAt = text.lastIndexOf('@', cursorPos - 1);
+      if (lastAt !== -1 && (cursorPos - lastAt) <= 30) {
+        const query = text.substring(lastAt + 1, cursorPos).toLowerCase();
+        
+        const allList = [
+          ...defaultVars.map(v => ({ name: v, value: '' })),
+          { name: 'Randomcode', value: '#123456 (كود عشوائي)' },
+          { name: 'invisible', value: '(أحرف خفية لمنع الحظر)' },
+          ...customVars
+        ];
+
+        const matched = allList.filter(item => item.name.toLowerCase().includes(query));
+
+        if (matched.length > 0) {
+          showDropdown(matched, lastAt, cursorPos);
+          return;
+        }
+      }
+      dropdown.style.display = 'none';
+    }
+
+    function showDropdown(items, atIndex, cursorPos) {
+      dropdown.innerHTML = '';
+      items.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'mention-item';
+        div.innerHTML = `
+          <span>@${item.name}</span>
+          ${item.value ? `<span class="mention-val">${item.value}</span>` : ''}
+        `;
+        div.onclick = () => insertMention(item.name, atIndex, cursorPos);
+        dropdown.appendChild(div);
+      });
+
+      const rect = activeTextarea.getBoundingClientRect();
+      dropdown.style.top = `${window.scrollY + rect.bottom + 6}px`;
+      dropdown.style.left = `${window.scrollX + rect.left + 20}px`;
+      dropdown.style.display = 'block';
+    }
+
+    function insertMention(varName, atIndex, cursorPos) {
+      const text = activeTextarea.value;
+      const before = text.substring(0, atIndex);
+      const after = text.substring(cursorPos);
+      activeTextarea.value = `${before}@${varName} ${after}`;
+      dropdown.style.display = 'none';
+      activeTextarea.focus();
+      const nextPos = atIndex + varName.length + 2;
+      activeTextarea.setSelectionRange(nextPos, nextPos);
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!dropdown.contains(e.target) && e.target !== activeTextarea) {
+        dropdown.style.display = 'none';
+      }
+    });
+
+    function addMessageField() {
+      messageCounter++;
+      const container = document.getElementById('messagesContainer');
+      const div = document.createElement('div');
+      div.className = 'msg-item';
+      div.id = `msg-box-${messageCounter}`;
+      div.innerHTML = `
+        <div class="msg-item-header">
+          <span>الرسالة رقم ${messageCounter}</span>
+          <button type="button" class="btn-icon-del" onclick="document.getElementById('${div.id}').remove()">
+            <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+          </button>
+        </div>
+        <textarea class="msg-text" rows="3" placeholder="اكتب قالب رسالة بديل..."></textarea>
+      `;
+      container.appendChild(div);
+      attachMentionEvents(div.querySelector('textarea'));
+      lucide.createIcons();
+    }
+
+    // ==========================================
     // إدارة الحسابات والتهيئة
     // ==========================================
     async function fetchServerInstances() {
@@ -1601,6 +2114,7 @@
       });
 
       document.getElementById('currentStatusText').innerText = `الحساب: ${currentInstance}`;
+      updateDailyCountUI();
       startInboxPolling();
       fetchAvailableGroups();
     }
@@ -1610,6 +2124,7 @@
       currentInstance = select.value;
       localStorage.setItem('evo_current_instance', currentInstance);
       document.getElementById('currentStatusText').innerText = `الحساب: ${currentInstance}`;
+      updateDailyCountUI();
       addLog(`تم التبديل إلى الحساب: [${currentInstance}]`, 'log-msg-info');
       startInboxPolling();
       fetchAvailableGroups(true);
@@ -1623,58 +2138,6 @@
       line.innerHTML = `<span class="log-time">[${time}]</span><span class="${className}">${text}</span>`;
       logBox.appendChild(line);
       logBox.scrollTop = logBox.scrollHeight;
-    }
-
-    function renderVariableBadges() {
-      const container = document.getElementById('varTagList');
-      container.innerHTML = '';
-
-      defaultVars.forEach(v => {
-        const badge = document.createElement('div');
-        badge.className = 'v-badge fixed';
-        badge.innerHTML = `@${v}`;
-        container.appendChild(badge);
-      });
-
-      const randomBadge = document.createElement('div');
-      randomBadge.className = 'v-badge special';
-      randomBadge.innerHTML = `@Randomcode <small style="font-weight: normal; margin-right: 4px;">(#123456)</small>`;
-      container.appendChild(randomBadge);
-
-      const ghostBadge = document.createElement('div');
-      ghostBadge.className = 'v-badge ghost';
-      ghostBadge.innerHTML = `@invisible <small style="font-weight: normal; margin-right: 4px;">(مخفي)</small>`;
-      container.appendChild(ghostBadge);
-
-      customVars.forEach((item, index) => {
-        const badge = document.createElement('div');
-        badge.className = 'v-badge custom';
-        badge.innerHTML = `
-          <span>@${item.name}</span>
-          ${item.value ? `<span style="opacity: 0.8; font-size: 11px;">(${item.value})</span>` : ''}
-          <i data-lucide="x" class="del-btn" style="width: 14px; height: 14px;" onclick="removeCustomVariable(${index})"></i>
-        `;
-        container.appendChild(badge);
-      });
-      lucide.createIcons();
-    }
-
-    function addCustomVariable() {
-      const nameInput = document.getElementById('newVarName');
-      const valInput = document.getElementById('newVarVal');
-      const name = nameInput.value.trim().replace(/[^\p{L}\p{M}0-9_\-]/gu, '');
-      const val = valInput.value.trim();
-
-      if (!name) return;
-      customVars.push({ name: name, value: val });
-      nameInput.value = '';
-      valInput.value = '';
-      renderVariableBadges();
-    }
-
-    function removeCustomVariable(index) {
-      customVars.splice(index, 1);
-      renderVariableBadges();
     }
 
     function openAddAccountModal() {
@@ -1738,13 +2201,45 @@
     function downloadExcelTemplate() {
       const headers = ['Phone', 'Name', ...customVars.map(v => v.name)];
       const sampleRow = ['201280471390', 'مينا سامح', ...customVars.map(v => v.value || 'قيمة تجريبية')];
-      const wsData = [headers, ...rows];
+      const wsData = [headers, sampleRow];
       const ws = XLSX.utils.aoa_to_sheet(wsData);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Campaign_Data");
       XLSX.writeFile(wb, "whatsapp_campaign_template.xlsx");
       addLog("تم تصدير وتحميل قالب Excel بنجاح.", "log-msg-info");
     }
+
+    document.getElementById('dataFile').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      document.getElementById('selectedFileName').innerText = file.name;
+      const fileName = file.name.toLowerCase();
+
+      if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          const data = new Uint8Array(evt.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+          const dataRows = rows.slice(1).filter(r => r.length > 0 && r[0]);
+          const formattedLines = dataRows.map(r => r.join(', '));
+          document.getElementById('dataInput').value = formattedLines.join('\n');
+          updateKpiTotal();
+          addLog(`تم استيراد ${dataRows.length} جهة اتصال من ملف الإكسيل.`, "log-msg-info");
+        };
+        reader.readAsArrayBuffer(file);
+      } else {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          document.getElementById('dataInput').value = evt.target.result.trim();
+          updateKpiTotal();
+          addLog("تمت قراءة البيانات من الملف.", "log-msg-info");
+        };
+        reader.readAsText(file);
+      }
+    });
 
     function updateKpiTotal() {
       const raw = document.getElementById('dataInput').value.trim();
@@ -1761,8 +2256,10 @@
     // التشغيل المباشر
     renderInstanceSelect();
     fetchServerInstances();
+    document.querySelectorAll('.msg-text').forEach(attachMentionEvents);
     renderVariableBadges();
     renderAutomationRules();
+    updateKpiTotal();
   </script>
 </body>
 </html>
