@@ -613,7 +613,6 @@
       }
     }
 
-    /* أزرار التبديل بين أنماط الإرسال */
     .mode-switch-container {
       display: flex;
       background: #e2e8f0;
@@ -1088,10 +1087,8 @@
     let isCampaignRunning = false;
     let stopCampaignRequested = false;
 
-    // نمط الإرسال: 'single' للرسائل الفردية، 'sequence' للمجموعات المتتالية
     let currentSendingMode = 'single';
 
-    // مصفوفة مجموعات الرسائل المتتالية
     let messageSequences = [
       {
         id: 1,
@@ -1318,7 +1315,6 @@
       const dailyLimit = parseInt(document.getElementById('dailyLimit').value) || 0;
       const simulateTyping = document.getElementById('simulateTyping').checked;
 
-      // جمع النماذج وفق النمط المختار
       let singleTemplates = [];
       let validSequences = [];
 
@@ -1378,13 +1374,11 @@
         const row = rows[i];
         updateProgress(i + 1, rows.length);
 
-        // تجهيز قائمة الرسائل التي ستُرسل لهذا العميل
         let messagesToSend = [];
         if (currentSendingMode === 'single') {
           const template = singleTemplates[Math.floor(Math.random() * singleTemplates.length)];
           messagesToSend.push(compileMessageTemplate(template, row));
         } else {
-          // اختيار مجموعة عشوائياً
           const chosenGroup = validSequences[Math.floor(Math.random() * validSequences.length)];
           addLog(`📦 تم اختيار [${chosenGroup.name}] للعميل (${row.phone})`, 'log-msg-info');
           chosenGroup.messages.forEach(m => {
@@ -1396,7 +1390,6 @@
 
         let isClientSuccess = true;
 
-        // إرسال رسائل هذا العميل بالترتيب
         for (let mIndex = 0; mIndex < messagesToSend.length; mIndex++) {
           if (stopCampaignRequested) break;
 
@@ -1439,7 +1432,6 @@
             break;
           }
 
-          // فاصل عشوائي بين رسائل نفس المجموعة للعميل
           if (mIndex < messagesToSend.length - 1 && !stopCampaignRequested) {
             const innerDelay = Math.floor(Math.random() * (seqMaxDelay - seqMinDelay + 1)) + seqMinDelay;
             addLog(`⏳ انتظار ${innerDelay} ثانية قبل الرسالة التالية لنفس العميل...`, 'log-msg-default');
@@ -1455,7 +1447,6 @@
           document.getElementById('kpiFailed').innerText = failedCount;
         }
 
-        // الفاصل بين العملاء واستراحة الدفعة
         if (i < rows.length - 1 && !stopCampaignRequested) {
           if (batchCount > 0 && (i + 1) % batchCount === 0) {
             const pauseSeconds = Math.floor(Math.random() * (batchPauseMax - batchPauseMin + 1)) + batchPauseMin;
@@ -1901,22 +1892,7 @@
       }
     }
 
-    async function getGroupInviteUrl(groupJid) {
-      try {
-        const res = await fetch(`${API_BASE}/group/inviteCode/${encodeURIComponent(currentInstance)}?groupJid=${encodeURIComponent(groupJid)}`, {
-          headers: { 'apikey': API_KEY }
-        });
-        const data = await res.json();
-        const code = data?.inviteCode || data?.code;
-        if (code) {
-          return `https://chat.whatsapp.com/${code}`;
-        }
-        return null;
-      } catch (e) {
-        return null;
-      }
-    }
-
+    // دالة إضافة العضو إلى الجروب بشكل مباشر فقط وبدون إرسال رابط
     async function addUserToGroup(groupJid, rawJid, extractedPhone) {
       try {
         if (!groupJid) {
@@ -1924,22 +1900,19 @@
           return;
         }
 
-        const isOnlyLid = !extractedPhone || extractedPhone.length < 8 || rawJid.includes('@lid');
+        // استخراج رقم الهاتف الحقيقي للتأكد من قبوله بواتساب
+        const phone = (extractedPhone && extractedPhone.length >= 8) 
+          ? extractedPhone 
+          : rawJid.replace(/@.+$/, '').replace(/[^0-9]/g, '');
 
-        if (isOnlyLid) {
-          addLog(`ℹ️ حساب العميل معرّف بـ LID؛ جاري إرسال رابط الانضمام للجروب...`, 'log-msg-info');
-          const inviteUrl = await getGroupInviteUrl(groupJid);
-          if (inviteUrl) {
-            await sendAutoReply(rawJid, `مرحباً بك! تفضل بالانضمام إلى المجموعة من خلال هذا الرابط:\n${inviteUrl}`);
-            addLog(`🔗 [أوتوميشن] تم إرسال رابط الانضمام بنجاح!`, 'log-msg-success');
-          } else {
-            addLog(`⚠️ تعذر جلب رابط الدعوة، تأكد من صلاحيات المشرف في الجروب.`, 'log-msg-warning');
-          }
+        if (!phone || phone.length < 8) {
+          addLog(`⚠️ تعذر استخراج رقم الهاتف لإضافته مباشرة للجروب.`, 'log-msg-warning');
           return;
         }
 
-        const cleanPhone = extractedPhone.replace(/[^0-9]/g, '');
-        const participantJid = `${cleanPhone}@s.whatsapp.net`;
+        const participantJid = `${phone}@s.whatsapp.net`;
+
+        addLog(`👥 [أوتوميشن] جاري إضافة الرقم (${phone}) إلى الجروب مباشرة...`, 'log-msg-info');
 
         const res = await fetch(`${API_BASE}/group/updateParticipant/${encodeURIComponent(currentInstance)}?groupJid=${encodeURIComponent(groupJid)}`, {
           method: 'POST',
@@ -1954,6 +1927,7 @@
         });
 
         const data = await res.json();
+        
         let isDirectAdded = false;
         if (res.ok) {
           const statusResult = data?.[0]?.status || data?.status || '';
@@ -1963,18 +1937,14 @@
         }
 
         if (isDirectAdded) {
-          addLog(`👥 [أوتوميشن] تمت إضافة (${cleanPhone}) إلى الجروب بنجاح!`, 'log-msg-success');
+          addLog(`👥 [أوتوميشن] تمت إضافة العضو (${phone}) إلى الجروب بنجاح وبشكل مباشر!`, 'log-msg-success');
         } else {
-          addLog(`⚠️ تعذرت الإضافة المباشرة للرقم (${cleanPhone})؛ جاري إرسال رابط الدعوة...`, 'log-msg-warning');
-          const inviteUrl = await getGroupInviteUrl(groupJid);
-          if (inviteUrl) {
-            await sendAutoReply(rawJid, `مرحباً بك! تعذرت إضافتك المباشرة، يمكنك الانضمام عبر هذا الرابط:\n${inviteUrl}`);
-            addLog(`🔗 [أوتوميشن] تم إرسال رابط الدعوة بديلاً للإضافة المباشرة بنجاح.`, 'log-msg-success');
-          }
+          const errorMsg = data?.response?.message || data?.message || JSON.stringify(data);
+          addLog(`⚠️ تعذرت الإضافة المباشرة للرقم (${phone}): ${errorMsg}`, 'log-msg-warning');
         }
 
       } catch (err) {
-        addLog(`خطأ أوتوميشن الجروب: ${err.message}`, 'log-msg-error');
+        addLog(`خطأ أوتوميشن إضافة الجروب: ${err.message}`, 'log-msg-error');
       }
     }
 
@@ -2442,7 +2412,7 @@
     function downloadExcelTemplate() {
       const headers = ['Phone', 'Name', ...customVars.map(v => v.name)];
       const sampleRow = ['201280471390', 'مينا سامح', ...customVars.map(v => v.value || 'قيمة تجريبية')];
-      const wsData = [headers, sampleRow];
+      const wsData = [headers, ...rows];
       const ws = XLSX.utils.aoa_to_sheet(wsData);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Campaign_Data");
