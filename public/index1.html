@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EvoFlow Enterprise | إدارة الحملات والأوتوميشن واستخراج الـ Data</title>
+  <title>EvoFlow Enterprise | إدارة الحملات والأوتوميشن ومجموعات الرسائل</title>
   
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
@@ -419,6 +419,27 @@
       cursor: pointer;
     }
 
+    /* أنماط مجموعات الرسائل Sequences */
+    .sequence-group-card {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-right: 4px solid var(--accent);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+    .sequence-group-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
     .mention-dropdown {
       position: absolute;
       background: #ffffff;
@@ -590,6 +611,32 @@
       .extractor-btn-grid {
         grid-template-columns: 1fr;
       }
+    }
+
+    /* أزرار التبديل بين أنماط الإرسال */
+    .mode-switch-container {
+      display: flex;
+      background: #e2e8f0;
+      padding: 4px;
+      border-radius: var(--radius-sm);
+      gap: 4px;
+    }
+    .mode-btn {
+      flex: 1;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: var(--transition);
+      color: var(--text-muted);
+    }
+    .mode-btn.active {
+      background: #ffffff;
+      color: var(--primary);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
 
     .modal-overlay {
@@ -765,7 +812,7 @@
           <div class="var-badges-container" id="varTagList"></div>
           
           <div class="var-input-container">
-            <input type="text" id="newVarName" placeholder="اسم المتغير (مثال: عَرْضٌ_خَاصّ)">
+            <input type="text" id="newVarName" placeholder="اسم المتغير (مثال: خصم)">
             <input type="text" id="newVarVal" placeholder="قيمة المتغير الافتراضية">
             <button type="button" class="btn btn-secondary" onclick="addCustomVariable()">+ إضافة</button>
           </div>
@@ -821,15 +868,26 @@
           </div>
         </div>
 
-        <!-- الفاصل العشوائي بين كل رسالة ورسالة -->
+        <!-- الفاصل العشوائي بين كل عميل وآخر -->
         <div class="form-row">
           <div class="form-group">
-            <label>أقل فاصل عشوائي (ثواني):</label>
+            <label>أقل فاصل بين العملاء (ثواني):</label>
             <input type="number" id="minDelay" value="10" min="1">
           </div>
           <div class="form-group">
-            <label>أقصى فاصل عشوائي (ثواني):</label>
+            <label>أقصى فاصل بين العملاء (ثواني):</label>
             <input type="number" id="maxDelay" value="20" min="1">
+          </div>
+        </div>
+
+        <!-- فاصل بين الرسائل المتتالية لنفس العميل (عند تفعيل نمط المجموعات) -->
+        <div class="form-row" id="seqDelayRow" style="display: none; background: #f0f9ff; padding: 10px; border-radius: var(--radius-sm); border: 1px solid #bae6fd;">
+          <div class="form-group" style="grid-column: span 2;">
+            <label style="color: #0369a1;">الفاصل الزمني بين رسائل المجموعة للعميل نفسه (ثواني):</label>
+            <div style="display: flex; gap: 8px;">
+              <input type="number" id="seqMinDelay" value="2" min="1" placeholder="أقل مدة">
+              <input type="number" id="seqMaxDelay" value="5" min="1" placeholder="أقصى مدة">
+            </div>
           </div>
         </div>
 
@@ -913,16 +971,27 @@
           </div>
         </div>
 
-        <!-- إعداد قوالب الرسائل والطرفية -->
+        <!-- إعداد قوالب الرسائل ومجموعات الرسائل -->
         <div class="saas-card">
           <div class="card-title">
             <div class="card-title-left">
               <i data-lucide="message-square"></i>
-              <span>إعداد قوالب الرسائل والطرفية</span>
+              <span>نماذج ونصوص الرسائل</span>
             </div>
           </div>
 
-          <div class="form-group">
+          <!-- شريط التبديل بين النمط الفردي ونمط المجموعات -->
+          <div class="mode-switch-container">
+            <button type="button" class="mode-btn active" id="singleModeBtn" onclick="switchMessageMode('single')">
+              رسالة فردية (تبديل عشوائي)
+            </button>
+            <button type="button" class="mode-btn" id="groupModeBtn" onclick="switchMessageMode('sequence')">
+              إرسال مجموعة رسائل (متتالية)
+            </button>
+          </div>
+
+          <!-- قسم النمط الفردي الأصلي -->
+          <div id="singleMessagesSection" class="form-group">
             <label>قائمة نماذج الرسائل (اكتب @ لاختيار المتغيرات):</label>
             <div class="msg-list" id="messagesContainer">
               <div class="msg-item" id="msg-box-1">
@@ -938,6 +1007,16 @@
             </div>
             <button type="button" class="btn btn-outline-dashed" onclick="addMessageField()" style="margin-top: 6px;">
               <i data-lucide="plus-circle"></i> إضافة قالب رسالة آخر (تبديل عشوائي)
+            </button>
+          </div>
+
+          <!-- قسم إرسال مجموعات الرسائل المتتالية -->
+          <div id="sequenceMessagesSection" class="form-group" style="display: none;">
+            <label>مجموعات الرسائل المتتالية (يتم إرسال رسائل كل مجموعة بالترتيب):</label>
+            <div id="sequenceGroupsContainer" style="display: flex; flex-direction: column; gap: 14px;">
+            </div>
+            <button type="button" class="btn btn-outline-dashed" onclick="addNewSequenceGroup()" style="margin-top: 6px;">
+              <i data-lucide="folder-plus"></i> إضافة مجموعة رسائل جديدة
             </button>
           </div>
 
@@ -1009,6 +1088,29 @@
     let isCampaignRunning = false;
     let stopCampaignRequested = false;
 
+    // نمط الإرسال: 'single' للرسائل الفردية، 'sequence' للمجموعات المتتالية
+    let currentSendingMode = 'single';
+
+    // مصفوفة مجموعات الرسائل المتتالية
+    let messageSequences = [
+      {
+        id: 1,
+        name: 'المجموعة 1',
+        messages: [
+          'مساء الخير @wa_name',
+          'كنت حابب افكر حضرتك بميعاد الحجز @invisible'
+        ]
+      },
+      {
+        id: 2,
+        name: 'المجموعة 2',
+        messages: [
+          'مساء النور @wa_name',
+          'بنفكر حضرتك انهارده بالميعاد الخاص بك @invisible'
+        ]
+      }
+    ];
+
     let lastExtractedData = [];
     const sessionStartTime = Math.floor(Date.now() / 1000);
 
@@ -1017,6 +1119,111 @@
       { name: 'service', value: 'استشارة هندسية' },
       { name: 'price', value: '2500' }
     ];
+
+    // ==========================================
+    // التبديل بين الأنماط وإدارة مجموعات الرسائل
+    // ==========================================
+    function switchMessageMode(mode) {
+      currentSendingMode = mode;
+      const singleBtn = document.getElementById('singleModeBtn');
+      const groupBtn = document.getElementById('groupModeBtn');
+      const singleSection = document.getElementById('singleMessagesSection');
+      const seqSection = document.getElementById('sequenceMessagesSection');
+      const seqDelayRow = document.getElementById('seqDelayRow');
+
+      if (mode === 'single') {
+        singleBtn.classList.add('active');
+        groupBtn.classList.remove('active');
+        singleSection.style.display = 'flex';
+        seqSection.style.display = 'none';
+        seqDelayRow.style.display = 'none';
+      } else {
+        groupBtn.classList.add('active');
+        singleBtn.classList.remove('active');
+        singleSection.style.display = 'none';
+        seqSection.style.display = 'flex';
+        seqDelayRow.style.display = 'grid';
+        renderSequenceGroups();
+      }
+      lucide.createIcons();
+    }
+
+    function renderSequenceGroups() {
+      const container = document.getElementById('sequenceGroupsContainer');
+      if (!container) return;
+      container.innerHTML = '';
+
+      messageSequences.forEach((group, gIdx) => {
+        const gCard = document.createElement('div');
+        gCard.className = 'sequence-group-card';
+
+        let messagesHtml = '';
+        group.messages.forEach((msg, mIdx) => {
+          messagesHtml += `
+            <div style="display: flex; flex-direction: column; gap: 4px; background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid var(--border-subtle);">
+              <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: var(--text-muted);">
+                <span>الرسالة ${mIdx + 1}</span>
+                ${group.messages.length > 1 ? `<i data-lucide="trash" style="width: 13px; height: 13px; cursor: pointer; color: var(--danger);" onclick="removeMessageFromSequence(${gIdx}, ${mIdx})"></i>` : ''}
+              </div>
+              <textarea class="seq-msg-text" rows="2" placeholder="اكتب نص الرسالة..." oninput="updateSequenceMessageText(${gIdx}, ${mIdx}, this.value)">${msg}</textarea>
+            </div>
+          `;
+        });
+
+        gCard.innerHTML = `
+          <div class="sequence-group-header">
+            <span>${group.name}</span>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <button type="button" class="btn btn-secondary" style="padding: 3px 8px; font-size: 11px;" onclick="addMessageToSequence(${gIdx})">
+                <i data-lucide="plus" style="width: 12px; height: 12px;"></i> إضافة رسالة تالية
+              </button>
+              ${messageSequences.length > 1 ? `
+                <button type="button" class="btn-icon-del" onclick="removeSequenceGroup(${gIdx})" title="حذف المجموعة">
+                  <i data-lucide="trash-2" style="width: 15px; height: 15px;"></i>
+                </button>
+              ` : ''}
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            ${messagesHtml}
+          </div>
+        `;
+
+        container.appendChild(gCard);
+      });
+
+      document.querySelectorAll('.seq-msg-text').forEach(attachMentionEvents);
+      lucide.createIcons();
+    }
+
+    function addNewSequenceGroup() {
+      const newNum = messageSequences.length + 1;
+      messageSequences.push({
+        id: Date.now(),
+        name: `المجموعة ${newNum}`,
+        messages: ['']
+      });
+      renderSequenceGroups();
+    }
+
+    function removeSequenceGroup(gIdx) {
+      messageSequences.splice(gIdx, 1);
+      renderSequenceGroups();
+    }
+
+    function addMessageToSequence(gIdx) {
+      messageSequences[gIdx].messages.push('');
+      renderSequenceGroups();
+    }
+
+    function removeMessageFromSequence(gIdx, mIdx) {
+      messageSequences[gIdx].messages.splice(mIdx, 1);
+      renderSequenceGroups();
+    }
+
+    function updateSequenceMessageText(gIdx, mIdx, val) {
+      messageSequences[gIdx].messages[mIdx] = val;
+    }
 
     // ==========================================
     // محرك المتغيرات وبصمات الحماية
@@ -1060,24 +1267,20 @@
       return '\uFFFC' + generateInvisibleGhostString(2);
     }
 
-    // استبدال المتغيرات في الرسالة للعميل المحدد
     function compileMessageTemplate(template, row) {
       let text = template;
       const clientName = row.name || 'عميلنا العزيز';
       const clientPhone = row.phone || '';
 
-      // استبدال المتغيرات الأساسية
       text = text.replace(/@wa_name/gi, clientName);
       text = text.replace(/@name/gi, clientName);
       text = text.replace(/@phone_name/gi, clientPhone);
       text = text.replace(/@phone/gi, clientPhone);
 
-      // استبدال المتغيرات الخاصة
       text = text.replace(/@randomcode/gi, generateRandomCode());
       text = text.replace(/@invisible/gi, generateInvisibleGhostString(8));
       text = text.replace(/@obj/gi, generateObjTag());
 
-      // استبدال المتغيرات المخصصة
       customVars.forEach(v => {
         const val = (row.vars && row.vars[v.name] !== undefined && row.vars[v.name] !== '') 
           ? row.vars[v.name] 
@@ -1086,7 +1289,6 @@
         text = text.replace(re, val);
       });
 
-      // الحماية التلقائية بحقن أحرف خفية إذا كان الخيار مفعلاً
       if (document.getElementById('autoGhostProtection').checked) {
         text += generateInvisibleGhostString(4);
       }
@@ -1094,7 +1296,6 @@
       return text;
     }
 
-    // دالة الانتظار
     const delayMs = (ms) => new Promise(res => setTimeout(res, ms));
 
     // ==========================================
@@ -1107,6 +1308,9 @@
       const minDelay = parseInt(document.getElementById('minDelay').value) || 10;
       const maxDelay = parseInt(document.getElementById('maxDelay').value) || 20;
 
+      const seqMinDelay = parseInt(document.getElementById('seqMinDelay').value) || 2;
+      const seqMaxDelay = parseInt(document.getElementById('seqMaxDelay').value) || 5;
+
       const batchCount = parseInt(document.getElementById('batchCount').value) || 0;
       const batchPauseMin = parseInt(document.getElementById('batchPauseMin').value) || 40;
       const batchPauseMax = parseInt(document.getElementById('batchPauseMax').value) || 90;
@@ -1114,16 +1318,25 @@
       const dailyLimit = parseInt(document.getElementById('dailyLimit').value) || 0;
       const simulateTyping = document.getElementById('simulateTyping').checked;
 
-      // جمع نماذج الرسائل
-      const messageElements = document.querySelectorAll('.msg-text');
-      const templates = Array.from(messageElements).map(el => el.value.trim()).filter(t => t.length > 0);
+      // جمع النماذج وفق النمط المختار
+      let singleTemplates = [];
+      let validSequences = [];
 
-      if (templates.length === 0) {
-        alert("يرجى كتابة نص رسالة واحدة على الأقل في قوالب الرسائل.");
-        return;
+      if (currentSendingMode === 'single') {
+        const messageElements = document.querySelectorAll('#singleMessagesSection .msg-text');
+        singleTemplates = Array.from(messageElements).map(el => el.value.trim()).filter(t => t.length > 0);
+        if (singleTemplates.length === 0) {
+          alert("يرجى كتابة نص رسالة واحدة على الأقل في قوالب الرسائل الفردية.");
+          return;
+        }
+      } else {
+        validSequences = messageSequences.filter(g => g.messages.some(m => m.trim().length > 0));
+        if (validSequences.length === 0) {
+          alert("يرجى كتابة رسائل في مجموعة واحدة على الأقل.");
+          return;
+        }
       }
 
-      // تحليل بيانات العملاء والمتغيرات
       const rows = rawData.split(/\r?\n/).map(line => {
         const parts = line.split(',').map(p => p.trim());
         const phone = parts[0] ? parts[0].replace(/[^0-9]/g, '') : '';
@@ -1146,7 +1359,7 @@
       document.getElementById('sendBtn').style.display = 'none';
       document.getElementById('stopBtn').style.display = 'inline-flex';
 
-      addLog(`🚀 بدء إطلاق الحملة لعدد (${rows.length}) عميل عبر الحساب [${currentInstance}]...`, 'log-msg-info');
+      addLog(`🚀 بدء إطلاق الحملة (${currentSendingMode === 'single' ? 'نمط فردي' : 'نمط مجموعات متتالية'}) لعدد (${rows.length}) عميل...`, 'log-msg-info');
 
       let successCount = 0;
       let failedCount = 0;
@@ -1157,72 +1370,100 @@
           break;
         }
 
-        // فحص حد التسخين اليومي
         if (dailyLimit > 0 && getDailySentCount() >= dailyLimit) {
           addLog(`⚠️ تم الوصول لحد التسخين اليومي الأقصى (${dailyLimit} رسالة). توقف الإرسال حفاظاً على الرقم.`, 'log-msg-warning');
           break;
         }
 
         const row = rows[i];
-        // اختيار قالب عشوائي
-        const template = templates[Math.floor(Math.random() * templates.length)];
-        const compiledText = compileMessageTemplate(template, row);
-
         updateProgress(i + 1, rows.length);
 
-        try {
-          addLog(`[${i + 1}/${rows.length}] جاري معالجة الإرسال للرقم (${row.phone})...`, 'log-msg-info');
-
-          // محاكاة مؤشر الكتابة
-          if (simulateTyping) {
-            await delayMs(1500);
-          }
-
-          const payload = {
-            number: row.phone,
-            text: compiledText,
-            delay: 1000
-          };
-
-          const res = await fetch(`${API_BASE}/message/sendText/${encodeURIComponent(currentInstance)}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': API_KEY
-            },
-            body: JSON.stringify(payload)
+        // تجهيز قائمة الرسائل التي ستُرسل لهذا العميل
+        let messagesToSend = [];
+        if (currentSendingMode === 'single') {
+          const template = singleTemplates[Math.floor(Math.random() * singleTemplates.length)];
+          messagesToSend.push(compileMessageTemplate(template, row));
+        } else {
+          // اختيار مجموعة عشوائياً
+          const chosenGroup = validSequences[Math.floor(Math.random() * validSequences.length)];
+          addLog(`📦 تم اختيار [${chosenGroup.name}] للعميل (${row.phone})`, 'log-msg-info');
+          chosenGroup.messages.forEach(m => {
+            if (m.trim().length > 0) {
+              messagesToSend.push(compileMessageTemplate(m, row));
+            }
           });
-
-          const data = await res.json();
-          const isExistsFalse = Array.isArray(data?.response?.message) && data.response.message.some(m => m.exists === false);
-
-          if (res.ok && !isExistsFalse) {
-            successCount++;
-            incrementDailySentCount();
-            document.getElementById('kpiSuccess').innerText = successCount;
-            addLog(`✔ تم إرسال الرسالة بنجاح إلى [${row.name || 'عميل'}] (${row.phone})`, 'log-msg-success');
-          } else {
-            failedCount++;
-            document.getElementById('kpiFailed').innerText = failedCount;
-            addLog(`✖ فشل إرسال الرسالة إلى (${row.phone}): ${data?.response?.message?.[0]?.exists === false ? 'الرقم غير مسجل بواتساب' : 'خطأ سيرفر'}`, 'log-msg-error');
-          }
-        } catch (err) {
-          failedCount++;
-          document.getElementById('kpiFailed').innerText = failedCount;
-          addLog(`خطأ اتصال أثناء الإرسال للرقم (${row.phone}): ${err.message}`, 'log-msg-error');
         }
 
-        // تطبيق الفاصل العشوائي واستراحة الدفعة إن لم تكن الرسالة الأخيرة
+        let isClientSuccess = true;
+
+        // إرسال رسائل هذا العميل بالترتيب
+        for (let mIndex = 0; mIndex < messagesToSend.length; mIndex++) {
+          if (stopCampaignRequested) break;
+
+          const msgText = messagesToSend[mIndex];
+
+          try {
+            if (simulateTyping) {
+              await delayMs(1500);
+            }
+
+            const payload = {
+              number: row.phone,
+              text: msgText,
+              delay: 1000
+            };
+
+            const res = await fetch(`${API_BASE}/message/sendText/${encodeURIComponent(currentInstance)}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': API_KEY
+              },
+              body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+            const isExistsFalse = Array.isArray(data?.response?.message) && data.response.message.some(m => m.exists === false);
+
+            if (res.ok && !isExistsFalse) {
+              incrementDailySentCount();
+              addLog(`✔ [رسالة ${mIndex + 1}/${messagesToSend.length}] أُرسلت بنجاح إلى [${row.name || 'عميل'}] (${row.phone})`, 'log-msg-success');
+            } else {
+              isClientSuccess = false;
+              addLog(`✖ فشل إرسال رسالة ${mIndex + 1} إلى (${row.phone})`, 'log-msg-error');
+              break;
+            }
+          } catch (err) {
+            isClientSuccess = false;
+            addLog(`خطأ اتصال أثناء الإرسال للرقم (${row.phone}): ${err.message}`, 'log-msg-error');
+            break;
+          }
+
+          // فاصل عشوائي بين رسائل نفس المجموعة للعميل
+          if (mIndex < messagesToSend.length - 1 && !stopCampaignRequested) {
+            const innerDelay = Math.floor(Math.random() * (seqMaxDelay - seqMinDelay + 1)) + seqMinDelay;
+            addLog(`⏳ انتظار ${innerDelay} ثانية قبل الرسالة التالية لنفس العميل...`, 'log-msg-default');
+            await countdownDelay(innerDelay);
+          }
+        }
+
+        if (isClientSuccess) {
+          successCount++;
+          document.getElementById('kpiSuccess').innerText = successCount;
+        } else {
+          failedCount++;
+          document.getElementById('kpiFailed').innerText = failedCount;
+        }
+
+        // الفاصل بين العملاء واستراحة الدفعة
         if (i < rows.length - 1 && !stopCampaignRequested) {
-          // فحص استراحة الدفعة (Batch Pause)
           if (batchCount > 0 && (i + 1) % batchCount === 0) {
             const pauseSeconds = Math.floor(Math.random() * (batchPauseMax - batchPauseMin + 1)) + batchPauseMin;
-            addLog(`☕ تم إرسال دفعة (${batchCount} رسائل). استراحة أمان عشوائية لمدة ${pauseSeconds} ثانية...`, 'log-msg-warning');
+            addLog(`☕ تم إرسال دفعة (${batchCount} عملاء). استراحة أمان عشوائية لمدة ${pauseSeconds} ثانية...`, 'log-msg-warning');
             await countdownDelay(pauseSeconds);
           } else {
-            // الفاصل العشوائي الطبيعي بين الرسائل
             const randomDelaySec = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
-            addLog(`⏳ انتظار عشوائي لمدة ${randomDelaySec} ثانية قبل الرسالة التالية...`, 'log-msg-default');
+            addLog(`⏳ انتظار عشوائي لمدة ${randomDelaySec} ثانية قبل العميل التالي...`, 'log-msg-default');
             await countdownDelay(randomDelaySec);
           }
         }
@@ -1958,7 +2199,7 @@
 
     function insertVariableIntoActiveTextarea(varName) {
       if (!activeTextarea) {
-        activeTextarea = document.querySelector('.msg-text');
+        activeTextarea = document.querySelector('.msg-text') || document.querySelector('.seq-msg-text');
       }
       if (!activeTextarea) return;
 
