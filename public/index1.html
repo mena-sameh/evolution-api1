@@ -557,6 +557,28 @@
       gap: 10px;
     }
 
+    /* أسلوب كروت الأوتوميشن */
+    .auto-rule-card {
+      background: #f8fafc;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .auto-rule-row {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 2fr auto;
+      gap: 8px;
+      align-items: center;
+    }
+    @media (max-width: 768px) {
+      .auto-rule-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
     /* Modal */
     .modal-overlay {
       position: fixed;
@@ -795,7 +817,7 @@
         </div>
       </div>
 
-      <!-- Left: Live Incoming Messages & Message Setup -->
+      <!-- Left: Live Incoming Messages, Automation & Message Setup -->
       <div style="display: flex; flex-direction: column; gap: 24px;">
 
         <!-- مربع الرسائل المستلمة الواردة (Live Inbox) -->
@@ -815,6 +837,23 @@
               <i data-lucide="inbox" style="width: 36px; height: 36px;"></i>
               <p>في انتظار الرسائل الواردة من العملاء...</p>
             </div>
+          </div>
+        </div>
+
+        <!-- كارت أوتوميشن الردود والجروبات الذكية -->
+        <div class="saas-card">
+          <div class="card-title">
+            <div class="card-title-left">
+              <i data-lucide="bot" style="color: var(--primary);"></i>
+              <span>قواعد الأوتوميشن الذكية (الردود والجروبات)</span>
+            </div>
+            <button type="button" class="btn btn-secondary" style="padding: 4px 10px; font-size: 12px;" onclick="addAutomationRule()">
+              <i data-lucide="plus"></i> إضافة قاعدة
+            </button>
+          </div>
+
+          <div id="automationRulesContainer" style="display: flex; flex-direction: column; gap: 12px;">
+            <!-- يتم رسم القواعد هنا عبر الجافاسكريبت -->
           </div>
         </div>
 
@@ -920,6 +959,184 @@
     ];
     let activeTextarea = null;
 
+    // ==========================================
+    // محرك أوتوميشن الردود وإضافة الجروبات
+    // ==========================================
+    let autoRules = JSON.parse(localStorage.getItem('evo_auto_rules')) || [
+      {
+        keyword: 'x',
+        matchType: 'exact',
+        action: 'add_to_group',
+        value: '12036302XXXXXXXX@g.us'
+      },
+      {
+        keyword: 'y',
+        matchType: 'contains',
+        action: 'reply_text',
+        value: 'أهلاً بك! تم استلام رسالتك وسيتم التواصل معك مباشرة.'
+      },
+      {
+        keyword: 'z',
+        matchType: 'exact',
+        action: 'add_to_group',
+        value: '12036303YYYYYYYY@g.us'
+      }
+    ];
+
+    function saveRules() {
+      localStorage.setItem('evo_auto_rules', JSON.stringify(autoRules));
+    }
+
+    function renderAutomationRules() {
+      const container = document.getElementById('automationRulesContainer');
+      if (!container) return;
+      container.innerHTML = '';
+
+      if (autoRules.length === 0) {
+        container.innerHTML = `<p style="font-size: 12px; color: var(--text-subtle); text-align: center; padding: 10px;">لا توجد قواعد مضافة حالياً. اضغط على "إضافة قاعدة".</p>`;
+        return;
+      }
+
+      autoRules.forEach((rule, idx) => {
+        const card = document.createElement('div');
+        card.className = 'auto-rule-card';
+        card.innerHTML = `
+          <div class="auto-rule-row">
+            <div>
+              <label style="font-size: 11px; font-weight: 700;">الكلمة المفتاحية:</label>
+              <input type="text" value="${rule.keyword}" placeholder="مثال: x" oninput="updateRule(${idx}, 'keyword', this.value)" style="padding: 6px 10px; font-size: 12px; width: 100%;">
+            </div>
+            <div>
+              <label style="font-size: 11px; font-weight: 700;">نوع الفحص:</label>
+              <select onchange="updateRule(${idx}, 'matchType', this.value)" style="padding: 6px 8px; font-size: 12px; width: 100%;">
+                <option value="exact" ${rule.matchType === 'exact' ? 'selected' : ''}>تطابق تام (Exact)</option>
+                <option value="contains" ${rule.matchType === 'contains' ? 'selected' : ''}>تحتوي على (Contains)</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size: 11px; font-weight: 700;">الإجراء والقيمة:</label>
+              <div style="display: flex; gap: 6px;">
+                <select onchange="updateRule(${idx}, 'action', this.value)" style="padding: 6px 8px; font-size: 12px; width: 45%;">
+                  <option value="reply_text" ${rule.action === 'reply_text' ? 'selected' : ''}>إرسال رد نصي</option>
+                  <option value="add_to_group" ${rule.action === 'add_to_group' ? 'selected' : ''}>إضافة لجروب</option>
+                </select>
+                <input type="text" value="${rule.value}" placeholder="${rule.action === 'add_to_group' ? 'معرف الجروب Group JID' : 'نص الرد التلقائي'}" oninput="updateRule(${idx}, 'value', this.value)" style="padding: 6px 10px; font-size: 12px; width: 55%;">
+              </div>
+            </div>
+            <button type="button" class="btn-icon-del" onclick="deleteRule(${idx})" style="align-self: flex-end; margin-bottom: 6px;" title="حذف القاعدة">
+              <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      lucide.createIcons();
+    }
+
+    function addAutomationRule() {
+      autoRules.push({
+        keyword: '',
+        matchType: 'contains',
+        action: 'reply_text',
+        value: ''
+      });
+      saveRules();
+      renderAutomationRules();
+    }
+
+    function updateRule(idx, field, val) {
+      autoRules[idx][field] = val;
+      saveRules();
+      if (field === 'action') renderAutomationRules();
+    }
+
+    function deleteRule(idx) {
+      autoRules.splice(idx, 1);
+      saveRules();
+      renderAutomationRules();
+    }
+
+    async function sendAutoReply(remoteJid, text) {
+      try {
+        const res = await fetch(`${API_BASE}/message/sendText/${currentInstance}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': API_KEY
+          },
+          body: JSON.stringify({
+            number: remoteJid,
+            options: { delay: 1200, presence: 'composing' },
+            textMessage: { text: text }
+          })
+        });
+        if (res.ok) {
+          addLog(`🤖 [أوتوميشن] تم إرسال الرد التلقائي إلى (${remoteJid})`, 'log-msg-success');
+        }
+      } catch (err) {
+        addLog(`فشل إرسال الرد التلقائي: ${err.message}`, 'log-msg-error');
+      }
+    }
+
+    async function addUserToGroup(groupJid, userPhone) {
+      try {
+        const cleanPhone = userPhone.replace(/[^0-9]/g, '');
+        const participantJid = `${cleanPhone}@s.whatsapp.net`;
+
+        const res = await fetch(`${API_BASE}/group/updateParticipant/${currentInstance}?groupJid=${encodeURIComponent(groupJid)}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': API_KEY
+          },
+          body: JSON.stringify({
+            action: 'add',
+            participants: [participantJid]
+          })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          addLog(`👥 [أوتوميشن] تمت إضافة (${cleanPhone}) إلى الجروب [${groupJid}] بنجاح!`, 'log-msg-success');
+        } else {
+          addLog(`تعذر إضافة الرقم للجروب: ${data.response || data.message || 'تأكد من صلاحيات المشرف'}`, 'log-msg-warning');
+        }
+      } catch (err) {
+        addLog(`خطأ أوتوميشن الجروب: ${err.message}`, 'log-msg-error');
+      }
+    }
+
+    async function processMessageAutomation(remoteJid, messageText) {
+      if (!messageText || autoRules.length === 0) return;
+      const cleanMsg = messageText.trim().toLowerCase();
+
+      for (const rule of autoRules) {
+        if (!rule.keyword) continue;
+        const targetKey = rule.keyword.trim().toLowerCase();
+        let isMatched = false;
+
+        if (rule.matchType === 'exact' && cleanMsg === targetKey) {
+          isMatched = true;
+        } else if (rule.matchType === 'contains' && cleanMsg.includes(targetKey)) {
+          isMatched = true;
+        }
+
+        if (isMatched) {
+          addLog(`⚡ تطابق الأوتوميشن مع القاعدة [${rule.keyword}] من (${remoteJid})`, 'log-msg-info');
+          if (rule.action === 'reply_text' && rule.value) {
+            await sendAutoReply(remoteJid, rule.value);
+          } else if (rule.action === 'add_to_group' && rule.value) {
+            await addUserToGroup(rule.value, remoteJid);
+          }
+          break;
+        }
+      }
+    }
+
+    // ==========================================
+    // دوال الحسابات والعدادات اليومية
+    // ==========================================
     function getTodayKey() {
       const today = new Date().toISOString().slice(0, 10);
       return `evo_sent_count_${currentInstance}_${today}`;
@@ -963,7 +1180,6 @@
       return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
-    // جلب الحسابات المسجلة من السيرفر
     async function fetchServerInstances() {
       try {
         const res = await fetch(`${API_BASE}/instance/fetchInstances`, {
@@ -1016,130 +1232,86 @@
       startInboxPolling();
     }
 
-    // نظام الاستقبال الدوري المضمون بدلاً من الـ WebSocket لضمان وصول الرسائل دائماً
+    // ==========================================
+    // فحص واستلام الرسائل المباشرة Inbox Polling
+    // ==========================================
     function startInboxPolling() {
-  if (window.inboxPollTimer) {
-    clearInterval(window.inboxPollTimer);
-  }
+      if (window.inboxPollTimer) {
+        clearInterval(window.inboxPollTimer);
+      }
 
-  // حفظ الرسائل التي تم عرضها بالفعل لمنع التكرار
-  if (!window.seenIncomingMessageIds) {
-    window.seenIncomingMessageIds = new Set();
-  }
+      if (!window.seenIncomingMessageIds) {
+        window.seenIncomingMessageIds = new Set();
+      }
 
-  addLog(
-    `✔ تم تفعيل استماع صندوق الوارد المباشر للحساب [${currentInstance}]`,
-    'log-msg-success'
-  );
-
-  window.inboxPollTimer = setInterval(async () => {
-    try {
-      const res = await fetch(
-        `${API_BASE}/chat/findMessages/${currentInstance}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': API_KEY
-          },
-          body: JSON.stringify({
-            where: {
-              key: {
-                fromMe: false
-              }
-            },
-            take: 50
-          })
-        }
+      addLog(
+        `✔ تم تفعيل استماع صندوق الوارد المباشر للحساب [${currentInstance}]`,
+        'log-msg-success'
       );
 
-      if (!res.ok) {
-        console.warn(
-          `Inbox polling failed: ${res.status} ${res.statusText}`
-        );
-        return;
-      }
+      window.inboxPollTimer = setInterval(async () => {
+        try {
+          const res = await fetch(
+            `${API_BASE}/chat/findMessages/${currentInstance}`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': API_KEY
+              },
+              body: JSON.stringify({
+                where: {
+                  key: {
+                    fromMe: false
+                  }
+                },
+                take: 50
+              })
+            }
+          );
 
-      const data = await res.json();
+          if (!res.ok) return;
 
-      // Evolution API بيرجع:
-      // data.messages.records
-      const records =
-        data?.messages?.records ||
-        data?.records ||
-        (Array.isArray(data?.messages) ? data.messages : []) ||
-        (Array.isArray(data) ? data : []);
+          const data = await res.json();
+          const records =
+            data?.messages?.records ||
+            data?.records ||
+            (Array.isArray(data?.messages) ? data.messages : []) ||
+            (Array.isArray(data) ? data : []);
 
-      if (!Array.isArray(records) || records.length === 0) {
-        return;
-      }
+          if (!Array.isArray(records) || records.length === 0) return;
 
-      // ترتيب الرسائل من الأقدم للأحدث لو timestamp موجود
-      const sortedRecords = [...records].sort((a, b) => {
-        const timeA = Number(a?.messageTimestamp || a?.timestamp || 0);
-        const timeB = Number(b?.messageTimestamp || b?.timestamp || 0);
+          const sortedRecords = [...records].sort((a, b) => {
+            const timeA = Number(a?.messageTimestamp || a?.timestamp || 0);
+            const timeB = Number(b?.messageTimestamp || b?.timestamp || 0);
+            return timeA - timeB;
+          });
 
-        return timeA - timeB;
-      });
+          for (const msg of sortedRecords) {
+            if (!msg || typeof msg !== 'object') continue;
+            const key = msg.key || {};
+            if (key.fromMe === true) continue;
 
-      for (const msg of sortedRecords) {
-        if (!msg || typeof msg !== 'object') {
-          continue;
+            const remoteJid = key.remoteJid || '';
+            if (remoteJid.includes('@g.us') || remoteJid.includes('status@broadcast')) continue;
+
+            const msgId = key.id || msg.id;
+            if (!msgId || window.seenIncomingMessageIds.has(msgId)) continue;
+
+            window.seenIncomingMessageIds.add(msgId);
+            handleIncomingMessage({ data: msg });
+          }
+
+          if (window.seenIncomingMessageIds.size > 1000) {
+            const ids = Array.from(window.seenIncomingMessageIds);
+            window.seenIncomingMessageIds = new Set(ids.slice(-1000));
+          }
+
+        } catch (e) {
+          console.error('Inbox polling error:', e);
         }
-
-        const key = msg.key || {};
-
-        // تجاهل الرسائل التي أرسلها الحساب نفسه
-        if (key.fromMe === true) {
-          continue;
-        }
-
-        // تجاهل الجروبات وحالات واتساب
-        const remoteJid = key.remoteJid || '';
-
-        if (
-          remoteJid.includes('@g.us') ||
-          remoteJid.includes('status@broadcast')
-        ) {
-          continue;
-        }
-
-        // ID ثابت للرسالة
-        const msgId = key.id || msg.id;
-
-        if (!msgId) {
-          continue;
-        }
-
-        // لو الرسالة اتعرضت قبل كده، تجاهلها
-        if (window.seenIncomingMessageIds.has(msgId)) {
-          continue;
-        }
-
-        // تسجيل الرسالة كمعالجة
-        window.seenIncomingMessageIds.add(msgId);
-
-        // عرض الرسالة في صندوق الوارد
-        handleIncomingMessage({
-          data: msg
-        });
-      }
-
-      // منع Set من النمو بلا حدود
-      // نحتفظ بآخر 1000 رسالة فقط
-      if (window.seenIncomingMessageIds.size > 1000) {
-        const ids = Array.from(window.seenIncomingMessageIds);
-
-        window.seenIncomingMessageIds = new Set(
-          ids.slice(-1000)
-        );
-      }
-
-    } catch (e) {
-      console.error('Inbox polling error:', e);
+      }, 4000);
     }
-  }, 4000);
-}
 
     function handleIncomingMessage(payload) {
       if (!payload) return;
@@ -1163,9 +1335,14 @@
         || (msg.audioMessage ? '🎙 [تسجيل صوتي]' : '')
         || (msg.documentMessage ? `📄 [مستند: ${msg.documentMessage.fileName || 'ملف'}]` : '')
         || (msg.videoMessage ? '🎥 [فيديو]' : '')
-        || 'رسالة واردة';
+        || '';
 
-      appendInboxMessage(pushName, phone, bodyText);
+      appendInboxMessage(pushName, phone, bodyText || 'رسالة واردة');
+
+      // معالجة الأوتوميشن للرسائل النصية
+      if (bodyText) {
+        processMessageAutomation(remoteJid, bodyText);
+      }
     }
 
     function appendInboxMessage(name, phone, text) {
@@ -1210,6 +1387,9 @@
       lucide.createIcons();
     }
 
+    // ==========================================
+    // نافذة الربط ورمز QR
+    // ==========================================
     function openAddAccountModal() {
       document.getElementById('addAccountModal').style.display = 'flex';
       document.getElementById('createStep').style.display = 'block';
@@ -1308,6 +1488,9 @@
       }, 3000);
     }
 
+    // ==========================================
+    // إدارة المتغيرات والقوالب
+    // ==========================================
     function renderVariableBadges() {
       const container = document.getElementById('varTagList');
       container.innerHTML = '';
@@ -1550,7 +1733,9 @@
       document.getElementById('progressCount').innerText = `${current} / ${total}`;
     }
 
-    // إطلاق الحملة على السيرفر (Background Worker)
+    // ==========================================
+    // تشغيل حملات الإرسال ومتابعة السيرفر
+    // ==========================================
     async function startSending() {
       const rawData = document.getElementById('dataInput').value.trim();
       const mediaFile = document.getElementById('mediaFile').files[0];
@@ -1648,7 +1833,6 @@
       } catch (e) {}
     }
 
-    // متابعة التقدم المستمر من السيرفر وعرضه في الشاشة والعدادات
     function trackServerCampaign() {
       setInterval(async () => {
         try {
@@ -1671,9 +1855,11 @@
       }, 3000);
     }
 
+    // التهيئة العامة عند التحميل
     initInstances();
     document.querySelectorAll('.msg-text').forEach(attachMentionEvents);
     renderVariableBadges();
+    renderAutomationRules();
     updateKpiTotal();
     updateDailyCountUI();
     trackServerCampaign();
