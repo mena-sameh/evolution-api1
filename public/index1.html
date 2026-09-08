@@ -323,7 +323,6 @@
     }
     .file-dropzone:hover { border-color: var(--primary); background: #f0fdf4; }
 
-    /* صندوق الرسائل الواردة */
     .inbox-container {
       background: #f8fafc;
       border: 1px solid var(--border-subtle);
@@ -390,35 +389,6 @@
       word-break: break-word;
     }
 
-    .msg-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .msg-item {
-      background: #f8fafc;
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .msg-item-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--primary);
-    }
-    .btn-icon-del {
-      background: transparent;
-      border: none;
-      color: var(--danger);
-      cursor: pointer;
-    }
-
     .btn {
       display: inline-flex;
       align-items: center;
@@ -450,28 +420,6 @@
       border: 1px dashed var(--primary);
       color: var(--primary);
       width: 100%;
-    }
-
-    .progress-wrapper {
-      background: #f8fafc;
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .progress-bar-bg {
-      height: 8px;
-      background: #e2e8f0;
-      border-radius: 4px;
-      overflow: hidden;
-    }
-    .progress-bar-fill {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, var(--primary), var(--accent));
-      transition: width 0.3s ease;
     }
 
     .terminal-console {
@@ -525,7 +473,6 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
     }
     .auto-rule-row {
       display: grid;
@@ -742,22 +689,9 @@
         </div>
 
         <div style="display: flex; gap: 10px;">
-          <button type="button" class="btn btn-primary" id="sendBtn" onclick="startSending()" style="flex: 2;">
+          <button type="button" class="btn btn-primary" id="sendBtn" style="flex: 2;">
             <i data-lucide="play"></i> إطلاق الحملة على السيرفر
           </button>
-          <button type="button" class="btn btn-danger" id="stopBtn" onclick="stopSending()" style="flex: 1; display: none;">
-            <i data-lucide="square"></i> إيقاف مؤقت
-          </button>
-        </div>
-
-        <div class="progress-wrapper">
-          <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700;">
-            <span>معدل الإنجاز: <b id="progressCount">0 / 0</b></span>
-            <span id="percentText" style="color: var(--primary);">0%</span>
-          </div>
-          <div class="progress-bar-bg">
-            <div class="progress-bar-fill" id="progressBar"></div>
-          </div>
         </div>
       </div>
 
@@ -867,12 +801,15 @@
     const API_BASE = 'https://evolution-api-bkwl.onrender.com';
     const API_KEY = '9SXCq4YxLGPtkufJKM7u+zv2';
 
-    let instances = JSON.parse(localStorage.getItem('evo_instances') || '["MMMMMMM"]');
-    let currentInstance = localStorage.getItem('evo_current_instance') || 'MMMMMMM';
+    let instances = JSON.parse(localStorage.getItem('evo_instances') || '["Q"]');
+    let currentInstance = localStorage.getItem('evo_current_instance') || 'Q';
 
-    let availableGroups = []; // لحفظ الجروبات المتاحة للحساب النشط
+    let availableGroups = [];
     let receivedCount = 0;
     let qrCheckInterval = null;
+
+    // تسجيل توقيت بدء الجلسة لتجاهل الرسائل القديمة في الأوتوميشن
+    const sessionStartTime = Math.floor(Date.now() / 1000);
 
     const defaultVars = ['wa_name', 'phone_name', 'name', 'phone'];
     let customVars = [
@@ -894,7 +831,7 @@
         keyword: 'y',
         matchType: 'exact',
         action: 'reply_text',
-        value: 'أهلاً بك! تم استلام رسالتك وسيتم تنفيذ طلبك فوراً.'
+        value: 'أهلاً بك! تم استلام رسالتك وسيتم الرد عليك.'
       }
     ];
 
@@ -902,7 +839,6 @@
       localStorage.setItem('evo_auto_rules', JSON.stringify(autoRules));
     }
 
-    // جلب قائمة الجروبات المسجل بها الحساب من السيرفر
     async function fetchAvailableGroups(notify = false) {
       if (!currentInstance) return;
       try {
@@ -912,9 +848,7 @@
           headers: { 'apikey': API_KEY }
         });
         
-        if (!res.ok) {
-          throw new Error(`كود الاستجابة: ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`كود: ${res.status}`);
 
         const data = await res.json();
         const groups = Array.isArray(data) ? data : (data?.groups || []);
@@ -925,13 +859,11 @@
         })).filter(g => g.id && g.id.includes('@g.us'));
 
         if (notify) {
-          addLog(`✔ تم العثور على ${availableGroups.length} مجموعة مسجلة على هذا الرقم.`, 'log-msg-success');
+          addLog(`✔ تم تحديث ${availableGroups.length} مجموعة مسجلة على هذا الرقم.`, 'log-msg-success');
         }
         renderAutomationRules();
       } catch (err) {
-        if (notify) {
-          addLog(`تعذر جلب المجموعات: ${err.message}`, 'log-msg-warning');
-        }
+        if (notify) addLog(`تعذر جلب المجموعات: ${err.message}`, 'log-msg-warning');
       }
     }
 
@@ -941,7 +873,7 @@
       container.innerHTML = '';
 
       if (autoRules.length === 0) {
-        container.innerHTML = `<p style="font-size: 12px; color: var(--text-subtle); text-align: center; padding: 10px;">لا توجد قواعد مضافة حالياً. اضغط على "إضافة قاعدة".</p>`;
+        container.innerHTML = `<p style="font-size: 12px; color: var(--text-subtle); text-align: center; padding: 10px;">لا توجد قواعد مضافة حالياً.</p>`;
         return;
       }
 
@@ -949,7 +881,6 @@
         const card = document.createElement('div');
         card.className = 'auto-rule-card';
 
-        // بناء حقل الإجراء: لو إضافة لجروب، يعرض قائمة بالجروبات
         let valueFieldHtml = '';
         if (rule.action === 'add_to_group') {
           let optionsHtml = `<option value="">-- اختر الجروب المطلوب --</option>`;
@@ -964,7 +895,7 @@
           `;
         } else {
           valueFieldHtml = `
-            <input type="text" value="${rule.value || ''}" placeholder="نص رسالة الرد التلقائي..." oninput="updateRule(${idx}, 'value', this.value)" style="width: 58%; font-size: 12px; padding: 6px 10px;">
+            <input type="text" value="${rule.value || ''}" placeholder="نص رسالة الرد..." oninput="updateRule(${idx}, 'value', this.value)" style="width: 58%; font-size: 12px; padding: 6px 10px;">
           `;
         }
 
@@ -1025,26 +956,30 @@
       renderAutomationRules();
     }
 
-    // إرسال الرد التلقائي بدقة
+    // إرسال الرد بالصيغة الصحيحة المتوافقة مع Evolution API v2
     async function sendAutoReply(recipientJid, text) {
       try {
         const cleanRecipient = recipientJid.replace(/@.+$/, '');
+        
+        // الهيكل المعتمد والمطلوب من السيرفر
+        const payload = {
+          number: cleanRecipient,
+          text: text,
+          delay: 1200
+        };
+
         const res = await fetch(`${API_BASE}/message/sendText/${currentInstance}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'apikey': API_KEY
           },
-          body: JSON.stringify({
-            number: cleanRecipient,
-            options: { delay: 1000, presence: 'composing' },
-            textMessage: { text: text }
-          })
+          body: JSON.stringify(payload)
         });
 
         const data = await res.json();
         if (res.ok) {
-          addLog(`🤖 [أوتوميشن] تم إرسال الرد التلقائي بنجاح إلى (${cleanRecipient})`, 'log-msg-success');
+          addLog(`🤖 [أوتوميشن] تم إرسال الرد بنجاح إلى (${cleanRecipient}): "${text}"`, 'log-msg-success');
         } else {
           const errDetail = typeof data === 'object' ? JSON.stringify(data) : data;
           addLog(`فشل إرسال الرد: ${errDetail}`, 'log-msg-error');
@@ -1054,7 +989,7 @@
       }
     }
 
-    // إضافة جهة الاتصال إلى الجروب المحدد
+    // إضافة جهة الاتصال إلى الجروب
     async function addUserToGroup(groupJid, rawJid, extractedPhone) {
       try {
         if (!groupJid) {
@@ -1062,7 +997,6 @@
           return;
         }
 
-        // استخدام رقم الهاتف الحقيقي؛ إذا لم يتوفر يُنظف الرقم من الـ JID
         const targetPhone = (extractedPhone && extractedPhone.length >= 8) 
           ? extractedPhone 
           : rawJid.replace(/[^0-9]/g, '');
@@ -1083,7 +1017,7 @@
 
         const data = await res.json();
         if (res.ok) {
-          addLog(`👥 [أوتوميشن] تمت إضافة (${targetPhone}) إلى المجموعة بنجاح!`, 'log-msg-success');
+          addLog(`👥 [أوتوميشن] تمت إضافة (${targetPhone}) إلى الجروب بنجاح!`, 'log-msg-success');
         } else {
           const errorMsg = data?.response?.message || data?.message || JSON.stringify(data);
           addLog(`تعذر إضافة العضو للجروب: ${errorMsg}`, 'log-msg-warning');
@@ -1093,9 +1027,15 @@
       }
     }
 
-    // فحص وتوجيه الرسائل للأوتوميشن
-    async function processMessageAutomation(remoteJid, messageText, extractedPhone) {
+    // معالجة الأوتوميشن فقط للرسائل الجديدة
+    async function processMessageAutomation(remoteJid, messageText, extractedPhone, timestamp) {
       if (!messageText || autoRules.length === 0) return;
+
+      // تجاهل الرسائل التي تم استلامها قبل فتح الصفحة لتفادي التكرار القديم
+      if (timestamp && timestamp < sessionStartTime) {
+        return;
+      }
+
       const cleanMsg = messageText.trim().toLowerCase();
 
       for (const rule of autoRules) {
@@ -1110,7 +1050,7 @@
         }
 
         if (isMatched) {
-          addLog(`⚡ تطابق الأوتوميشن مع القاعدة [${rule.keyword}] من (${remoteJid})`, 'log-msg-info');
+          addLog(`⚡ تطابق أوتوميشن [${rule.keyword}] من (${remoteJid})`, 'log-msg-info');
           if (rule.action === 'reply_text' && rule.value) {
             await sendAutoReply(remoteJid, rule.value);
           } else if (rule.action === 'add_to_group' && rule.value) {
@@ -1125,15 +1065,10 @@
     // صندوق الوارد المباشر Inbox Polling
     // ==========================================
     function startInboxPolling() {
-      if (window.inboxPollTimer) {
-        clearInterval(window.inboxPollTimer);
-      }
+      if (window.inboxPollTimer) clearInterval(window.inboxPollTimer);
+      if (!window.seenIncomingMessageIds) window.seenIncomingMessageIds = new Set();
 
-      if (!window.seenIncomingMessageIds) {
-        window.seenIncomingMessageIds = new Set();
-      }
-
-      addLog(`✔ تم تفعيل استماع صندوق الوارد المباشر للحساب [${currentInstance}]`, 'log-msg-success');
+      addLog(`✔ تم تفعيل استماع صندوق الوارد للحساب [${currentInstance}]`, 'log-msg-success');
 
       window.inboxPollTimer = setInterval(async () => {
         try {
@@ -1185,7 +1120,7 @@
         } catch (e) {
           console.error('Inbox polling error:', e);
         }
-      }, 4000);
+      }, 3500);
     }
 
     function handleIncomingMessage(payload) {
@@ -1200,7 +1135,6 @@
       const remoteJid = key.remoteJid || '';
       if (remoteJid.includes('@g.us') || remoteJid.includes('status@broadcast')) return;
 
-      // استخراج رقم الهاتف الحقيقي لتجاوز مشكلة معرّفات الـ LID
       let phone = '';
       if (key.participant && !key.participant.includes('@lid')) {
         phone = key.participant.replace(/[^0-9]/g, '');
@@ -1222,8 +1156,10 @@
 
       appendInboxMessage(pushName, phone, bodyText || 'رسالة واردة');
 
+      const timestamp = Number(msgData.messageTimestamp || msgData.timestamp || 0);
+
       if (bodyText) {
-        processMessageAutomation(remoteJid, bodyText, phone);
+        processMessageAutomation(remoteJid, bodyText, phone, timestamp);
       }
     }
 
@@ -1439,7 +1375,7 @@
       }
     }
 
-    // تشغيل التطبيق
+    // التشغيل المباشر
     renderInstanceSelect();
     fetchServerInstances();
     renderVariableBadges();
