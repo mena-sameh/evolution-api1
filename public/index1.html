@@ -415,12 +415,6 @@
     }
     .btn-secondary:hover { background: #f8fafc; }
     .btn-danger { background: var(--danger); color: #fff; }
-    .btn-outline-dashed {
-      background: #f0fdf4;
-      border: 1px dashed var(--primary);
-      color: var(--primary);
-      width: 100%;
-    }
 
     .terminal-console {
       background: #0f172a;
@@ -800,8 +794,8 @@
     const API_BASE = 'https://evolution-api-bkwl.onrender.com';
     const API_KEY = '9SXCq4YxLGPtkufJKM7u+zv2';
 
-    let instances = JSON.parse(localStorage.getItem('evo_instances') || '["Q"]');
-    let currentInstance = localStorage.getItem('evo_current_instance') || 'Q';
+    let instances = JSON.parse(localStorage.getItem('evo_instances') || '["vb"]');
+    let currentInstance = localStorage.getItem('evo_current_instance') || 'vb';
 
     let availableGroups = [];
     let receivedCount = 0;
@@ -954,12 +948,10 @@
       renderAutomationRules();
     }
 
-    // إرسال الرد بالصيغة المتوافقة مع أرقام الهواتف ومعرّفات LID
+    // إرسال الرد
     async function sendAutoReply(recipientJid, text) {
       try {
         let targetRecipient = recipientJid;
-
-        // إذا كان المعرف من نوع LID، يمرر كاملاً مع @lid ليفك السيرفر تشفيره
         if (recipientJid.endsWith('@lid')) {
           targetRecipient = recipientJid;
         } else {
@@ -986,28 +978,61 @@
 
         if (res.ok && !isExistsFalse) {
           addLog(`🤖 [أوتوميشن] تم إرسال الرد بنجاح إلى (${targetRecipient}): "${text}"`, 'log-msg-success');
+          return true;
         } else {
           const errDetail = typeof data === 'object' ? JSON.stringify(data) : data;
           addLog(`فشل إرسال الرد: ${errDetail}`, 'log-msg-error');
+          return false;
         }
       } catch (err) {
         addLog(`خطأ إرسال الرد التلقائي: ${err.message}`, 'log-msg-error');
+        return false;
       }
     }
 
-    // إضافة جهة الاتصال إلى الجروب
+    // جلب رابط دعوة الجروب
+    async function getGroupInviteUrl(groupJid) {
+      try {
+        const res = await fetch(`${API_BASE}/group/inviteCode/${currentInstance}?groupJid=${encodeURIComponent(groupJid)}`, {
+          headers: { 'apikey': API_KEY }
+        });
+        const data = await res.json();
+        const code = data?.inviteCode || data?.code;
+        if (code) {
+          return `https://chat.whatsapp.com/${code}`;
+        }
+        return null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    // إضافة جهة الاتصال إلى الجروب مع خاصية Fallback لرابط الدعوة
     async function addUserToGroup(groupJid, rawJid, extractedPhone) {
       try {
         if (!groupJid) {
-          addLog(`⚠️ لم يتم تحديد جروب للقاعدة المتطابقة! يرجى اختيار جروب من القائمة.`, 'log-msg-warning');
+          addLog(`⚠️ لم يتم تحديد جروب للقاعدة المتطابقة!`, 'log-msg-warning');
           return;
         }
 
-        const targetPhone = (extractedPhone && extractedPhone.length >= 8) 
-          ? extractedPhone 
-          : rawJid.replace(/[^0-9]/g, '');
+        // إذا كان المتوفر فقط هو LID وليس رقم هاتف حقيقي، نرسل الرابط فوراً
+        const isOnlyLid = !extractedPhone || extractedPhone.length < 8 || rawJid.includes('@lid');
 
-        const participantJid = `${targetPhone}@s.whatsapp.net`;
+        if (isOnlyLid) {
+          addLog(`ℹ️ حساب العميل معرّف بـ LID مشفر؛ جاري توليد رابط انضمام للجروب وإرساله له...`, 'log-msg-info');
+          const inviteUrl = await getGroupInviteUrl(groupJid);
+          if (inviteUrl) {
+            await sendAutoReply(rawJid, `مرحباً بك! تفضل بالانضمام إلى المجموعة من خلال هذا الرابط:\n${inviteUrl}`);
+            addLog(`🔗 [أوتوميشن] تم إرسال رابط الانضمام للعميل بنجاح!`, 'log-msg-success');
+          } else {
+            addLog(`⚠️ تعذر جلب رابط الدعوة، تأكد من صلاحيات المشرف (Admin) في الجروب.`, 'log-msg-warning');
+          }
+          return;
+        }
+
+        // محاولة الإضافة المباشرة إذا توفر رقم الهاتف
+        const cleanPhone = extractedPhone.replace(/[^0-9]/g, '');
+        const participantJid = `${cleanPhone}@s.whatsapp.net`;
 
         const res = await fetch(`${API_BASE}/group/updateParticipant/${currentInstance}?groupJid=${encodeURIComponent(groupJid)}`, {
           method: 'POST',
@@ -1022,18 +1047,34 @@
         });
 
         const data = await res.json();
+
+        // التحقق من نتيجة الإضافة
+        let isDirectAdded = false;
         if (res.ok) {
-          addLog(`👥 [أوتوميشن] تمت إضافة (${targetPhone}) إلى الجروب بنجاح!`, 'log-msg-success');
-        } else {
-          const errorMsg = data?.response?.message || data?.message || JSON.stringify(data);
-          addLog(`تعذر إضافة العضو للجروب: ${errorMsg}`, 'log-msg-warning');
+          const statusResult = data?.[0]?.status || data?.status || '';
+          if (statusResult === '200' || statusResult === 200 || !statusResult) {
+            isDirectAdded = true;
+          }
         }
+
+        if (isDirectAdded) {
+          addLog(`👥 [أوتوميشن] تمت إضافة (${cleanPhone}) إلى الجروب بنجاح!`, 'log-msg-success');
+        } else {
+          // في حال منع العضو الإضافة بسبب الخصوصية (403 أو غيرها)، نرسل له الرابط فوراً
+          addLog(`⚠️ تعذرت الإضافة المباشرة للرقم (${cleanPhone}) بسبب إعدادات الخصوصية؛ جاري إرسال رابط الدعوة...`, 'log-msg-warning');
+          const inviteUrl = await getGroupInviteUrl(groupJid);
+          if (inviteUrl) {
+            await sendAutoReply(rawJid, `مرحباً بك! حاولت إضافتك إلى الجروب ولكن إعدادات الخصوصية لديك تمنع ذلك، يمكنك الانضمام عبر هذا الرابط:\n${inviteUrl}`);
+            addLog(`🔗 [أوتوميشن] تم إرسال رابط الدعوة بديلاً للإضافة المباشرة بنجاح.`, 'log-msg-success');
+          }
+        }
+
       } catch (err) {
-        addLog(`خطأ إضافة الجروب: ${err.message}`, 'log-msg-error');
+        addLog(`خطأ أوتوميشن الجروب: ${err.message}`, 'log-msg-error');
       }
     }
 
-    // معالجة الأوتوميشن للرسائل الواردة الجديدة فقط
+    // معالجة الأوتوميشن
     async function processMessageAutomation(targetRecipient, messageText, extractedPhone, timestamp) {
       if (!messageText || autoRules.length === 0) return;
 
@@ -1149,15 +1190,9 @@
         phone = String(msgData.participantPhone).replace(/[^0-9]/g, '');
       } else if (!remoteJid.includes('@lid')) {
         phone = remoteJid.replace(/[^0-9]/g, '');
-      } else {
-        phone = remoteJid.replace('@lid', '');
       }
 
-      // تحديد المستقبل المناسب: رقم الهاتف الحقيقي إن وجد، أو الـ JID بالكامل (مثل @lid)
-      const targetRecipient = (phone && phone.length >= 8 && !remoteJid.startsWith(phone)) 
-        ? phone 
-        : remoteJid;
-
+      const targetRecipient = remoteJid;
       const pushName = msgData.pushName || 'عميل واتساب';
       const msg = msgData.message || {};
       let bodyText = msg.conversation 
@@ -1168,7 +1203,7 @@
         || (msg.videoMessage ? '🎥 [فيديو]' : '')
         || '';
 
-      appendInboxMessage(pushName, phone, bodyText || 'رسالة واردة');
+      appendInboxMessage(pushName, phone || remoteJid.replace('@lid', ''), bodyText || 'رسالة واردة');
 
       const timestamp = Number(msgData.messageTimestamp || msgData.timestamp || 0);
 
@@ -1400,7 +1435,7 @@
       addLog("تم تصدير وتحميل قالب Excel بنجاح.", "log-msg-info");
     }
 
-    // التشغيل المباشر
+    // التشغيل
     renderInstanceSelect();
     fetchServerInstances();
     renderVariableBadges();
