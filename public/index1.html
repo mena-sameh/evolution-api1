@@ -909,23 +909,58 @@
         if (!res.ok) throw new Error(`كود الاستجابة: ${res.status}`);
 
         const data = await res.json();
-        const records = Array.isArray(data) ? data : (data?.records || data?.chats || []);
+        const records = Array.isArray(data)
+  ? data
+  : (data?.records || data?.chats || []);
 
-        const extracted = [];
-        const seenPhones = new Set();
+const extracted = [];
+const seenPhones = new Set();
 
-        records.forEach(c => {
-          const jid = c.id || c.remoteJid || c.jid || '';
-          if (!jid.endsWith('@s.whatsapp.net')) return;
-          if (jid.includes('@g.us') || jid.includes('@broadcast') || jid.includes('@lid')) return;
+records.forEach(c => {
+  // مهم: remoteJid هو الأولوية، وليس id
+  const jid = String(c.remoteJid || c.jid || c.id || '').trim();
 
-          const phone = jid.replace('@s.whatsapp.net', '').replace(/[^0-9]/g, '');
-          if (phone.length >= 8 && !seenPhones.has(phone)) {
-            seenPhones.add(phone);
-            const name = c.pushName || c.name || `عميل (${phone})`;
-            extracted.push({ phone, name, source: 'Chatlist' });
-          }
-        });
+  // قبول أرقام WhatsApp الحقيقية فقط
+  if (!jid.endsWith('@s.whatsapp.net')) return;
+
+  // استبعاد أي نوع غير فردي
+  if (
+    jid.includes('@g.us') ||
+    jid.includes('@broadcast') ||
+    jid.includes('@newsletter') ||
+    jid.includes('@lid')
+  ) {
+    return;
+  }
+
+  const phone = jid
+    .replace(/@s\.whatsapp\.net$/, '')
+    .replace(/[^0-9]/g, '');
+
+  if (
+    phone &&
+    phone.length >= 8 &&
+    phone.length <= 15 &&
+    !seenPhones.has(phone)
+  ) {
+    seenPhones.add(phone);
+
+    const name =
+      (typeof c.pushName === 'string' && c.pushName.trim())
+        ? c.pushName.trim()
+        : (
+            typeof c.name === 'string' && c.name.trim()
+              ? c.name.trim()
+              : `عميل (${phone})`
+          );
+
+    extracted.push({
+      phone,
+      name,
+      source: 'Chatlist'
+    });
+  }
+});
 
         if (extracted.length > 0) {
           handleExtractionSuccess(extracted, 'محادثات الشات (Chatlists)');
