@@ -464,7 +464,6 @@
       gap: 10px;
     }
 
-    /* كروت الأوتوميشن الذكية */
     .auto-rule-card {
       background: #f8fafc;
       border: 1px solid var(--border-subtle);
@@ -739,7 +738,7 @@
           </div>
         </div>
 
-        <!-- إعداد الرسائل والطرفية -->
+        <!-- سجل العمليات والطرفية -->
         <div class="saas-card">
           <div class="card-title">
             <div class="card-title-left">
@@ -808,7 +807,6 @@
     let receivedCount = 0;
     let qrCheckInterval = null;
 
-    // تسجيل توقيت بدء الجلسة لتجاهل الرسائل القديمة في الأوتوميشن
     const sessionStartTime = Math.floor(Date.now() / 1000);
 
     const defaultVars = ['wa_name', 'phone_name', 'name', 'phone'];
@@ -956,16 +954,22 @@
       renderAutomationRules();
     }
 
-    // إرسال الرد بالصيغة الصحيحة المتوافقة مع Evolution API v2
+    // إرسال الرد بالصيغة المتوافقة مع أرقام الهواتف ومعرّفات LID
     async function sendAutoReply(recipientJid, text) {
       try {
-        const cleanRecipient = recipientJid.replace(/@.+$/, '');
-        
-        // الهيكل المعتمد والمطلوب من السيرفر
+        let targetRecipient = recipientJid;
+
+        // إذا كان المعرف من نوع LID، يمرر كاملاً مع @lid ليفك السيرفر تشفيره
+        if (recipientJid.endsWith('@lid')) {
+          targetRecipient = recipientJid;
+        } else {
+          targetRecipient = recipientJid.replace(/[^0-9]/g, '');
+        }
+
         const payload = {
-          number: cleanRecipient,
+          number: targetRecipient,
           text: text,
-          delay: 1200
+          delay: 1000
         };
 
         const res = await fetch(`${API_BASE}/message/sendText/${currentInstance}`, {
@@ -978,8 +982,10 @@
         });
 
         const data = await res.json();
-        if (res.ok) {
-          addLog(`🤖 [أوتوميشن] تم إرسال الرد بنجاح إلى (${cleanRecipient}): "${text}"`, 'log-msg-success');
+        const isExistsFalse = Array.isArray(data?.response?.message) && data.response.message.some(m => m.exists === false);
+
+        if (res.ok && !isExistsFalse) {
+          addLog(`🤖 [أوتوميشن] تم إرسال الرد بنجاح إلى (${targetRecipient}): "${text}"`, 'log-msg-success');
         } else {
           const errDetail = typeof data === 'object' ? JSON.stringify(data) : data;
           addLog(`فشل إرسال الرد: ${errDetail}`, 'log-msg-error');
@@ -1027,11 +1033,10 @@
       }
     }
 
-    // معالجة الأوتوميشن فقط للرسائل الجديدة
-    async function processMessageAutomation(remoteJid, messageText, extractedPhone, timestamp) {
+    // معالجة الأوتوميشن للرسائل الواردة الجديدة فقط
+    async function processMessageAutomation(targetRecipient, messageText, extractedPhone, timestamp) {
       if (!messageText || autoRules.length === 0) return;
 
-      // تجاهل الرسائل التي تم استلامها قبل فتح الصفحة لتفادي التكرار القديم
       if (timestamp && timestamp < sessionStartTime) {
         return;
       }
@@ -1050,11 +1055,11 @@
         }
 
         if (isMatched) {
-          addLog(`⚡ تطابق أوتوميشن [${rule.keyword}] من (${remoteJid})`, 'log-msg-info');
+          addLog(`⚡ تطابق أوتوميشن [${rule.keyword}] من (${targetRecipient})`, 'log-msg-info');
           if (rule.action === 'reply_text' && rule.value) {
-            await sendAutoReply(remoteJid, rule.value);
+            await sendAutoReply(targetRecipient, rule.value);
           } else if (rule.action === 'add_to_group' && rule.value) {
-            await addUserToGroup(rule.value, remoteJid, extractedPhone);
+            await addUserToGroup(rule.value, targetRecipient, extractedPhone);
           }
           break;
         }
@@ -1138,11 +1143,20 @@
       let phone = '';
       if (key.participant && !key.participant.includes('@lid')) {
         phone = key.participant.replace(/[^0-9]/g, '');
+      } else if (msgData.senderPn) {
+        phone = String(msgData.senderPn).replace(/[^0-9]/g, '');
       } else if (msgData.participantPhone) {
         phone = String(msgData.participantPhone).replace(/[^0-9]/g, '');
-      } else {
+      } else if (!remoteJid.includes('@lid')) {
         phone = remoteJid.replace(/[^0-9]/g, '');
+      } else {
+        phone = remoteJid.replace('@lid', '');
       }
+
+      // تحديد المستقبل المناسب: رقم الهاتف الحقيقي إن وجد، أو الـ JID بالكامل (مثل @lid)
+      const targetRecipient = (phone && phone.length >= 8 && !remoteJid.startsWith(phone)) 
+        ? phone 
+        : remoteJid;
 
       const pushName = msgData.pushName || 'عميل واتساب';
       const msg = msgData.message || {};
@@ -1159,7 +1173,7 @@
       const timestamp = Number(msgData.messageTimestamp || msgData.timestamp || 0);
 
       if (bodyText) {
-        processMessageAutomation(remoteJid, bodyText, phone, timestamp);
+        processMessageAutomation(targetRecipient, bodyText, phone, timestamp);
       }
     }
 
@@ -1373,6 +1387,17 @@
       } catch (err) {
         document.getElementById('qrStatusText').innerText = `خطأ: ${err.message}`;
       }
+    }
+
+    function downloadExcelTemplate() {
+      const headers = ['Phone', 'Name', ...customVars.map(v => v.name)];
+      const sampleRow = ['201280471390', 'مينا سامح', ...customVars.map(v => v.value || 'قيمة تجريبية')];
+      const wsData = [headers, sampleRow];
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Campaign_Data");
+      XLSX.writeFile(wb, "whatsapp_campaign_template.xlsx");
+      addLog("تم تصدير وتحميل قالب Excel بنجاح.", "log-msg-info");
     }
 
     // التشغيل المباشر
