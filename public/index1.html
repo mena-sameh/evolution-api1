@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EvoFlow Enterprise | إدارة الحملات والأوتوميشن ومجموعات الرسائل</title>
-  
+  <title>EvoFlow Enterprise | لوحة تحكم الحملات والأوتوميشن السحابية</title>
+
+  <!-- Supabase JS Client v2 -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <!-- SheetJS لمعالجة ملفات Excel -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <!-- مكتبة Socket.io للاتصال المباشر مع Evolution API -->
@@ -20,22 +22,18 @@
       --bg-card: #ffffff;
       --border-subtle: #e2e8f0;
       --border-focus: #10b981;
-      
       --primary: #059669;
       --primary-glow: rgba(5, 150, 105, 0.12);
       --primary-hover: #047857;
       --accent: #0284c7;
-      
       --text-main: #0f172a;
       --text-muted: #475569;
       --text-subtle: #94a3b8;
-      
       --danger: #e11d48;
       --danger-bg: #fff1f2;
       --warning: #d97706;
       --success: #059669;
       --success-bg: #ecfdf5;
-
       --radius-sm: 8px;
       --radius-md: 12px;
       --radius-lg: 16px;
@@ -43,9 +41,7 @@
       --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
       --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, system-ui, sans-serif;
       background-color: var(--bg-base);
@@ -59,15 +55,7 @@
       flex-direction: column;
       align-items: center;
     }
-
-    .app-container {
-      width: 100%;
-      max-width: 1260px;
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-    }
-
+    .app-container { width: 100%; max-width: 1260px; display: flex; flex-direction: column; gap: 24px; }
     .saas-header {
       display: flex;
       justify-content: space-between;
@@ -80,471 +68,152 @@
       flex-wrap: wrap;
       gap: 16px;
     }
-    .brand-section {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
+    .brand-section { display: flex; align-items: center; gap: 14px; }
     .brand-logo {
-      width: 44px;
-      height: 44px;
-      border-radius: 10px;
+      width: 44px; height: 44px; border-radius: 10px;
       background: linear-gradient(135deg, var(--primary), #0284c7);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      box-shadow: 0 4px 12px var(--primary-glow);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; box-shadow: 0 4px 12px var(--primary-glow);
     }
-    .brand-title h1 {
-      font-size: 18px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-    }
-    .brand-title p {
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-
-    .instance-controls {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+    .brand-title h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
+    .brand-title p { font-size: 12px; color: var(--text-muted); }
+    .instance-controls { display: flex; align-items: center; gap: 10px; }
     .instance-select {
-      background: #ffffff;
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-sm);
-      color: var(--text-main);
-      padding: 8px 12px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
+      background: #ffffff; border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm); color: var(--text-main);
+      padding: 8px 12px; font-size: 13px; font-weight: 600; cursor: pointer;
     }
     .btn-add-account {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 14px;
-      background: #ecfdf5;
-      color: var(--primary);
-      border: 1px solid #a7f3d0;
-      border-radius: var(--radius-sm);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: var(--transition);
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 14px; background: #ecfdf5; color: var(--primary);
+      border: 1px solid #a7f3d0; border-radius: var(--radius-sm);
+      font-size: 13px; font-weight: 600; cursor: pointer; transition: var(--transition);
     }
-    .btn-add-account:hover {
-      background: var(--primary);
-      color: #ffffff;
-    }
-
+    .btn-add-account:hover { background: var(--primary); color: #ffffff; }
     .status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      background: var(--success-bg);
-      color: var(--primary);
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 14px; border-radius: 20px; font-size: 12px;
+      font-weight: 600; background: var(--success-bg); color: var(--primary);
       border: 1px solid rgba(5, 150, 105, 0.2);
     }
     .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--primary);
-      box-shadow: 0 0 8px var(--primary);
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--primary); box-shadow: 0 0 8px var(--primary);
       animation: pulse 2s infinite;
     }
     @keyframes pulse {
       0%, 100% { opacity: 1; transform: scale(1); }
       50% { opacity: 0.4; transform: scale(0.85); }
     }
-
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
-    }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
     .kpi-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      padding: 18px 20px;
-      border-radius: var(--radius-md);
-      box-shadow: var(--shadow-saas);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      transition: var(--transition);
+      background: var(--bg-surface); border: 1px solid var(--border-subtle);
+      padding: 18px 20px; border-radius: var(--radius-md); box-shadow: var(--shadow-saas);
+      display: flex; align-items: center; justify-content: space-between; transition: var(--transition);
     }
     .kpi-card:hover { box-shadow: var(--shadow-hover); }
     .kpi-data span { font-size: 12px; color: var(--text-muted); font-weight: 600; }
     .kpi-data h3 { font-size: 24px; font-weight: 700; margin-top: 4px; }
     .kpi-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--bg-surface-elevated);
-      color: var(--primary);
-      border: 1px solid var(--border-subtle);
+      width: 44px; height: 44px; border-radius: 10px; display: flex;
+      align-items: center; justify-content: center; background: var(--bg-surface-elevated);
+      color: var(--primary); border: 1px solid var(--border-subtle);
     }
-
-    .dashboard-layout {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-    }
-    @media (max-width: 1024px) {
-      .dashboard-layout { grid-template-columns: 1fr; }
-    }
-
+    .dashboard-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    @media (max-width: 1024px) { .dashboard-layout { grid-template-columns: 1fr; } }
     .saas-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-lg);
-      padding: 24px;
-      box-shadow: var(--shadow-saas);
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
+      background: var(--bg-surface); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-saas);
+      display: flex; flex-direction: column; gap: 20px;
     }
     .card-title {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--text-main);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid var(--border-subtle);
-      padding-bottom: 12px;
+      font-size: 16px; font-weight: 700; color: var(--text-main);
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--border-subtle); padding-bottom: 12px;
     }
-    .card-title-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+    .card-title-left { display: flex; align-items: center; gap: 10px; }
     .card-title i { color: var(--primary); }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .form-group label {
-      font-size: 13px;
-      font-weight: 600;
-      display: flex;
-      justify-content: space-between;
-    }
-
+    .form-group { display: flex; flex-direction: column; gap: 8px; }
+    .form-group label { font-size: 13px; font-weight: 600; display: flex; justify-content: space-between; }
     input, textarea, select {
-      background: #ffffff;
-      border: 1px solid #cbd5e1;
-      border-radius: var(--radius-sm);
-      color: var(--text-main);
-      padding: 10px 12px;
-      font-size: 13px;
-      font-family: inherit;
-      transition: var(--transition);
+      background: #ffffff; border: 1px solid #cbd5e1; border-radius: var(--radius-sm);
+      color: var(--text-main); padding: 10px 12px; font-size: 13px; font-family: inherit; transition: var(--transition);
     }
-    input:focus, textarea:focus, select:focus {
-      outline: none;
-      border-color: var(--border-focus);
-      box-shadow: 0 0 0 3px var(--primary-glow);
-    }
-
+    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--primary-glow); }
     .var-manager-box {
-      background: #f8fafc;
-      border: 1px dashed #cbd5e1;
-      border-radius: var(--radius-md);
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+      background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: var(--radius-md);
+      padding: 14px; display: flex; flex-direction: column; gap: 12px;
     }
-    .var-badges-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
+    .var-badges-container { display: flex; flex-wrap: wrap; gap: 8px; }
     .v-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      padding: 5px 12px;
-      border-radius: 6px;
-      cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px; font-size: 12px;
+      font-weight: 600; padding: 5px 12px; border-radius: 6px; cursor: pointer;
     }
-    .v-badge.fixed {
-      border: 1px solid #bae6fd;
-      background: #f0f9ff;
-      color: #0369a1;
-    }
-    .v-badge.special {
-      border: 1px solid #fde68a;
-      background: #fefce8;
-      color: #b45309;
-    }
-    .v-badge.ghost {
-      border: 1px solid #e9d5ff;
-      background: #faf5ff;
-      color: #7e22ce;
-    }
-    .v-badge.custom {
-      border: 1px solid #a7f3d0;
-      background: #ecfdf5;
-      color: #047857;
-    }
+    .v-badge.fixed { border: 1px solid #bae6fd; background: #f0f9ff; color: #0369a1; }
+    .v-badge.special { border: 1px solid #fde68a; background: #fefce8; color: #b45309; }
+    .v-badge.ghost { border: 1px solid #e9d5ff; background: #faf5ff; color: #7e22ce; }
+    .v-badge.custom { border: 1px solid #a7f3d0; background: #ecfdf5; color: #047857; }
     .v-badge .del-btn { cursor: pointer; color: var(--danger); margin-right: 4px; }
-
-    .var-input-container {
-      display: grid;
-      grid-template-columns: 1fr 1fr auto;
-      gap: 8px;
-      align-items: center;
-    }
-
+    .var-input-container { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: center; }
     .file-dropzone {
-      border: 2px dashed #cbd5e1;
-      border-radius: var(--radius-md);
-      padding: 16px;
-      text-align: center;
-      background: #f8fafc;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
+      border: 2px dashed #cbd5e1; border-radius: var(--radius-md); padding: 16px;
+      text-align: center; background: #f8fafc; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px;
     }
     .file-dropzone:hover { border-color: var(--primary); background: #f0fdf4; }
-
     .inbox-container {
-      background: #f8fafc;
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      height: 380px;
-      overflow-y: auto;
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+      background: #f8fafc; border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
+      height: 380px; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px;
     }
-    .inbox-empty {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-subtle);
-      gap: 8px;
-    }
+    .inbox-empty { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-subtle); gap: 8px; }
     .inbox-card {
-      background: #ffffff;
-      border: 1px solid var(--border-subtle);
-      border-right: 4px solid var(--primary);
-      border-radius: var(--radius-sm);
-      padding: 12px 16px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.03);
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      animation: fadeIn 0.3s ease;
+      background: #ffffff; border: 1px solid var(--border-subtle); border-right: 4px solid var(--primary);
+      border-radius: var(--radius-sm); padding: 12px 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+      display: flex; flex-direction: column; gap: 6px; animation: fadeIn 0.3s ease;
     }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-6px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .inbox-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 13px;
-    }
-    .sender-name {
-      font-weight: 700;
-      color: var(--text-main);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .sender-phone {
-      font-size: 11px;
-      color: var(--text-muted);
-      font-family: monospace;
-      direction: ltr;
-    }
-    .inbox-time {
-      font-size: 11px;
-      color: var(--text-subtle);
-    }
-    .inbox-body {
-      font-size: 13px;
-      color: var(--text-muted);
-      line-height: 1.5;
-      word-break: break-word;
-    }
-
-    .msg-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+    .inbox-header { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+    .sender-name { font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 6px; }
+    .sender-phone { font-size: 11px; color: var(--text-muted); font-family: monospace; direction: ltr; }
+    .inbox-time { font-size: 11px; color: var(--text-subtle); }
+    .inbox-body { font-size: 13px; color: var(--text-muted); line-height: 1.5; word-break: break-word; }
+    .msg-list { display: flex; flex-direction: column; gap: 12px; }
     .msg-item {
-      background: #f8fafc;
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+      background: #f8fafc; border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
+      padding: 14px; display: flex; flex-direction: column; gap: 10px;
     }
-    .msg-item-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--primary);
-    }
-    .btn-icon-del {
-      background: transparent;
-      border: none;
-      color: var(--danger);
-      cursor: pointer;
-    }
-
-    /* أنماط مجموعات الرسائل Sequences */
+    .msg-item-header { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 700; color: var(--primary); }
+    .btn-icon-del { background: transparent; border: none; color: var(--danger); cursor: pointer; }
     .sequence-group-card {
-      background: #ffffff;
-      border: 1px solid #cbd5e1;
-      border-right: 4px solid var(--accent);
-      border-radius: var(--radius-md);
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+      background: #ffffff; border: 1px solid #cbd5e1; border-right: 4px solid var(--accent);
+      border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; gap: 12px;
     }
-    .sequence-group-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--accent);
-    }
-
+    .sequence-group-header { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 700; color: var(--accent); }
     .mention-dropdown {
-      position: absolute;
-      background: #ffffff;
-      border: 1px solid #cbd5e1;
-      border-radius: var(--radius-sm);
-      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15);
-      z-index: 1000;
-      max-height: 220px;
-      overflow-y: auto;
-      display: none;
-      min-width: 250px;
+      position: absolute; background: #ffffff; border: 1px solid #cbd5e1; border-radius: var(--radius-sm);
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15); z-index: 1000; max-height: 220px; overflow-y: auto; display: none; min-width: 250px;
     }
-    .mention-item {
-      padding: 9px 14px;
-      font-size: 13px;
-      cursor: pointer;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #f1f5f9;
-    }
-    .mention-item:hover {
-      background: #ecfdf5;
-      color: var(--primary);
-      font-weight: 700;
-    }
-    .mention-val {
-      font-size: 11px;
-      color: var(--text-muted);
-      max-width: 120px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
+    .mention-item { padding: 9px 14px; font-size: 13px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; }
+    .mention-item:hover { background: #ecfdf5; color: var(--primary); font-weight: 700; }
+    .mention-val { font-size: 11px; color: var(--text-muted); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 10px 16px;
-      border-radius: var(--radius-sm);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: var(--transition);
-      border: none;
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 10px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; transition: var(--transition); border: none;
     }
-    .btn-primary {
-      background: var(--primary);
-      color: #ffffff;
-      box-shadow: 0 4px 12px var(--primary-glow);
-    }
+    .btn-primary { background: var(--primary); color: #ffffff; box-shadow: 0 4px 12px var(--primary-glow); }
     .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
-    .btn-secondary {
-      background: #ffffff;
-      color: var(--text-main);
-      border: 1px solid #cbd5e1;
-    }
+    .btn-secondary { background: #ffffff; color: var(--text-main); border: 1px solid #cbd5e1; }
     .btn-secondary:hover { background: #f8fafc; }
     .btn-danger { background: var(--danger); color: #fff; }
-    .btn-outline-dashed {
-      background: #f0fdf4;
-      border: 1px dashed var(--primary);
-      color: var(--primary);
-      width: 100%;
-    }
-
+    .btn-outline-dashed { background: #f0fdf4; border: 1px dashed var(--primary); color: var(--primary); width: 100%; }
     .progress-wrapper {
-      background: #f8fafc;
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+      background: #f8fafc; border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
+      padding: 14px; display: flex; flex-direction: column; gap: 8px;
     }
-    .progress-bar-bg {
-      height: 8px;
-      background: #e2e8f0;
-      border-radius: 4px;
-      overflow: hidden;
-    }
-    .progress-bar-fill {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, var(--primary), var(--accent));
-      transition: width 0.3s ease;
-    }
-
+    .progress-bar-bg { height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--primary), var(--accent)); transition: width 0.3s ease; }
     .terminal-console {
-      background: #0f172a;
-      border: 1px solid #1e293b;
-      border-radius: var(--radius-md);
-      height: 200px;
-      padding: 12px;
-      overflow-y: auto;
-      font-family: 'Fira Code', 'Consolas', monospace;
-      font-size: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
+      background: #0f172a; border: 1px solid #1e293b; border-radius: var(--radius-md);
+      height: 200px; padding: 12px; overflow-y: auto; font-family: 'Fira Code', 'Consolas', monospace; font-size: 12px; display: flex; flex-direction: column; gap: 6px;
     }
     .log-line { display: flex; gap: 8px; line-height: 1.4; }
     .log-time { color: #64748b; min-width: 65px; }
@@ -553,131 +222,36 @@
     .log-msg-info { color: #38bdf8; }
     .log-msg-warning { color: #fbbf24; }
     .log-msg-default { color: #cbd5e1; }
-
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-    .toggle-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      cursor: pointer;
-      font-size: 13px;
-    }
+    .toggle-row { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px; }
     .toggle-row input { accent-color: var(--primary); width: 16px; height: 16px; }
-
-    .shield-box {
-      background: #f8fafc;
-      border: 1px solid #cbd5e1;
-      border-radius: var(--radius-md);
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .auto-rule-card {
-      background: #f8fafc;
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .auto-rule-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr 2fr auto;
-      gap: 10px;
-      align-items: flex-end;
-    }
-    @media (max-width: 900px) {
-      .auto-rule-row {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .extractor-box {
-      background: #f8fafc;
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .extractor-btn-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 10px;
-    }
-    @media (max-width: 600px) {
-      .extractor-btn-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .mode-switch-container {
-      display: flex;
-      background: #e2e8f0;
-      padding: 4px;
-      border-radius: var(--radius-sm);
-      gap: 4px;
-    }
+    .shield-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+    .auto-rule-card { background: #f8fafc; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+    .auto-rule-row { display: grid; grid-template-columns: 1fr 1fr 2fr auto; gap: 10px; align-items: flex-end; }
+    @media (max-width: 900px) { .auto-rule-row { grid-template-columns: 1fr; } }
+    .extractor-box { background: #f8fafc; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+    .extractor-btn-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    @media (max-width: 600px) { .extractor-btn-grid { grid-template-columns: 1fr; } }
+    .mode-switch-container { display: flex; background: #e2e8f0; padding: 4px; border-radius: var(--radius-sm); gap: 4px; }
     .mode-btn {
-      flex: 1;
-      padding: 8px 12px;
-      font-size: 13px;
-      font-weight: 700;
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      border-radius: 6px;
-      transition: var(--transition);
-      color: var(--text-muted);
+      flex: 1; padding: 8px 12px; font-size: 13px; font-weight: 700; border: none;
+      background: transparent; cursor: pointer; border-radius: 6px; transition: var(--transition); color: var(--text-muted);
     }
-    .mode-btn.active {
-      background: #ffffff;
-      color: var(--primary);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-
+    .mode-btn.active { background: #ffffff; color: var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
     .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.6);
-      backdrop-filter: blur(4px);
-      z-index: 2000;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
+      z-index: 2000; display: none; align-items: center; justify-content: center; padding: 20px;
     }
     .modal-card {
-      background: #ffffff;
-      border-radius: var(--radius-lg);
-      padding: 26px;
-      width: 100%;
-      max-width: 440px;
-      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
-      border: 1px solid var(--border-subtle);
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      text-align: center;
+      background: #ffffff; border-radius: var(--radius-lg); padding: 26px; width: 100%; max-width: 440px;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); border: 1px solid var(--border-subtle); display: flex; flex-direction: column; gap: 16px;
     }
     .modal-header { display: flex; justify-content: space-between; align-items: center; }
     .modal-header h3 { font-size: 18px; font-weight: 700; }
     .close-modal-btn { background: none; border: none; cursor: pointer; color: var(--text-muted); }
     .qr-container {
-      background: #f8fafc;
-      border: 2px dashed #cbd5e1;
-      border-radius: var(--radius-md);
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 250px;
+      background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: var(--radius-md);
+      padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 250px;
     }
     .qr-container img { max-width: 220px; border-radius: 8px; }
   </style>
@@ -685,26 +259,25 @@
 <body>
 
   <div class="app-container">
-
     <!-- Header -->
     <header class="saas-header">
       <div class="brand-section">
-        <div class="brand-logo">
-          <i data-lucide="zap"></i>
-        </div>
+        <div class="brand-logo"><i data-lucide="zap"></i></div>
         <div class="brand-title">
           <h1>EvoFlow Campaign Engine</h1>
-          <p>لوحة التحكم الذكية | نظام إدارة السيرفر السحابي 24/7</p>
+          <p id="userStatusBanner">لوحة التحكم السحابية | Supabase Connected</p>
         </div>
       </div>
 
       <div class="instance-controls">
         <label style="font-size: 13px; font-weight: 600;">الحساب النشط:</label>
-        <select id="activeInstanceSelect" class="instance-select" onchange="switchInstance()">
-        </select>
+        <select id="activeInstanceSelect" class="instance-select" onchange="switchInstance()"></select>
         <button type="button" class="btn-add-account" onclick="openAddAccountModal()">
           <i data-lucide="plus-circle" style="width: 16px; height: 16px;"></i>
-          <span>إضافة حساب</span>
+          <span>إضافة رقم</span>
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="openAuthModal()" id="authButton" style="padding: 6px 12px; font-size: 12px;">
+          <i data-lucide="log-in" style="width: 14px; height: 14px;"></i> دخول
         </button>
         <div class="status-badge">
           <span class="status-dot"></span>
@@ -754,7 +327,6 @@
 
     <!-- Main Workspace Layout -->
     <main class="dashboard-layout">
-      
       <!-- Right Side -->
       <div class="saas-card">
         <div class="card-title">
@@ -764,7 +336,7 @@
           </div>
         </div>
 
-        <!-- أداة استخراج الـ Data المتقدمة -->
+        <!-- أداة استخراج الـ Data -->
         <div class="extractor-box">
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <label style="font-size: 13px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 6px;">
@@ -808,15 +380,14 @@
           </div>
         </div>
 
-        <!-- صندوق إدارة المتغيرات -->
+        <!-- صندوق إدارة المتغيرات (Supabase) -->
         <div class="var-manager-box">
-          <label style="font-size: 12px; font-weight: 700;">المتغيرات المتاحة (اضغط عليها أو اكتب @ في الرسالة):</label>
+          <label style="font-size: 12px; font-weight: 700;">المتغيرات المحفوظة سحابياً (اضغط عليها أو اكتب @ في الرسالة):</label>
           <div class="var-badges-container" id="varTagList"></div>
-          
           <div class="var-input-container">
             <input type="text" id="newVarName" placeholder="اسم المتغير (مثال: خصم)">
             <input type="text" id="newVarVal" placeholder="قيمة المتغير الافتراضية">
-            <button type="button" class="btn btn-secondary" onclick="addCustomVariable()">+ إضافة</button>
+            <button type="button" class="btn btn-secondary" onclick="addCustomVariable()">+ إضافة سحابية</button>
           </div>
         </div>
 
@@ -840,78 +411,66 @@
           <textarea id="dataInput" rows="3" placeholder="201280471390, مينا, استشارة, 2500"></textarea>
         </div>
 
-        <div class="form-group">
-          <label>مرفق وسائط:</label>
-          <input type="file" id="mediaFile">
-          <label class="toggle-row" style="margin-top: 4px;">
-            <input type="checkbox" id="isVoiceNote">
-            <span>إرسال كـ <b>تسجيل صوتي رسمي (Voice Note / PTT)</b></span>
-          </label>
-        </div>
-
-        <!-- خيارات الحماية -->
+        <!-- خيارات الحماية والـ Warm-up -->
         <div class="shield-box">
           <span style="font-size: 13px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 6px;">
             <i data-lucide="shield-check" style="width: 16px; height: 16px;"></i>
             خيارات الحماية المتطورة من الحظر
           </span>
           <label class="toggle-row">
-            <input type="checkbox" id="simulateTyping" checked>
-            <span><b>محاكاة الكتابة والتسجيل:</b> إرسال مؤشر (يكتب الآن...) لعدة ثوانٍ قبل الإرسال</span>
+            <input type="checkbox" id="simulateTyping" checked onchange="saveInstanceSettingsToDB()">
+            <span><b>محاكاة الكتابة:</b> إرسال مؤشر (يكتب الآن...) لعدة ثوانٍ قبل الإرسال</span>
           </label>
           <label class="toggle-row">
-            <input type="checkbox" id="autoGhostProtection" checked>
+            <input type="checkbox" id="autoGhostProtection" checked onchange="saveInstanceSettingsToDB()">
             <span><b>حقن أحرف غير مرئية تلقائياً:</b> كسر تشابه الـ Hash بين الرسائل</span>
           </label>
-          
           <div class="form-group" style="margin-top: 6px;">
-            <label style="font-size: 12px;"><b>حد التسخين اليومي الأقصى (Daily Warm-up):</b></label>
-            <input type="number" id="dailyLimit" value="50" min="0" placeholder="0 لإلغاء الحد">
+            <label style="font-size: 12px;"><b>حد الإرسال اليومي (Daily Warm-up):</b></label>
+            <input type="number" id="dailyLimit" value="50" min="0" onchange="saveInstanceSettingsToDB()">
           </div>
         </div>
 
-        <!-- الفاصل العشوائي بين كل عميل وآخر -->
+        <!-- الفواصل الزمنية -->
         <div class="form-row">
           <div class="form-group">
             <label>أقل فاصل بين العملاء (ثواني):</label>
-            <input type="number" id="minDelay" value="10" min="1">
+            <input type="number" id="minDelay" value="10" min="1" onchange="saveInstanceSettingsToDB()">
           </div>
           <div class="form-group">
             <label>أقصى فاصل بين العملاء (ثواني):</label>
-            <input type="number" id="maxDelay" value="20" min="1">
+            <input type="number" id="maxDelay" value="20" min="1" onchange="saveInstanceSettingsToDB()">
           </div>
         </div>
 
-        <!-- فاصل بين الرسائل المتتالية لنفس العميل -->
         <div class="form-row" id="seqDelayRow" style="display: none; background: #f0f9ff; padding: 10px; border-radius: var(--radius-sm); border: 1px solid #bae6fd;">
           <div class="form-group" style="grid-column: span 2;">
             <label style="color: #0369a1;">الفاصل الزمني بين رسائل المجموعة للعميل نفسه (ثواني):</label>
             <div style="display: flex; gap: 8px;">
-              <input type="number" id="seqMinDelay" value="2" min="1" placeholder="أقل مدة">
-              <input type="number" id="seqMaxDelay" value="5" min="1" placeholder="أقصى مدة">
+              <input type="number" id="seqMinDelay" value="2" min="1">
+              <input type="number" id="seqMaxDelay" value="5" min="1">
             </div>
           </div>
         </div>
 
-        <!-- فواصل التوقف العشوائية للراحة بعد كل دفعة رسائل -->
         <div class="form-row" style="background: #f8fafc; padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
           <div class="form-group" style="grid-column: span 2;">
             <label>توقف مؤقت بعد كل (عدد رسائل X):</label>
-            <input type="number" id="batchCount" value="15" min="0" placeholder="0 لإلغاء الميزة">
+            <input type="number" id="batchCount" value="15" min="0" onchange="saveInstanceSettingsToDB()">
           </div>
           <div class="form-group">
             <label>أقل مدة توقف (ثواني):</label>
-            <input type="number" id="batchPauseMin" value="40" min="1">
+            <input type="number" id="batchPauseMin" value="40" min="1" onchange="saveInstanceSettingsToDB()">
           </div>
           <div class="form-group">
             <label>أقصى مدة توقف (ثواني):</label>
-            <input type="number" id="batchPauseMax" value="90" min="1">
+            <input type="number" id="batchPauseMax" value="90" min="1" onchange="saveInstanceSettingsToDB()">
           </div>
         </div>
 
         <div style="display: flex; gap: 10px;">
           <button type="button" class="btn btn-primary" id="sendBtn" onclick="startSendingCampaign()" style="flex: 2;">
-            <i data-lucide="play"></i> إطلاق الحملة المباشرة
+            <i data-lucide="play"></i> إطلاق الحملة وحفظها سحابياً
           </button>
           <button type="button" class="btn btn-danger" id="stopBtn" onclick="stopSendingCampaign()" style="flex: 1; display: none;">
             <i data-lucide="square"></i> إيقاف الحملة
@@ -931,33 +490,31 @@
 
       <!-- Left Side -->
       <div style="display: flex; flex-direction: column; gap: 24px;">
-
-        <!-- صندوق الوارد المباشر -->
+        <!-- صندوق الوارد المباشر (Supabase Messages) -->
         <div class="saas-card">
           <div class="card-title">
             <div class="card-title-left">
               <i data-lucide="mail" style="color: var(--accent);"></i>
-              <span>صندوق الوارد المباشر (الرسائل المستلمة)</span>
+              <span>صندوق الوارد المباشر (Realtime 24/7)</span>
             </div>
-            <button type="button" class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="clearInbox()">
-              مسح الصندوق
+            <button type="button" class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="clearInboxUI()">
+              تفريغ العرض
             </button>
           </div>
-
           <div class="inbox-container" id="inboxContainer">
             <div class="inbox-empty" id="inboxEmpty">
               <i data-lucide="inbox" style="width: 36px; height: 36px;"></i>
-              <p>في انتظار الرسائل الواردة من العملاء...</p>
+              <p>في انتظار الرسائل الواردة...</p>
             </div>
           </div>
         </div>
 
-        <!-- محرك قواعد الأوتوميشن والجروبات -->
+        <!-- محرك الأوتوميشن السحابي -->
         <div class="saas-card">
           <div class="card-title">
             <div class="card-title-left">
               <i data-lucide="bot" style="color: var(--primary);"></i>
-              <span>قواعد الأوتوميشن الذكية (الردود والجروبات)</span>
+              <span>قواعد الأوتوميشن الذكية (تعمل 24/7 سحابياً)</span>
             </div>
             <div style="display: flex; gap: 8px;">
               <button type="button" class="btn btn-secondary" style="padding: 4px 10px; font-size: 12px;" onclick="fetchAvailableGroups(true)">
@@ -968,31 +525,26 @@
               </button>
             </div>
           </div>
-
-          <div id="automationRulesContainer" style="display: flex; flex-direction: column; gap: 12px;">
-          </div>
+          <div id="automationRulesContainer" style="display: flex; flex-direction: column; gap: 12px;"></div>
         </div>
 
-        <!-- إعداد قوالب الرسائل ومجموعات الرسائل -->
+        <!-- نماذج وقوالب ومجموعات الرسائل -->
         <div class="saas-card">
           <div class="card-title">
             <div class="card-title-left">
               <i data-lucide="message-square"></i>
-              <span>نماذج ونصوص الرسائل</span>
+              <span>نماذج ومجموعات الرسائل (Sequences)</span>
             </div>
           </div>
-
-          <!-- شريط التبديل بين النمط الفردي ونمط المجموعات -->
           <div class="mode-switch-container">
             <button type="button" class="mode-btn active" id="singleModeBtn" onclick="switchMessageMode('single')">
               رسالة فردية (تبديل عشوائي)
             </button>
             <button type="button" class="mode-btn" id="groupModeBtn" onclick="switchMessageMode('sequence')">
-              إرسال مجموعة رسائل (متتالية)
+              إرسال مجموعة رسائل متتالية
             </button>
           </div>
 
-          <!-- قسم النمط الفردي -->
           <div id="singleMessagesSection" class="form-group">
             <label>قائمة نماذج الرسائل (اكتب @ لاختيار المتغيرات):</label>
             <div class="msg-list" id="messagesContainer">
@@ -1000,23 +552,17 @@
                 <div class="msg-item-header">
                   <span>الرسالة رقم 1</span>
                 </div>
-                <textarea class="msg-text" rows="3" placeholder="اكتب نص الرسالة هنا...">مَرْحَبًا @wa_name،
-طلبك رقم: @Randomcode
-الخدمة: @service
-السعر: @price ج.م
-@invisible</textarea>
+                <textarea class="msg-text" rows="3" placeholder="اكتب نص الرسالة هنا...">مَرْحَبًا @name، طلبك رقم: @Randomcode. @invisible</textarea>
               </div>
             </div>
             <button type="button" class="btn btn-outline-dashed" onclick="addMessageField()" style="margin-top: 6px;">
-              <i data-lucide="plus-circle"></i> إضافة قالب رسالة آخر (تبديل عشوائي)
+              <i data-lucide="plus-circle"></i> إضافة قالب رسالة إضافي
             </button>
           </div>
 
-          <!-- قسم إرسال مجموعات الرسائل المتتالية -->
           <div id="sequenceMessagesSection" class="form-group" style="display: none;">
-            <label>مجموعات الرسائل المتتالية (يتم إرسال رسائل كل مجموعة بالترتيب):</label>
-            <div id="sequenceGroupsContainer" style="display: flex; flex-direction: column; gap: 14px;">
-            </div>
+            <label>مجموعات الرسائل المتتالية المحفوظة سحابياً:</label>
+            <div id="sequenceGroupsContainer" style="display: flex; flex-direction: column; gap: 14px;"></div>
             <button type="button" class="btn btn-outline-dashed" onclick="addNewSequenceGroup()" style="margin-top: 6px;">
               <i data-lucide="folder-plus"></i> إضافة مجموعة رسائل جديدة
             </button>
@@ -1025,39 +571,56 @@
           <div class="terminal-console" id="logBox">
             <div class="log-line">
               <span class="log-time">[00:00:00]</span>
-              <span class="log-msg-info">جاري تهيئة النظام...</span>
+              <span class="log-msg-info">جاري تهيئة النظام السحابي...</span>
             </div>
           </div>
         </div>
-
       </div>
-
     </main>
   </div>
 
   <!-- Mention Dropdown -->
   <div class="mention-dropdown" id="mentionDropdown"></div>
 
-  <!-- Modal إضافة حساب -->
+  <!-- Modal Auth (تسجيل الدخول وإنشاء حساب) -->
+  <div class="modal-overlay" id="authModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="authModalTitle">تسجيل الدخول إلى حسابك السحابي</h3>
+        <button type="button" class="close-modal-btn" onclick="closeAuthModal()"><i data-lucide="x"></i></button>
+      </div>
+      <div class="form-group" style="text-align: right;">
+        <label>البريد الإلكتروني:</label>
+        <input type="email" id="authEmail" placeholder="name@example.com">
+      </div>
+      <div class="form-group" style="text-align: right;">
+        <label>كلمة المرور:</label>
+        <input type="password" id="authPassword" placeholder="••••••••">
+      </div>
+      <div style="display: flex; gap: 8px; margin-top: 10px;">
+        <button type="button" class="btn btn-primary" style="flex: 1;" onclick="handleAuthLogin()">دخول</button>
+        <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="handleAuthRegister()">حساب جديد</button>
+      </div>
+      <span id="authErrorMsg" style="font-size: 12px; color: var(--danger); text-align: center;"></span>
+    </div>
+  </div>
+
+  <!-- Modal إضافة رقم / Instance -->
   <div class="modal-overlay" id="addAccountModal">
     <div class="modal-card">
       <div class="modal-header">
-        <h3>إضافة حساب واتساب جديد</h3>
-        <button type="button" class="close-modal-btn" onclick="closeAddAccountModal()">
-          <i data-lucide="x"></i>
-        </button>
+        <h3>ربط رقم واتساب جديد</h3>
+        <button type="button" class="close-modal-btn" onclick="closeAddAccountModal()"><i data-lucide="x"></i></button>
       </div>
-
       <div id="createStep">
         <div class="form-group" style="text-align: right;">
-          <label>اسم الحساب الجديد (بالإنجليزية وبدون مسافات):</label>
-          <input type="text" id="newInstanceName" placeholder="مثال: support1">
+          <label>اسم الحساب / الرقم (بالإنجليزية وبدون مسافات):</label>
+          <input type="text" id="newInstanceName" placeholder="مثال: support_cairo">
         </div>
         <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 12px;" onclick="generateInstanceQR()">
-          <i data-lucide="qr-code"></i> توليد QR Code
+          <i data-lucide="qr-code"></i> توليد QR Code وحفظ الرقم
         </button>
       </div>
-
       <div id="qrStep" style="display: none;">
         <div class="qr-container">
           <img id="qrCodeImage" src="" alt="WhatsApp QR Code" style="display: none;">
@@ -1073,1065 +636,371 @@
   </div>
 
   <script>
-    lucide.createIcons();
-
+    // ==========================================
+    // 1️⃣ تهيئة وتكوين الروابط
+    // ==========================================
+    const SUPABASE_URL = "https://daxhdliuwtswcrrxcqqe.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_4NplfHevmJpBHl9s064d1Q_Ov9le3Vl";
     const API_BASE = 'https://evolution-api-bkwl.onrender.com';
     const API_KEY = '9SXCq4YxLGPtkufJKM7u+zv2';
-
-    let instances = JSON.parse(localStorage.getItem('evo_instances') || '["منتالبيس"]');
-    let currentInstance = localStorage.getItem('evo_current_instance') || 'منتالبيس';
-
-    let availableGroups = [];
-    let receivedCount = 0;
-    let qrCheckInterval = null;
-    let messageCounter = 1;
-    let activeTextarea = null;
-
-    let isCampaignRunning = false;
-    let stopCampaignRequested = false;
-
-    let currentSendingMode = 'single';
-
-    let messageSequences = [
-      {
-        id: 1,
-        name: 'المجموعة 1',
-        messages: [
-          'مساء الخير @wa_name',
-          'كنت حابب افكر حضرتك بميعاد الحجز @invisible'
-        ]
-      },
-      {
-        id: 2,
-        name: 'المجموعة 2',
-        messages: [
-          'مساء النور @wa_name',
-          'بنفكر حضرتك انهارده بالميعاد الخاص بك @invisible'
-        ]
-      }
-    ];
-
-    let lastExtractedData = [];
-    const sessionStartTime = Math.floor(Date.now() / 1000);
-
-    const defaultVars = ['wa_name', 'phone_name', 'name', 'phone'];
-    let customVars = [
-      { name: 'service', value: 'استشارة هندسية' },
-      { name: 'price', value: '2500' }
-    ];
-
-    // ==========================================
-    // التبديل بين الأنماط وإدارة مجموعات الرسائل
-    // ==========================================
-    function switchMessageMode(mode) {
-      currentSendingMode = mode;
-      const singleBtn = document.getElementById('singleModeBtn');
-      const groupBtn = document.getElementById('groupModeBtn');
-      const singleSection = document.getElementById('singleMessagesSection');
-      const seqSection = document.getElementById('sequenceMessagesSection');
-      const seqDelayRow = document.getElementById('seqDelayRow');
-
-      if (mode === 'single') {
-        singleBtn.classList.add('active');
-        groupBtn.classList.remove('active');
-        singleSection.style.display = 'flex';
-        seqSection.style.display = 'none';
-        seqDelayRow.style.display = 'none';
-      } else {
-        groupBtn.classList.add('active');
-        singleBtn.classList.remove('active');
-        singleSection.style.display = 'none';
-        seqSection.style.display = 'flex';
-        seqDelayRow.style.display = 'grid';
-        renderSequenceGroups();
-      }
-      lucide.createIcons();
-    }
-
-    function renderSequenceGroups() {
-      const container = document.getElementById('sequenceGroupsContainer');
-      if (!container) return;
-      container.innerHTML = '';
-
-      messageSequences.forEach((group, gIdx) => {
-        const gCard = document.createElement('div');
-        gCard.className = 'sequence-group-card';
-
-        let messagesHtml = '';
-        group.messages.forEach((msg, mIdx) => {
-          messagesHtml += `
-            <div style="display: flex; flex-direction: column; gap: 4px; background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid var(--border-subtle);">
-              <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: var(--text-muted);">
-                <span>الرسالة ${mIdx + 1}</span>
-                ${group.messages.length > 1 ? `<i data-lucide="trash" style="width: 13px; height: 13px; cursor: pointer; color: var(--danger);" onclick="removeMessageFromSequence(${gIdx}, ${mIdx})"></i>` : ''}
-              </div>
-              <textarea class="seq-msg-text" rows="2" placeholder="اكتب نص الرسالة..." oninput="updateSequenceMessageText(${gIdx}, ${mIdx}, this.value)">${msg}</textarea>
-            </div>
-          `;
-        });
-
-        gCard.innerHTML = `
-          <div class="sequence-group-header">
-            <span>${group.name}</span>
-            <div style="display: flex; gap: 8px; align-items: center;">
-              <button type="button" class="btn btn-secondary" style="padding: 3px 8px; font-size: 11px;" onclick="addMessageToSequence(${gIdx})">
-                <i data-lucide="plus" style="width: 12px; height: 12px;"></i> إضافة رسالة تالية
-              </button>
-              ${messageSequences.length > 1 ? `
-                <button type="button" class="btn-icon-del" onclick="removeSequenceGroup(${gIdx})" title="حذف المجموعة">
-                  <i data-lucide="trash-2" style="width: 15px; height: 15px;"></i>
-                </button>
-              ` : ''}
-            </div>
-          </div>
-          <div style="display: flex; flex-direction: column; gap: 8px;">
-            ${messagesHtml}
-          </div>
-        `;
-
-        container.appendChild(gCard);
-      });
-
-      document.querySelectorAll('.seq-msg-text').forEach(attachMentionEvents);
-      lucide.createIcons();
-    }
-
-    function addNewSequenceGroup() {
-      const newNum = messageSequences.length + 1;
-      messageSequences.push({
-        id: Date.now(),
-        name: `المجموعة ${newNum}`,
-        messages: ['']
-      });
-      renderSequenceGroups();
-    }
-
-    function removeSequenceGroup(gIdx) {
-      messageSequences.splice(gIdx, 1);
-      renderSequenceGroups();
-    }
-
-    function addMessageToSequence(gIdx) {
-      messageSequences[gIdx].messages.push('');
-      renderSequenceGroups();
-    }
-
-    function removeMessageFromSequence(gIdx, mIdx) {
-      messageSequences[gIdx].messages.splice(mIdx, 1);
-      renderSequenceGroups();
-    }
-
-    function updateSequenceMessageText(gIdx, mIdx, val) {
-      messageSequences[gIdx].messages[mIdx] = val;
-    }
-
-    // ==========================================
-    // محرك المتغيرات وبصمات الحماية
-    // ==========================================
-    function getTodayKey() {
-      const today = new Date().toISOString().slice(0, 10);
-      return `evo_sent_count_${currentInstance}_${today}`;
-    }
-
-    function getDailySentCount() {
-      return parseInt(localStorage.getItem(getTodayKey()) || '0');
-    }
-
-    function incrementDailySentCount() {
-      const current = getDailySentCount() + 1;
-      localStorage.setItem(getTodayKey(), current.toString());
-      updateDailyCountUI();
-      return current;
-    }
-
-    function updateDailyCountUI() {
-      const count = getDailySentCount();
-      const el = document.getElementById('kpiDailySent');
-      if (el) el.innerText = count;
-    }
-
-    function generateRandomCode() {
-      return `#${Math.floor(100000 + Math.random() * 900000)}`;
-    }
-
-    function generateInvisibleGhostString(length = 6) {
-      const ghostChars = ['\u200B', '\u200C', '\u200D', '\u2060', '\uFEFF'];
-      let result = '';
-      for (let i = 0; i < length; i++) {
-        result += ghostChars[Math.floor(Math.random() * ghostChars.length)];
-      }
-      return result;
-    }
-
-    function generateObjTag() {
-      return '\uFFFC' + generateInvisibleGhostString(2);
-    }
-
-    function compileMessageTemplate(template, row) {
-      let text = template;
-      const clientName = row.name || 'عميلنا العزيز';
-      const clientPhone = row.phone || '';
-
-      text = text.replace(/@wa_name/gi, clientName);
-      text = text.replace(/@name/gi, clientName);
-      text = text.replace(/@phone_name/gi, clientPhone);
-      text = text.replace(/@phone/gi, clientPhone);
-
-      text = text.replace(/@randomcode/gi, generateRandomCode());
-      text = text.replace(/@invisible/gi, generateInvisibleGhostString(8));
-      text = text.replace(/@obj/gi, generateObjTag());
-
-      customVars.forEach(v => {
-        const val = (row.vars && row.vars[v.name] !== undefined && row.vars[v.name] !== '') 
-          ? row.vars[v.name] 
-          : (v.value || '');
-        const re = new RegExp(`@${v.name}`, 'gi');
-        text = text.replace(re, val);
-      });
-
-      if (document.getElementById('autoGhostProtection').checked) {
-        text += generateInvisibleGhostString(4);
-      }
-
-      return text;
-    }
-
-    const delayMs = (ms) => new Promise(res => setTimeout(res, ms));
-
-    // ==========================================
-    // محرك إطلاق الحملات الذكي (Campaign Engine)
-    // ==========================================
-    async function startSendingCampaign() {
-      if (isCampaignRunning) return;
-
-      const rawData = document.getElementById('dataInput').value.trim();
-      const minDelay = parseInt(document.getElementById('minDelay').value) || 10;
-      const maxDelay = parseInt(document.getElementById('maxDelay').value) || 20;
-
-      const seqMinDelay = parseInt(document.getElementById('seqMinDelay').value) || 2;
-      const seqMaxDelay = parseInt(document.getElementById('seqMaxDelay').value) || 5;
-
-      const batchCount = parseInt(document.getElementById('batchCount').value) || 0;
-      const batchPauseMin = parseInt(document.getElementById('batchPauseMin').value) || 40;
-      const batchPauseMax = parseInt(document.getElementById('batchPauseMax').value) || 90;
-
-      const dailyLimit = parseInt(document.getElementById('dailyLimit').value) || 0;
-      const simulateTyping = document.getElementById('simulateTyping').checked;
-
-      let singleTemplates = [];
-      let validSequences = [];
-
-      if (currentSendingMode === 'single') {
-        const messageElements = document.querySelectorAll('#singleMessagesSection .msg-text');
-        singleTemplates = Array.from(messageElements).map(el => el.value.trim()).filter(t => t.length > 0);
-        if (singleTemplates.length === 0) {
-          alert("يرجى كتابة نص رسالة واحدة على الأقل في قوالب الرسائل الفردية.");
-          return;
-        }
-      } else {
-        validSequences = messageSequences.filter(g => g.messages.some(m => m.trim().length > 0));
-        if (validSequences.length === 0) {
-          alert("يرجى كتابة رسائل في مجموعة واحدة على الأقل.");
-          return;
-        }
-      }
-
-      const rows = rawData.split(/\r?\n/).map(line => {
-        const parts = line.split(',').map(p => p.trim());
-        const phone = parts[0] ? parts[0].replace(/[^0-9]/g, '') : '';
-        const name = parts[1] || '';
-        const vars = {};
-        customVars.forEach((v, idx) => {
-          vars[v.name] = parts[idx + 2] || '';
-        });
-        return { phone, name, vars };
-      }).filter(r => r.phone.length >= 8);
-
-      if (rows.length === 0) {
-        alert("يرجى إدخال أرقام صحيحة في خانة البيانات أو استخدام ميزة الاستخراج.");
-        return;
-      }
-
-      isCampaignRunning = true;
-      stopCampaignRequested = false;
-
-      document.getElementById('sendBtn').style.display = 'none';
-      document.getElementById('stopBtn').style.display = 'inline-flex';
-
-      addLog(`🚀 بدء إطلاق الحملة (${currentSendingMode === 'single' ? 'نمط فردي' : 'نمط مجموعات متتالية'}) لعدد (${rows.length}) عميل...`, 'log-msg-info');
-
-      let successCount = 0;
-      let failedCount = 0;
-
-      for (let i = 0; i < rows.length; i++) {
-        if (stopCampaignRequested) {
-          addLog("⏸ تم إيقاف الحملة بواسطة المستخدم.", 'log-msg-warning');
-          break;
-        }
-
-        if (dailyLimit > 0 && getDailySentCount() >= dailyLimit) {
-          addLog(`⚠️ تم الوصول لحد التسخين اليومي الأقصى (${dailyLimit} رسالة). توقف الإرسال حفاظاً على الرقم.`, 'log-msg-warning');
-          break;
-        }
-
-        const row = rows[i];
-        updateProgress(i + 1, rows.length);
-
-        let messagesToSend = [];
-        if (currentSendingMode === 'single') {
-          const template = singleTemplates[Math.floor(Math.random() * singleTemplates.length)];
-          messagesToSend.push(compileMessageTemplate(template, row));
-        } else {
-          const chosenGroup = validSequences[Math.floor(Math.random() * validSequences.length)];
-          addLog(`📦 تم اختيار [${chosenGroup.name}] للعميل (${row.phone})`, 'log-msg-info');
-          chosenGroup.messages.forEach(m => {
-            if (m.trim().length > 0) {
-              messagesToSend.push(compileMessageTemplate(m, row));
-            }
-          });
-        }
-
-        let isClientSuccess = true;
-
-        for (let mIndex = 0; mIndex < messagesToSend.length; mIndex++) {
-          if (stopCampaignRequested) break;
-
-          const msgText = messagesToSend[mIndex];
-
-          try {
-            if (simulateTyping) {
-              await delayMs(1500);
-            }
-
-            const payload = {
-              number: row.phone,
-              text: msgText,
-              delay: 1000
-            };
-
-            const res = await fetch(`${API_BASE}/message/sendText/${encodeURIComponent(currentInstance)}`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'apikey': API_KEY
-              },
-              body: JSON.stringify(payload)
-            });
-
-            const data = await res.json();
-            const isExistsFalse = Array.isArray(data?.response?.message) && data.response.message.some(m => m.exists === false);
-
-            if (res.ok && !isExistsFalse) {
-              incrementDailySentCount();
-              addLog(`✔ [رسالة ${mIndex + 1}/${messagesToSend.length}] أُرسلت بنجاح إلى [${row.name || 'عميل'}] (${row.phone})`, 'log-msg-success');
-            } else {
-              isClientSuccess = false;
-              addLog(`✖ فشل إرسال رسالة ${mIndex + 1} إلى (${row.phone})`, 'log-msg-error');
-              break;
-            }
-          } catch (err) {
-            isClientSuccess = false;
-            addLog(`خطأ اتصال أثناء الإرسال للرقم (${row.phone}): ${err.message}`, 'log-msg-error');
-            break;
-          }
-
-          if (mIndex < messagesToSend.length - 1 && !stopCampaignRequested) {
-            const innerDelay = Math.floor(Math.random() * (seqMaxDelay - seqMinDelay + 1)) + seqMinDelay;
-            addLog(`⏳ انتظار ${innerDelay} ثانية قبل الرسالة التالية لنفس العميل...`, 'log-msg-default');
-            await countdownDelay(innerDelay);
-          }
-        }
-
-        if (isClientSuccess) {
-          successCount++;
-          document.getElementById('kpiSuccess').innerText = successCount;
-        } else {
-          failedCount++;
-          document.getElementById('kpiFailed').innerText = failedCount;
-        }
-
-        if (i < rows.length - 1 && !stopCampaignRequested) {
-          if (batchCount > 0 && (i + 1) % batchCount === 0) {
-            const pauseSeconds = Math.floor(Math.random() * (batchPauseMax - batchPauseMin + 1)) + batchPauseMin;
-            addLog(`☕ تم إرسال دفعة (${batchCount} عملاء). استراحة أمان عشوائية لمدة ${pauseSeconds} ثانية...`, 'log-msg-warning');
-            await countdownDelay(pauseSeconds);
-          } else {
-            const randomDelaySec = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
-            addLog(`⏳ انتظار عشوائي لمدة ${randomDelaySec} ثانية قبل العميل التالي...`, 'log-msg-default');
-            await countdownDelay(randomDelaySec);
-          }
-        }
-      }
-
-      addLog(`🏁 اكتملت الحملة! (ناجح: ${successCount} | فشل: ${failedCount})`, 'log-msg-success');
-      isCampaignRunning = false;
-      document.getElementById('sendBtn').style.display = 'inline-flex';
-      document.getElementById('stopBtn').style.display = 'none';
-    }
-
-    function stopSendingCampaign() {
-      stopCampaignRequested = true;
-    }
-
-    async function countdownDelay(seconds) {
-      for (let s = seconds; s > 0; s--) {
-        if (stopCampaignRequested) break;
-        await delayMs(1000);
-      }
-    }
-
-    function updateProgress(current, total) {
-      if (total === 0) return;
-      const percent = Math.round((current / total) * 100);
-      document.getElementById('progressBar').style.width = `${percent}%`;
-      document.getElementById('percentText').innerText = `${percent}%`;
-      document.getElementById('progressCount').innerText = `${current} / ${total}`;
-    }
-
-    // ==========================================
-    // محرك استخراج الـ Data
-    // ==========================================
-    function extractValidPhoneNumber(jidOrNumber) {
-      if (!jidOrNumber) return '';
-      const str = String(jidOrNumber).trim();
-      if (str.includes('@g.us') || str.includes('@broadcast') || str.includes('@newsletter')) {
-        return '';
-      }
-      const digits = str.replace(/@.+$/, '').replace(/[^0-9]/g, '');
-      if (digits.length >= 8 && digits.length <= 15) {
-        return digits;
-      }
-      return '';
-    }
-
-    async function extractChatListContacts() {
-      if (!currentInstance) return alert("يرجى اختيار حساب نشط أولاً");
-      setExtractorStatus("جاري فحص المحادثات...");
-      addLog(`🔍 جاري استخراج محادثات الشات للحساب [${currentInstance}]...`, 'log-msg-info');
-
+    // رابط الـ Webhook السحابي الخاص بك على Supabase Edge Functions
+    const WEBHOOK_URL = `${SUPABASE_URL}/functions/v1/whatsapp-webhook`;
+
+    let supabaseReady = false;
+    let supabaseClient = null;
+    let realtimeChannel = null;
+
+    function initSupabaseClient() {
+      if (!window.supabase || typeof window.supabase.createClient !== "function") return false;
       try {
-        const res = await fetch(`${API_BASE}/chat/findChats/${encodeURIComponent(currentInstance)}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
-          body: JSON.stringify({ where: {} })
-        });
-
-        if (!res.ok) throw new Error(`كود الاستجابة: ${res.status}`);
-
-        const data = await res.json();
-        const records = Array.isArray(data) ? data : (data?.records || data?.chats || []);
-
-        const extracted = [];
-        const seenPhones = new Set();
-
-        records.forEach(c => {
-          const jid = c.id || c.remoteJid || c.jid || '';
-          if (!jid.endsWith('@s.whatsapp.net')) return;
-          if (jid.includes('@g.us') || jid.includes('@broadcast') || jid.includes('@lid')) return;
-
-          const phone = jid.replace('@s.whatsapp.net', '').replace(/[^0-9]/g, '');
-          if (phone.length >= 8 && !seenPhones.has(phone)) {
-            seenPhones.add(phone);
-            const name = c.pushName || c.name || `عميل (${phone})`;
-            extracted.push({ phone, name, source: 'Chatlist' });
-          }
-        });
-
-        if (extracted.length > 0) {
-          handleExtractionSuccess(extracted, 'محادثات الشات (Chatlists)');
-        } else {
-          setExtractorStatus("لا توجد محادثات");
-          addLog("⚠️ لم يتم العثور على محادثات فردية صالحة.", 'log-msg-warning');
-        }
-      } catch (err) {
-        addLog(`فشل استخراج الـ Chatlists: ${err.message}`, 'log-msg-error');
-        setExtractorStatus("فشل الاستخراج");
-      }
-    }
-
-    async function extractSavedContacts() {
-      if (!currentInstance) return alert("يرجى اختيار حساب نشط أولاً");
-      setExtractorStatus("جاري جلب الأسماء المسجلة...");
-      addLog(`🔍 جاري فحص جهات الاتصال المسجلة للحساب [${currentInstance}]...`, 'log-msg-info');
-
-      try {
-        const res = await fetch(`${API_BASE}/chat/findContacts/${encodeURIComponent(currentInstance)}`, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json', 
-            'apikey': API_KEY 
-          },
-          body: JSON.stringify({ where: {} })
-        });
-
-        if (!res.ok) throw new Error(`كود الاستجابة: ${res.status}`);
-
-        const data = await res.json();
-        const records = Array.isArray(data) ? data : (data?.records || data?.contacts || []);
-
-        const foundList = [];
-        const seenPhones = new Set();
-
-        records.forEach(contact => {
-          const remoteJid = String(contact.remoteJid || '').trim();
-
-          if (!remoteJid.endsWith('@s.whatsapp.net')) return;
-          if (remoteJid.includes('@g.us') || remoteJid.includes('@lid') || remoteJid.includes('@broadcast') || remoteJid.includes('@newsletter')) return;
-
-          const phone = remoteJid.replace('@s.whatsapp.net', '').replace(/[^0-9]/g, '');
-
-          if (phone && phone.length >= 8 && phone !== '0' && !seenPhones.has(phone)) {
-            seenPhones.add(phone);
-            const clientName = (contact.pushName && contact.pushName.trim()) 
-              ? contact.pushName.trim() 
-              : ((contact.name && contact.name.trim()) ? contact.name.trim() : `عميل (${phone})`);
-
-            foundList.push({
-              phone: phone,
-              name: clientName,
-              source: 'Saved Contacts'
-            });
-          }
-        });
-
-        if (foundList.length > 0) {
-          handleExtractionSuccess(foundList, 'الأسماء المسجلة');
-        } else {
-          setExtractorStatus("لا توجد أرقام صالحة");
-          addLog("⚠️ تم جلب السجلات ولكن لم يتم العثور على أرقام هواتف فردية صالحة.", 'log-msg-warning');
-        }
-      } catch (err) {
-        addLog(`فشل استخراج جهات الاتصال: ${err.message}`, 'log-msg-error');
-        setExtractorStatus("فشل الاستخراج");
-      }
-    }
-
-    function toggleGroupExtractorUI() {
-      const row = document.getElementById('groupExtractorRow');
-      const select = document.getElementById('extractorGroupSelect');
-      if (row.style.display === 'none' || !row.style.display) {
-        row.style.display = 'flex';
-        select.innerHTML = '<option value="">-- اختر الجروب المراد سحب أرقامه --</option>';
-        availableGroups.forEach(g => {
-          select.innerHTML += `<option value="${g.id}">${g.subject}</option>`;
-        });
-      } else {
-        row.style.display = 'none';
-      }
-    }
-
-    async function extractSelectedGroupMembers() {
-      const groupJid = document.getElementById('extractorGroupSelect').value;
-      if (!groupJid) return alert("يرجى اختيار مجموعة أولاً");
-
-      setExtractorStatus("جاري سحب أرقام الجروب...");
-      addLog(`🔍 جاري سحب أرقام أعضاء الجروب [${groupJid}]...`, 'log-msg-info');
-
-      try {
-        const res = await fetch(`${API_BASE}/group/findGroupInfos/${encodeURIComponent(currentInstance)}?groupJid=${encodeURIComponent(groupJid)}`, {
-          headers: { 'apikey': API_KEY }
-        });
-
-        if (!res.ok) throw new Error(`كود الاستجابة: ${res.status}`);
-
-        const groupData = await res.json();
-        const participants = groupData.participants || groupData.subscribers || [];
-        const groupTitle = groupData.subject || 'جروب واتساب';
-
-        const extracted = [];
-        const seenPhones = new Set();
-
-        participants.forEach(p => {
-          let realPhone = '';
-          if (p.phoneNumber) {
-            realPhone = extractValidPhoneNumber(p.phoneNumber);
-          } else if (p.id && p.id.includes('@s.whatsapp.net')) {
-            realPhone = extractValidPhoneNumber(p.id);
-          } else if (p.user && !p.id?.includes('@lid')) {
-            realPhone = extractValidPhoneNumber(p.user);
-          }
-
-          if (!realPhone && p.participantPhone) {
-            realPhone = extractValidPhoneNumber(p.participantPhone);
-          }
-
-          if (realPhone && !seenPhones.has(realPhone)) {
-            seenPhones.add(realPhone);
-            const role = p.admin ? (p.admin === 'superadmin' ? 'منشئ المجموعة' : 'مشرف') : 'عضو';
-            extracted.push({ phone: realPhone, name: `${groupTitle} (${role})`, source: groupTitle });
-          }
-        });
-
-        handleExtractionSuccess(extracted, `جروب: ${groupTitle}`);
-      } catch (err) {
-        addLog(`فشل سحب أرقام الجروب: ${err.message}`, 'log-msg-error');
-        setExtractorStatus("فشل السحب");
-      }
-    }
-
-    function handleExtractionSuccess(list, sourceTitle) {
-      lastExtractedData = list;
-      setExtractorStatus(`تم بنجاح (${list.length})`);
-      addLog(`✔ تم استخراج ${list.length} رقم هاتف بنجاح من [${sourceTitle}].`, 'log-msg-success');
-
-      const actionsBar = document.getElementById('extractorActionsBar');
-      const resultText = document.getElementById('extractorResultText');
-      if (actionsBar && resultText) {
-        actionsBar.style.display = 'flex';
-        resultText.innerText = `تم استخراج ${list.length} رقم (${sourceTitle})`;
-      }
-      lucide.createIcons();
-    }
-
-    function setExtractorStatus(text) {
-      const badge = document.getElementById('extractorStatusBadge');
-      if (badge) badge.innerText = text;
-    }
-
-    function applyExtractedToCampaign() {
-      if (!lastExtractedData || lastExtractedData.length === 0) return;
-      const formattedLines = lastExtractedData.map(item => `${item.phone}, ${item.name}`);
-      const dataInput = document.getElementById('dataInput');
-      
-      if (dataInput.value.trim().length > 0) {
-        dataInput.value += '\n' + formattedLines.join('\n');
-      } else {
-        dataInput.value = formattedLines.join('\n');
-      }
-
-      updateKpiTotal();
-      addLog(`📋 تم إدراج ${lastExtractedData.length} رقم في قائمة الحملة مباشرة.`, 'log-msg-info');
-    }
-
-    function downloadExtractedExcel() {
-      if (!lastExtractedData || lastExtractedData.length === 0) return alert("لا توجد بيانات مستخرجة لتصديرها");
-      const headers = ['Phone', 'Name', 'Source'];
-      const rows = lastExtractedData.map(item => [item.phone, item.name, item.source]);
-      const wsData = [headers, ...rows];
-      const ws = XLSX.utils.aoa_to_sheet(wsData);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Extracted_Data");
-      XLSX.writeFile(wb, `whatsapp_extracted_${Date.now()}.xlsx`);
-      addLog("📥 تم تصدير وتحميل ملف Excel بالبيانات المستخرجة بنجاح.", "log-msg-success");
-    }
-
-    // ==========================================
-    // محرك أوتوميشن الردود وإضافة الجروبات المباشرة
-    // ==========================================
-    let autoRules = JSON.parse(localStorage.getItem('evo_auto_rules')) || [
-      {
-        keyword: 'x',
-        matchType: 'exact',
-        action: 'add_to_group',
-        value: ''
-      },
-      {
-        keyword: 'y',
-        matchType: 'exact',
-        action: 'reply_text',
-        value: 'أهلاً بك! تم استلام رسالتك وسيتم الرد عليك.'
-      }
-    ];
-
-    function saveRules() {
-      localStorage.setItem('evo_auto_rules', JSON.stringify(autoRules));
-    }
-
-    async function fetchAvailableGroups(notify = false) {
-      if (!currentInstance) return;
-      try {
-        if (notify) addLog(`جاري جلب مجموعات الحساب [${currentInstance}]...`, 'log-msg-info');
-        
-        const res = await fetch(`${API_BASE}/group/fetchAllGroups/${encodeURIComponent(currentInstance)}?getParticipants=false`, {
-          headers: { 'apikey': API_KEY }
-        });
-        
-        if (!res.ok) throw new Error(`كود: ${res.status}`);
-
-        const data = await res.json();
-        const groups = Array.isArray(data) ? data : (data?.groups || []);
-
-        availableGroups = groups.map(g => ({
-          id: g.id || g.jid,
-          subject: g.subject || g.name || 'مجموعة بدون اسم'
-        })).filter(g => g.id && g.id.includes('@g.us'));
-
-        if (notify) {
-          addLog(`✔ تم تحديث ${availableGroups.length} مجموعة مسجلة على هذا الرقم.`, 'log-msg-success');
-        }
-        renderAutomationRules();
-      } catch (err) {
-        if (notify) addLog(`تعذر جلب المجموعات: ${err.message}`, 'log-msg-warning');
-      }
-    }
-
-    function renderAutomationRules() {
-      const container = document.getElementById('automationRulesContainer');
-      if (!container) return;
-      container.innerHTML = '';
-
-      if (autoRules.length === 0) {
-        container.innerHTML = `<p style="font-size: 12px; color: var(--text-subtle); text-align: center; padding: 10px;">لا توجد قواعد مضافة حالياً.</p>`;
-        return;
-      }
-
-      autoRules.forEach((rule, idx) => {
-        const card = document.createElement('div');
-        card.className = 'auto-rule-card';
-
-        let valueFieldHtml = '';
-        if (rule.action === 'add_to_group') {
-          let optionsHtml = `<option value="">-- اختر الجروب المطلوب --</option>`;
-          availableGroups.forEach(g => {
-            const isSelected = rule.value === g.id ? 'selected' : '';
-            optionsHtml += `<option value="${g.id}" ${isSelected}>${g.subject}</option>`;
-          });
-          valueFieldHtml = `
-            <select onchange="updateRule(${idx}, 'value', this.value)" style="width: 58%; font-size: 12px; padding: 6px 8px;">
-              ${optionsHtml}
-            </select>
-          `;
-        } else {
-          valueFieldHtml = `
-            <input type="text" value="${rule.value || ''}" placeholder="نص رسالة الرد..." oninput="updateRule(${idx}, 'value', this.value)" style="width: 58%; font-size: 12px; padding: 6px 10px;">
-          `;
-        }
-
-        card.innerHTML = `
-          <div class="auto-rule-row">
-            <div>
-              <label style="font-size: 11px; font-weight: 700;">الكلمة المفتاحية:</label>
-              <input type="text" value="${rule.keyword}" placeholder="مثال: x" oninput="updateRule(${idx}, 'keyword', this.value)" style="padding: 6px 10px; font-size: 12px; width: 100%;">
-            </div>
-            <div>
-              <label style="font-size: 11px; font-weight: 700;">نوع الفحص:</label>
-              <select onchange="updateRule(${idx}, 'matchType', this.value)" style="padding: 6px 8px; font-size: 12px; width: 100%;">
-                <option value="exact" ${rule.matchType === 'exact' ? 'selected' : ''}>تطابق تام (Exact)</option>
-                <option value="contains" ${rule.matchType === 'contains' ? 'selected' : ''}>تحتوي على (Contains)</option>
-              </select>
-            </div>
-            <div>
-              <label style="font-size: 11px; font-weight: 700;">الإجراء والقيمة:</label>
-              <div style="display: flex; gap: 6px;">
-                <select onchange="updateRule(${idx}, 'action', this.value)" style="padding: 6px 8px; font-size: 12px; width: 42%;">
-                  <option value="reply_text" ${rule.action === 'reply_text' ? 'selected' : ''}>إرسال رد نصي</option>
-                  <option value="add_to_group" ${rule.action === 'add_to_group' ? 'selected' : ''}>إضافة لجروب</option>
-                </select>
-                ${valueFieldHtml}
-              </div>
-            </div>
-            <button type="button" class="btn-icon-del" onclick="deleteRule(${idx})" title="حذف القاعدة">
-              <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
-            </button>
-          </div>
-        `;
-        container.appendChild(card);
-      });
-
-      lucide.createIcons();
-    }
-
-    function addAutomationRule() {
-      autoRules.push({
-        keyword: '',
-        matchType: 'exact',
-        action: 'reply_text',
-        value: ''
-      });
-      saveRules();
-      renderAutomationRules();
-    }
-
-    function updateRule(idx, field, val) {
-      autoRules[idx][field] = val;
-      saveRules();
-      if (field === 'action') renderAutomationRules();
-    }
-
-    function deleteRule(idx) {
-      autoRules.splice(idx, 1);
-      saveRules();
-      renderAutomationRules();
-    }
-
-    async function sendAutoReply(recipientJid, text) {
-      try {
-        let targetRecipient = recipientJid;
-        if (recipientJid.endsWith('@lid')) {
-          targetRecipient = recipientJid;
-        } else {
-          targetRecipient = recipientJid.replace(/[^0-9]/g, '');
-        }
-
-        const payload = {
-          number: targetRecipient,
-          text: text,
-          delay: 1000
-        };
-
-        const res = await fetch(`${API_BASE}/message/sendText/${encodeURIComponent(currentInstance)}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': API_KEY
-          },
-          body: JSON.stringify(payload)
-        });
-
-        const data = await res.json();
-        const isExistsFalse = Array.isArray(data?.response?.message) && data.response.message.some(m => m.exists === false);
-
-        if (res.ok && !isExistsFalse) {
-          addLog(`🤖 [أوتوميشن] تم إرسال الرد بنجاح إلى (${targetRecipient}): "${text}"`, 'log-msg-success');
-          return true;
-        } else {
-          const errDetail = typeof data === 'object' ? JSON.stringify(data) : data;
-          addLog(`فشل إرسال الرد: ${errDetail}`, 'log-msg-error');
-          return false;
-        }
-      } catch (err) {
-        addLog(`خطأ إرسال الرد التلقائي: ${err.message}`, 'log-msg-error');
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        return true;
+      } catch (e) {
         return false;
       }
     }
 
-    // دالة إضافة العضو إلى الجروب بشكل مباشر فقط وبدون إرسال روابط
-    async function addUserToGroup(groupJid, rawJid, extractedPhone) {
-      try {
-        if (!groupJid) {
-          addLog(`⚠️ لم يتم تحديد جروب للقاعدة المتطابقة!`, 'log-msg-warning');
-          return;
-        }
+    supabaseReady = initSupabaseClient();
 
-        const phone = (extractedPhone && extractedPhone.length >= 8) 
-          ? extractedPhone 
-          : rawJid.replace(/@.+$/, '').replace(/[^0-9]/g, '');
+    // State
+    let currentUser = null;
+    let currentInstanceRecord = null;
+    let instanceList = [];
+    let customVars = [];
+    let messageSequences = [];
+    let autoRules = [];
+    let availableGroups = [];
+    let lastExtractedData = [];
+    let activeTextarea = null;
+    let isCampaignRunning = false;
+    let stopCampaignRequested = false;
+    let currentSendingMode = 'single';
+    let qrCheckInterval = null;
+    let messageCounter = 1;
 
-        if (!phone || phone.length < 8) {
-          addLog(`⚠️ تعذر استخراج رقم الهاتف لإضافته مباشرة للجروب.`, 'log-msg-warning');
-          return;
-        }
+    const defaultVars = ['wa_name', 'phone_name', 'name', 'phone'];
 
-        const participantJid = `${phone}@s.whatsapp.net`;
+    // ==========================================
+    // 2️⃣ المصادقة وتهيئة النظام
+    // ==========================================
+    async function initApp() {
+      lucide.createIcons();
 
-        addLog(`👥 [أوتوميشن] جاري إضافة الرقم (${phone}) إلى الجروب مباشرة...`, 'log-msg-info');
-
-        const res = await fetch(`${API_BASE}/group/updateParticipant/${encodeURIComponent(currentInstance)}?groupJid=${encodeURIComponent(groupJid)}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': API_KEY
-          },
-          body: JSON.stringify({
-            action: 'add',
-            participants: [participantJid]
-          })
-        });
-
-        const data = await res.json();
-        
-        let isDirectAdded = false;
-        if (res.ok) {
-          const statusResult = data?.[0]?.status || data?.status || '';
-          if (statusResult === '200' || statusResult === 200 || !statusResult) {
-            isDirectAdded = true;
-          }
-        }
-
-        if (isDirectAdded) {
-          addLog(`👥 [أوتوميشن] تمت إضافة العضو (${phone}) إلى الجروب بنجاح وبشكل مباشر!`, 'log-msg-success');
-        } else {
-          const errorMsg = data?.response?.message || data?.message || JSON.stringify(data);
-          addLog(`⚠️ تعذرت الإضافة المباشرة للرقم (${phone}): ${errorMsg}`, 'log-msg-warning');
-        }
-
-      } catch (err) {
-        addLog(`خطأ أوتوميشن إضافة الجروب: ${err.message}`, 'log-msg-error');
-      }
-    }
-
-    async function processMessageAutomation(targetRecipient, messageText, extractedPhone, timestamp) {
-      if (!messageText || autoRules.length === 0) return;
-
-      if (timestamp && timestamp < sessionStartTime) {
+      if (!supabaseReady || !supabaseClient) {
+        addLog("❌ فشل تحميل مكتبة Supabase! تأكد من الاتصال بالإنترنت.", "log-msg-error");
+        openAuthModal();
         return;
       }
 
-      const cleanMsg = messageText.trim().toLowerCase();
+      addLog("جاري التحقق من الاتصال وقراءة بيانات الحساب...", "log-msg-info");
 
-      for (const rule of autoRules) {
-        if (!rule.keyword) continue;
-        const targetKey = rule.keyword.trim().toLowerCase();
-        let isMatched = false;
+      try {
+        const { data, error } = await supabaseClient.auth.getSession();
+        if (error) throw error;
 
-        if (rule.matchType === 'exact' && cleanMsg === targetKey) {
-          isMatched = true;
-        } else if (rule.matchType === 'contains' && cleanMsg.includes(targetKey)) {
-          isMatched = true;
+        const session = data?.session;
+        if (session?.user) {
+          currentUser = session.user;
+          updateUserUI();
+          addLog(`✔ مرحباً بك: ${currentUser.email}`, "log-msg-success");
+          await loadUserInstances();
+        } else {
+          updateUserUI();
+          openAuthModal();
+          addLog("⚠️ لم يتم تسجيل الدخول، يرجى تسجيل الدخول للبدء.", "log-msg-warning");
         }
-
-        if (isMatched) {
-          addLog(`⚡ تطابق أوتوميشن [${rule.keyword}] من (${targetRecipient})`, 'log-msg-info');
-          if (rule.action === 'reply_text' && rule.value) {
-            await sendAutoReply(targetRecipient, rule.value);
-          } else if (rule.action === 'add_to_group' && rule.value) {
-            await addUserToGroup(rule.value, targetRecipient, extractedPhone);
-          }
-          break;
-        }
+      } catch (err) {
+        addLog(`تنبيه: يرجى تسجيل الدخول للمتابعة.`, "log-msg-warning");
+        openAuthModal();
       }
     }
 
-    // ==========================================
-    // صندوق الوارد المباشر Inbox Polling
-    // ==========================================
-    function startInboxPolling() {
-      if (window.inboxPollTimer) clearInterval(window.inboxPollTimer);
-      if (!window.seenIncomingMessageIds) window.seenIncomingMessageIds = new Set();
-
-      addLog(`✔ تم تفعيل استماع صندوق الوارد للحساب [${currentInstance}]`, 'log-msg-success');
-
-      window.inboxPollTimer = setInterval(async () => {
-        try {
-          const res = await fetch(`${API_BASE}/chat/findMessages/${encodeURIComponent(currentInstance)}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': API_KEY
-            },
-            body: JSON.stringify({
-              where: { key: { fromMe: false } },
-              take: 30
-            })
-          });
-
-          if (!res.ok) return;
-
-          const data = await res.json();
-          const records = data?.messages?.records || data?.records || (Array.isArray(data) ? data : []);
-
-          if (!Array.isArray(records) || records.length === 0) return;
-
-          const sortedRecords = [...records].sort((a, b) => {
-            const timeA = Number(a?.messageTimestamp || a?.timestamp || 0);
-            const timeB = Number(b?.messageTimestamp || b?.timestamp || 0);
-            return timeA - timeB;
-          });
-
-          for (const msg of sortedRecords) {
-            if (!msg || typeof msg !== 'object') continue;
-            const key = msg.key || {};
-            if (key.fromMe === true) continue;
-
-            const remoteJid = key.remoteJid || '';
-            if (remoteJid.includes('@g.us') || remoteJid.includes('status@broadcast')) continue;
-
-            const msgId = key.id || msg.id;
-            if (!msgId || window.seenIncomingMessageIds.has(msgId)) continue;
-
-            window.seenIncomingMessageIds.add(msgId);
-            handleIncomingMessage({ data: msg });
-          }
-
-          if (window.seenIncomingMessageIds.size > 1000) {
-            const ids = Array.from(window.seenIncomingMessageIds);
-            window.seenIncomingMessageIds = new Set(ids.slice(-1000));
-          }
-
-        } catch (e) {
-          console.error('Inbox polling error:', e);
-        }
-      }, 3500);
-    }
-
-    function handleIncomingMessage(payload) {
-      if (!payload) return;
-
-      const msgData = payload.data || (payload.messages && payload.messages[0]) || payload;
-      if (!msgData || typeof msgData !== 'object') return;
-
-      const key = msgData.key || {};
-      if (key.fromMe) return;
-
-      const remoteJid = key.remoteJid || '';
-      if (remoteJid.includes('@g.us') || remoteJid.includes('status@broadcast')) return;
-
-      let phone = '';
-      if (key.participant && !key.participant.includes('@lid')) {
-        phone = key.participant.replace(/[^0-9]/g, '');
-      } else if (msgData.senderPn) {
-        phone = String(msgData.senderPn).replace(/[^0-9]/g, '');
-      } else if (msgData.participantPhone) {
-        phone = String(msgData.participantPhone).replace(/[^0-9]/g, '');
-      } else if (!remoteJid.includes('@lid')) {
-        phone = remoteJid.replace(/[^0-9]/g, '');
+    function updateUserUI() {
+      const banner = document.getElementById('userStatusBanner');
+      const authBtn = document.getElementById('authButton');
+      if (currentUser) {
+        banner.innerText = `حساب: ${currentUser.email} | سحابي نشط (24/7 Cloud Ready)`;
+        authBtn.innerHTML = `<i data-lucide="log-out" style="width: 14px; height: 14px;"></i> خروج`;
+        authBtn.onclick = handleAuthLogout;
+      } else {
+        banner.innerText = `غير مسجل | يرجى الدخول`;
+        authBtn.innerHTML = `<i data-lucide="log-in" style="width: 14px; height: 14px;"></i> دخول`;
+        authBtn.onclick = openAuthModal;
       }
-
-      const targetRecipient = remoteJid;
-      const pushName = msgData.pushName || 'عميل واتساب';
-      const msg = msgData.message || {};
-      let bodyText = msg.conversation 
-        || msg.extendedTextMessage?.text 
-        || (msg.imageMessage ? '📷 [صورة]' : '')
-        || (msg.audioMessage ? '🎙 [تسجيل صوتي]' : '')
-        || (msg.documentMessage ? `📄 [مستند: ${msg.documentMessage.fileName || 'ملف'}]` : '')
-        || (msg.videoMessage ? '🎥 [فيديو]' : '')
-        || '';
-
-      appendInboxMessage(pushName, phone || remoteJid.replace('@lid', ''), bodyText || 'رسالة واردة');
-
-      const timestamp = Number(msgData.messageTimestamp || msgData.timestamp || 0);
-
-      if (bodyText) {
-        processMessageAutomation(targetRecipient, bodyText, phone, timestamp);
-      }
-    }
-
-    function appendInboxMessage(name, phone, text) {
-      const container = document.getElementById('inboxContainer');
-      const emptyState = document.getElementById('inboxEmpty');
-      if (emptyState) emptyState.style.display = 'none';
-
-      receivedCount++;
-      document.getElementById('kpiReceived').innerText = receivedCount;
-
-      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-      const card = document.createElement('div');
-      card.className = 'inbox-card';
-      card.innerHTML = `
-        <div class="inbox-header">
-          <div class="sender-name">
-            <i data-lucide="user" style="width: 14px; height: 14px; color: var(--primary);"></i>
-            <span>${name}</span>
-            <span class="sender-phone">(${phone})</span>
-          </div>
-          <span class="inbox-time">${time}</span>
-        </div>
-        <div class="inbox-body">${text}</div>
-      `;
-
-      container.prepend(card);
-      lucide.createIcons();
-      addLog(`📩 رسالة واردة من [${name}] (${phone}): "${text.substring(0, 30)}..."`, 'log-msg-info');
-    }
-
-    function clearInbox() {
-      const container = document.getElementById('inboxContainer');
-      container.innerHTML = `
-        <div class="inbox-empty" id="inboxEmpty">
-          <i data-lucide="inbox" style="width: 36px; height: 36px;"></i>
-          <p>في انتظار الرسائل الواردة من العملاء...</p>
-        </div>
-      `;
-      receivedCount = 0;
-      document.getElementById('kpiReceived').innerText = '0';
       lucide.createIcons();
     }
 
+    async function handleAuthLogin() {
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value.trim();
+      const errBox = document.getElementById('authErrorMsg');
+      errBox.innerText = '';
+
+      if (!email || !password) {
+        errBox.innerText = 'يرجى إدخال البريد وكلمة المرور';
+        return;
+      }
+
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) {
+        errBox.innerText = error.message;
+      } else {
+        currentUser = data.user;
+        closeAuthModal();
+        updateUserUI();
+        addLog(`✔ تم تسجيل الدخول بنجاح: ${currentUser.email}`, 'log-msg-success');
+        await loadUserInstances();
+      }
+    }
+
+    async function handleAuthRegister() {
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value.trim();
+      const errBox = document.getElementById('authErrorMsg');
+      errBox.innerText = '';
+
+      if (!email || !password) {
+        errBox.innerText = 'يرجى إدخال البريد وكلمة المرور';
+        return;
+      }
+
+      const { data, error } = await supabaseClient.auth.signUp({ email, password });
+      if (error) {
+        errBox.innerText = error.message;
+      } else {
+        alert("تم إنشاء الحساب بنجاح!");
+        currentUser = data.user;
+        closeAuthModal();
+        updateUserUI();
+        await loadUserInstances();
+      }
+    }
+
+    async function handleAuthLogout() {
+      if (supabaseClient) await supabaseClient.auth.signOut();
+      if (realtimeChannel) realtimeChannel.unsubscribe();
+      currentUser = null;
+      currentInstanceRecord = null;
+      instanceList = [];
+      document.getElementById('activeInstanceSelect').innerHTML = '';
+      document.getElementById('currentStatusText').innerText = 'الحساب: غير مسجل';
+      updateUserUI();
+      openAuthModal();
+    }
+
+    function openAuthModal() { document.getElementById('authModal').style.display = 'flex'; }
+    function closeAuthModal() { document.getElementById('authModal').style.display = 'none'; }
+
     // ==========================================
-    // إدارة المتغيرات والقوالب
+    // 3️⃣ إدارة الأرقام ومزامنة الـ Webhook
     // ==========================================
+    async function loadUserInstances() {
+      if (!currentUser || !supabaseClient) return;
+      try {
+        const { data, error } = await supabaseClient
+          .from('instances')
+          .select('*')
+          .order('created_at', { ascending: true });
+
+        if (error) throw error;
+
+        instanceList = data || [];
+        const select = document.getElementById('activeInstanceSelect');
+        select.innerHTML = '';
+
+        if (instanceList.length === 0) {
+          document.getElementById('currentStatusText').innerText = 'لا يوجد أرقام مضافة';
+          addLog("لا يوجد أرقام مسجلة بحسابك حالياً. اضغط 'إضافة رقم' لربط واتساب.", 'log-msg-info');
+          return;
+        }
+
+        instanceList.forEach(inst => {
+          const opt = document.createElement('option');
+          opt.value = inst.id;
+          opt.innerText = `حساب: ${inst.name}`;
+          select.appendChild(opt);
+        });
+
+        currentInstanceRecord = instanceList[0];
+        select.value = currentInstanceRecord.id;
+        document.getElementById('currentStatusText').innerText = `الحساب: ${currentInstanceRecord.name}`;
+
+        await loadAllInstanceData(currentInstanceRecord.id);
+      } catch (err) {
+        addLog(`خطأ في جلب الأرقام: ${err.message}`, 'log-msg-error');
+      }
+    }
+
+    async function switchInstance() {
+      const select = document.getElementById('activeInstanceSelect');
+      const instId = select.value;
+      currentInstanceRecord = instanceList.find(i => i.id === instId);
+
+      if (currentInstanceRecord) {
+        document.getElementById('currentStatusText').innerText = `الحساب: ${currentInstanceRecord.name}`;
+        addLog(`تم التبديل للحساب: [${currentInstanceRecord.name}]`, 'log-msg-info');
+        await loadAllInstanceData(currentInstanceRecord.id);
+      }
+    }
+
+    async function loadAllInstanceData(instanceId) {
+      // ضبط الـ Webhook الخاص بالسيرفر تلقائياً لضمان العمل 24/7
+      await configureInstanceWebhook(currentInstanceRecord.name);
+
+      await Promise.all([
+        loadInstanceSettingsFromDB(instanceId),
+        loadCustomVariablesFromDB(instanceId),
+        loadSequencesFromDB(instanceId),
+        loadAutomationRulesFromDB(instanceId),
+        loadInboxMessagesFromDB(instanceId),
+        loadTodaySentCountFromDB(instanceId),
+        fetchAvailableGroups()
+      ]);
+
+      // تشغيل الاستماع المباشر (Supabase Realtime)
+      setupRealtimeListener(instanceId);
+    }
+
+    // تفعيل Webhook في Evolution API
+    async function configureInstanceWebhook(instanceName) {
+      try {
+        const payload = {
+          webhook: {
+            enabled: true,
+            url: WEBHOOK_URL,
+            byEvents: false,
+            base64: false,
+            events: ["MESSAGES_UPSERT"]
+          }
+        };
+        await fetch(`${API_BASE}/webhook/set/${encodeURIComponent(instanceName)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
+          body: JSON.stringify(payload)
+        });
+      } catch (err) {
+        console.warn("Webhook config failed:", err);
+      }
+    }
+
+    // الاستماع للرسائل الواردة لحظياً عبر Supabase Realtime (بدلاً من Polling)
+    function setupRealtimeListener(instanceId) {
+      if (realtimeChannel) realtimeChannel.unsubscribe();
+
+      realtimeChannel = supabaseClient
+        .channel(`realtime-inbox-${instanceId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages',
+            filter: `instance_id=eq.${instanceId}`
+          },
+          payload => {
+            const newMsg = payload.new;
+            if (newMsg && newMsg.direction === 'incoming') {
+              renderInboxItem(
+                newMsg.remote_name || 'عميل',
+                newMsg.remote_phone,
+                newMsg.message_text,
+                new Date(newMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                true
+              );
+              document.getElementById('kpiReceived').innerText = (parseInt(document.getElementById('kpiReceived').innerText) || 0) + 1;
+              addLog(`📥 استلم السيرفر رسالة جديدة من (${newMsg.remote_phone}) ومارس الأوتوميشن بنجاح.`, 'log-msg-success');
+            }
+          }
+        )
+        .subscribe();
+    }
+
+    // ==========================================
+    // 4️⃣ الإعدادات والمتغيرات والقواعد
+    // ==========================================
+    async function loadInstanceSettingsFromDB(instanceId) {
+      if (!supabaseClient) return;
+      const { data } = await supabaseClient
+        .from('instance_settings')
+        .select('*')
+        .eq('instance_id', instanceId)
+        .maybeSingle();
+
+      if (data) {
+        document.getElementById('dailyLimit').value = data.daily_limit ?? 50;
+        document.getElementById('minDelay').value = data.min_delay_seconds ?? 10;
+        document.getElementById('maxDelay').value = data.max_delay_seconds ?? 20;
+        document.getElementById('batchCount').value = data.batch_size ?? 15;
+        document.getElementById('batchPauseMin').value = data.batch_pause_min ?? 40;
+        document.getElementById('batchPauseMax').value = data.batch_pause_max ?? 90;
+        document.getElementById('simulateTyping').checked = data.simulate_typing ?? true;
+        document.getElementById('autoGhostProtection').checked = data.invisible_characters ?? true;
+      }
+    }
+
+    async function saveInstanceSettingsToDB() {
+      if (!currentInstanceRecord || !currentUser || !supabaseClient) return;
+      const settingsPayload = {
+        user_id: currentUser.id,
+        instance_id: currentInstanceRecord.id,
+        daily_limit: parseInt(document.getElementById('dailyLimit').value) || 0,
+        min_delay_seconds: parseInt(document.getElementById('minDelay').value) || 10,
+        max_delay_seconds: parseInt(document.getElementById('maxDelay').value) || 20,
+        batch_size: parseInt(document.getElementById('batchCount').value) || 0,
+        batch_pause_min: parseInt(document.getElementById('batchPauseMin').value) || 40,
+        batch_pause_max: parseInt(document.getElementById('batchPauseMax').value) || 90,
+        simulate_typing: document.getElementById('simulateTyping').checked,
+        invisible_characters: document.getElementById('autoGhostProtection').checked,
+        updated_at: new Date().toISOString()
+      };
+
+      await supabaseClient.from('instance_settings').upsert(settingsPayload, { onConflict: 'instance_id' });
+    }
+
+    async function loadCustomVariablesFromDB(instanceId) {
+      if (!supabaseClient) return;
+      const { data } = await supabaseClient
+        .from('custom_variables')
+        .select('*')
+        .eq('instance_id', instanceId);
+
+      customVars = (data || []).map(v => ({ id: v.id, name: v.name, value: v.default_value }));
+      renderVariableBadges();
+    }
+
+    async function addCustomVariable() {
+      if (!currentInstanceRecord || !currentUser || !supabaseClient) return alert("اختر حساباً أولاً");
+      const nameInput = document.getElementById('newVarName');
+      const valInput = document.getElementById('newVarVal');
+      const name = nameInput.value.trim().replace(/[^\p{L}\p{M}0-9_\-]/gu, '');
+      const val = valInput.value.trim();
+
+      if (!name) return alert("يرجى إدخال اسم متغير صالح");
+
+      const { data, error } = await supabaseClient.from('custom_variables').insert([{
+        user_id: currentUser.id,
+        instance_id: currentInstanceRecord.id,
+        name: name,
+        default_value: val
+      }]).select().single();
+
+      if (!error && data) {
+        customVars.push({ id: data.id, name: data.name, value: data.default_value });
+        nameInput.value = '';
+        valInput.value = '';
+        renderVariableBadges();
+      }
+    }
+
+    async function removeCustomVariable(index) {
+      const variable = customVars[index];
+      if (variable?.id && supabaseClient) {
+        await supabaseClient.from('custom_variables').delete().eq('id', variable.id);
+      }
+      customVars.splice(index, 1);
+      renderVariableBadges();
+    }
+
     function renderVariableBadges() {
       const container = document.getElementById('varTagList');
       container.innerHTML = '';
@@ -2169,191 +1038,565 @@
       lucide.createIcons();
     }
 
-    function insertVariableIntoActiveTextarea(varName) {
-      if (!activeTextarea) {
-        activeTextarea = document.querySelector('.msg-text') || document.querySelector('.seq-msg-text');
+    // ==========================================
+    // 5️⃣ مجموعات الرسائل (Sequences)
+    // ==========================================
+    async function loadSequencesFromDB(instanceId) {
+      if (!supabaseClient) return;
+      const { data } = await supabaseClient
+        .from('message_sequences')
+        .select('*')
+        .eq('instance_id', instanceId);
+
+      if (data && data.length > 0) {
+        messageSequences = data.map(s => ({ id: s.id, name: s.name, messages: s.messages || [''] }));
+      } else {
+        messageSequences = [{ id: 'temp-1', name: 'المجموعة 1', messages: ['مساء الخير @wa_name'] }];
       }
-      if (!activeTextarea) return;
-
-      const cursorPos = activeTextarea.selectionStart || activeTextarea.value.length;
-      const text = activeTextarea.value;
-      activeTextarea.value = text.substring(0, cursorPos) + `@${varName} ` + text.substring(cursorPos);
-      activeTextarea.focus();
-      const nextPos = cursorPos + varName.length + 2;
-      activeTextarea.setSelectionRange(nextPos, nextPos);
+      renderSequenceGroups();
     }
 
-    function addCustomVariable() {
-      const nameInput = document.getElementById('newVarName');
-      const valInput = document.getElementById('newVarVal');
-      const name = nameInput.value.trim().replace(/[^\p{L}\p{M}0-9_\-]/gu, '');
-      const val = valInput.value.trim();
-
-      if (!name) return alert("يرجى إدخال اسم متغير صحيح");
-      customVars.push({ name: name, value: val });
-      nameInput.value = '';
-      valInput.value = '';
-      renderVariableBadges();
-    }
-
-    function removeCustomVariable(index) {
-      customVars.splice(index, 1);
-      renderVariableBadges();
-    }
-
-    const dropdown = document.getElementById('mentionDropdown');
-
-    function attachMentionEvents(textarea) {
-      textarea.addEventListener('focus', () => { activeTextarea = textarea; });
-      textarea.addEventListener('keyup', handleMention);
-      textarea.addEventListener('click', () => dropdown.style.display = 'none');
-    }
-
-    function handleMention(e) {
-      activeTextarea = e.target;
-      const text = activeTextarea.value;
-      const cursorPos = activeTextarea.selectionStart;
-
-      const lastAt = text.lastIndexOf('@', cursorPos - 1);
-      if (lastAt !== -1 && (cursorPos - lastAt) <= 30) {
-        const query = text.substring(lastAt + 1, cursorPos).toLowerCase();
-        
-        const allList = [
-          ...defaultVars.map(v => ({ name: v, value: '' })),
-          { name: 'Randomcode', value: '#123456 (كود عشوائي)' },
-          { name: 'invisible', value: '(أحرف خفية لمنع الحظر)' },
-          ...customVars
-        ];
-
-        const matched = allList.filter(item => item.name.toLowerCase().includes(query));
-
-        if (matched.length > 0) {
-          showDropdown(matched, lastAt, cursorPos);
-          return;
-        }
-      }
-      dropdown.style.display = 'none';
-    }
-
-    function showDropdown(items, atIndex, cursorPos) {
-      dropdown.innerHTML = '';
-      items.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'mention-item';
-        div.innerHTML = `
-          <span>@${item.name}</span>
-          ${item.value ? `<span class="mention-val">${item.value}</span>` : ''}
-        `;
-        div.onclick = () => insertMention(item.name, atIndex, cursorPos);
-        dropdown.appendChild(div);
-      });
-
-      const rect = activeTextarea.getBoundingClientRect();
-      dropdown.style.top = `${window.scrollY + rect.bottom + 6}px`;
-      dropdown.style.left = `${window.scrollX + rect.left + 20}px`;
-      dropdown.style.display = 'block';
-    }
-
-    function insertMention(varName, atIndex, cursorPos) {
-      const text = activeTextarea.value;
-      const before = text.substring(0, atIndex);
-      const after = text.substring(cursorPos);
-      activeTextarea.value = `${before}@${varName} ${after}`;
-      dropdown.style.display = 'none';
-      activeTextarea.focus();
-      const nextPos = atIndex + varName.length + 2;
-      activeTextarea.setSelectionRange(nextPos, nextPos);
-    }
-
-    document.addEventListener('click', (e) => {
-      if (!dropdown.contains(e.target) && e.target !== activeTextarea) {
-        dropdown.style.display = 'none';
-      }
-    });
-
-    function addMessageField() {
-      messageCounter++;
-      const container = document.getElementById('messagesContainer');
-      const div = document.createElement('div');
-      div.className = 'msg-item';
-      div.id = `msg-box-${messageCounter}`;
-      div.innerHTML = `
-        <div class="msg-item-header">
-          <span>الرسالة رقم ${messageCounter}</span>
-          <button type="button" class="btn-icon-del" onclick="document.getElementById('${div.id}').remove()">
-            <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
-          </button>
-        </div>
-        <textarea class="msg-text" rows="3" placeholder="اكتب قالب رسالة بديل..."></textarea>
-      `;
-      container.appendChild(div);
-      attachMentionEvents(div.querySelector('textarea'));
+    function switchMessageMode(mode) {
+      currentSendingMode = mode;
+      document.getElementById('singleModeBtn').classList.toggle('active', mode === 'single');
+      document.getElementById('groupModeBtn').classList.toggle('active', mode === 'sequence');
+      document.getElementById('singleMessagesSection').style.display = (mode === 'single') ? 'flex' : 'none';
+      document.getElementById('sequenceMessagesSection').style.display = (mode === 'sequence') ? 'flex' : 'none';
+      document.getElementById('seqDelayRow').style.display = (mode === 'sequence') ? 'grid' : 'none';
+      if (mode === 'sequence') renderSequenceGroups();
       lucide.createIcons();
     }
 
-    // ==========================================
-    // إدارة الحسابات والتهيئة
-    // ==========================================
-    async function fetchServerInstances() {
-      try {
-        const res = await fetch(`${API_BASE}/instance/fetchInstances`, {
-          headers: { 'apikey': API_KEY }
-        });
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          const serverList = data.map(item => item.name || item.instance?.instanceName || item.instanceName).filter(Boolean);
-          if (serverList.length > 0) {
-            instances = serverList;
-            localStorage.setItem('evo_instances', JSON.stringify(instances));
-            if (!instances.includes(currentInstance)) {
-              currentInstance = instances[0];
-              localStorage.setItem('evo_current_instance', currentInstance);
-            }
-          }
-        }
-      } catch (err) {}
-      renderInstanceSelect();
-    }
+    function renderSequenceGroups() {
+      const container = document.getElementById('sequenceGroupsContainer');
+      if (!container) return;
+      container.innerHTML = '';
 
-    function renderInstanceSelect() {
-      const select = document.getElementById('activeInstanceSelect');
-      select.innerHTML = '';
-      instances.forEach(inst => {
-        const opt = document.createElement('option');
-        opt.value = inst;
-        opt.innerText = `حساب: ${inst}`;
-        if (inst === currentInstance) opt.selected = true;
-        select.appendChild(opt);
+      messageSequences.forEach((group, gIdx) => {
+        const gCard = document.createElement('div');
+        gCard.className = 'sequence-group-card';
+
+        let messagesHtml = '';
+        group.messages.forEach((msg, mIdx) => {
+          messagesHtml += `
+            <div style="display: flex; flex-direction: column; gap: 4px; background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid var(--border-subtle);">
+              <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: var(--text-muted);">
+                <span>الرسالة ${mIdx + 1}</span>
+                ${group.messages.length > 1 ? `<i data-lucide="trash" style="width: 13px; height: 13px; cursor: pointer; color: var(--danger);" onclick="removeMessageFromSequence(${gIdx}, ${mIdx})"></i>` : ''}
+              </div>
+              <textarea class="seq-msg-text" rows="2" placeholder="اكتب نص الرسالة..." onchange="updateSequenceMessageText(${gIdx}, ${mIdx}, this.value)">${msg}</textarea>
+            </div>
+          `;
+        });
+
+        gCard.innerHTML = `
+          <div class="sequence-group-header">
+            <span>${group.name}</span>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <button type="button" class="btn btn-secondary" style="padding: 3px 8px; font-size: 11px;" onclick="addMessageToSequence(${gIdx})">
+                <i data-lucide="plus" style="width: 12px; height: 12px;"></i> إضافة رسالة تالية
+              </button>
+              ${messageSequences.length > 1 ? `
+                <button type="button" class="btn-icon-del" onclick="removeSequenceGroup(${gIdx})">
+                  <i data-lucide="trash-2" style="width: 15px; height: 15px;"></i>
+                </button>
+              ` : ''}
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">${messagesHtml}</div>
+        `;
+        container.appendChild(gCard);
       });
 
-      document.getElementById('currentStatusText').innerText = `الحساب: ${currentInstance}`;
-      updateDailyCountUI();
-      startInboxPolling();
-      fetchAvailableGroups();
+      document.querySelectorAll('.seq-msg-text').forEach(attachMentionEvents);
+      lucide.createIcons();
     }
 
-    function switchInstance() {
-      const select = document.getElementById('activeInstanceSelect');
-      currentInstance = select.value;
-      localStorage.setItem('evo_current_instance', currentInstance);
-      document.getElementById('currentStatusText').innerText = `الحساب: ${currentInstance}`;
-      updateDailyCountUI();
-      addLog(`تم التبديل إلى الحساب: [${currentInstance}]`, 'log-msg-info');
-      startInboxPolling();
-      fetchAvailableGroups(true);
+    async function syncSequenceGroup(gIdx) {
+      if (!currentInstanceRecord || !currentUser || !supabaseClient) return;
+      const group = messageSequences[gIdx];
+
+      if (group.id && !String(group.id).startsWith('temp-')) {
+        await supabaseClient.from('message_sequences').update({
+          name: group.name,
+          messages: group.messages
+        }).eq('id', group.id);
+      } else {
+        const { data } = await supabaseClient.from('message_sequences').insert([{
+          user_id: currentUser.id,
+          instance_id: currentInstanceRecord.id,
+          name: group.name,
+          messages: group.messages
+        }]).select().single();
+        if (data) group.id = data.id;
+      }
     }
 
-    function addLog(text, className = 'log-msg-default') {
-      const logBox = document.getElementById('logBox');
-      const time = new Date().toLocaleTimeString();
-      const line = document.createElement('div');
-      line.className = 'log-line';
-      line.innerHTML = `<span class="log-time">[${time}]</span><span class="${className}">${text}</span>`;
-      logBox.appendChild(line);
-      logBox.scrollTop = logBox.scrollHeight;
+    async function addNewSequenceGroup() {
+      const newNum = messageSequences.length + 1;
+      const newGroup = { id: `temp-${Date.now()}`, name: `المجموعة ${newNum}`, messages: [''] };
+      messageSequences.push(newGroup);
+      await syncSequenceGroup(messageSequences.length - 1);
+      renderSequenceGroups();
     }
 
+    async function removeSequenceGroup(gIdx) {
+      const group = messageSequences[gIdx];
+      if (group.id && !String(group.id).startsWith('temp-') && supabaseClient) {
+        await supabaseClient.from('message_sequences').delete().eq('id', group.id);
+      }
+      messageSequences.splice(gIdx, 1);
+      renderSequenceGroups();
+    }
+
+    function addMessageToSequence(gIdx) {
+      messageSequences[gIdx].messages.push('');
+      syncSequenceGroup(gIdx);
+      renderSequenceGroups();
+    }
+
+    function removeMessageFromSequence(gIdx, mIdx) {
+      messageSequences[gIdx].messages.splice(mIdx, 1);
+      syncSequenceGroup(gIdx);
+      renderSequenceGroups();
+    }
+
+    function updateSequenceMessageText(gIdx, mIdx, val) {
+      messageSequences[gIdx].messages[mIdx] = val;
+      syncSequenceGroup(gIdx);
+    }
+
+    // ==========================================
+    // 6️⃣ قواعد الأوتوميشن السحابية (Automation Rules)
+    // ==========================================
+    async function loadAutomationRulesFromDB(instanceId) {
+      if (!supabaseClient) return;
+      const { data } = await supabaseClient
+        .from('automation_rules')
+        .select('*')
+        .eq('instance_id', instanceId);
+
+      autoRules = (data || []).map(r => ({
+        id: r.id,
+        keyword: r.keyword,
+        matchType: r.match_type,
+        action: r.action,
+        value: r.action_value
+      }));
+      renderAutomationRules();
+    }
+
+    function renderAutomationRules() {
+      const container = document.getElementById('automationRulesContainer');
+      if (!container) return;
+      container.innerHTML = '';
+
+      if (autoRules.length === 0) {
+        container.innerHTML = `<p style="font-size: 12px; color: var(--text-subtle); text-align: center; padding: 10px;">لا توجد قواعد مضافة سحابياً.</p>`;
+        return;
+      }
+
+      autoRules.forEach((rule, idx) => {
+        const card = document.createElement('div');
+        card.className = 'auto-rule-card';
+
+        let valueFieldHtml = '';
+        if (rule.action === 'add_to_group') {
+          let optionsHtml = `<option value="">-- اختر الجروب المطلوب --</option>`;
+          availableGroups.forEach(g => {
+            const isSelected = rule.value === g.id ? 'selected' : '';
+            optionsHtml += `<option value="${g.id}" ${isSelected}>${g.subject}</option>`;
+          });
+          valueFieldHtml = `
+            <select onchange="updateRule(${idx}, 'value', this.value)" style="width: 58%; font-size: 12px; padding: 6px 8px;">
+              ${optionsHtml}
+            </select>
+          `;
+        } else {
+          valueFieldHtml = `
+            <input type="text" value="${rule.value || ''}" placeholder="نص رسالة الرد..." onchange="updateRule(${idx}, 'value', this.value)" style="width: 58%; font-size: 12px; padding: 6px 10px;">
+          `;
+        }
+
+        card.innerHTML = `
+          <div class="auto-rule-row">
+            <div>
+              <label style="font-size: 11px; font-weight: 700;">الكلمة المفتاحية:</label>
+              <input type="text" value="${rule.keyword}" placeholder="مثال: خصم" onchange="updateRule(${idx}, 'keyword', this.value)" style="padding: 6px 10px; font-size: 12px; width: 100%;">
+            </div>
+            <div>
+              <label style="font-size: 11px; font-weight: 700;">نوع الفحص:</label>
+              <select onchange="updateRule(${idx}, 'matchType', this.value)" style="padding: 6px 8px; font-size: 12px; width: 100%;">
+                <option value="exact" ${rule.matchType === 'exact' ? 'selected' : ''}>تطابق تام (Exact)</option>
+                <option value="contains" ${rule.matchType === 'contains' ? 'selected' : ''}>تحتوي على (Contains)</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size: 11px; font-weight: 700;">الإجراء والقيمة:</label>
+              <div style="display: flex; gap: 6px;">
+                <select onchange="updateRule(${idx}, 'action', this.value)" style="padding: 6px 8px; font-size: 12px; width: 42%;">
+                  <option value="reply_text" ${rule.action === 'reply_text' ? 'selected' : ''}>إرسال رد نصي</option>
+                  <option value="add_to_group" ${rule.action === 'add_to_group' ? 'selected' : ''}>إضافة لجروب</option>
+                </select>
+                ${valueFieldHtml}
+              </div>
+            </div>
+            <button type="button" class="btn-icon-del" onclick="deleteRule(${idx})">
+              <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+      lucide.createIcons();
+    }
+
+    async function addAutomationRule() {
+      if (!currentInstanceRecord || !currentUser || !supabaseClient) return;
+      const { data } = await supabaseClient.from('automation_rules').insert([{
+        user_id: currentUser.id,
+        instance_id: currentInstanceRecord.id,
+        keyword: 'جديد',
+        match_type: 'exact',
+        action: 'reply_text',
+        action_value: 'أهلاً بك! تم استلام طلبك تلقائياً.'
+      }]).select().single();
+
+      if (data) {
+        autoRules.push({
+          id: data.id,
+          keyword: data.keyword,
+          matchType: data.match_type,
+          action: data.action,
+          value: data.action_value
+        });
+        renderAutomationRules();
+      }
+    }
+
+    async function updateRule(idx, field, val) {
+      autoRules[idx][field] = val;
+      const rule = autoRules[idx];
+      if (rule.id && supabaseClient) {
+        await supabaseClient.from('automation_rules').update({
+          keyword: rule.keyword,
+          match_type: rule.matchType,
+          action: rule.action,
+          action_value: rule.value
+        }).eq('id', rule.id);
+      }
+      if (field === 'action') renderAutomationRules();
+    }
+
+    async function deleteRule(idx) {
+      const rule = autoRules[idx];
+      if (rule.id && supabaseClient) {
+        await supabaseClient.from('automation_rules').delete().eq('id', rule.id);
+      }
+      autoRules.splice(idx, 1);
+      renderAutomationRules();
+    }
+
+    // ==========================================
+    // 7️⃣ صندوق الوارد
+    // ==========================================
+    async function loadInboxMessagesFromDB(instanceId) {
+      if (!supabaseClient) return;
+      const { data } = await supabaseClient
+        .from('messages')
+        .select('*')
+        .eq('instance_id', instanceId)
+        .order('created_at', { ascending: false })
+        .limit(30);
+
+      const container = document.getElementById('inboxContainer');
+      const emptyState = document.getElementById('inboxEmpty');
+
+      if (!data || data.length === 0) {
+        emptyState.style.display = 'flex';
+        document.getElementById('kpiReceived').innerText = '0';
+        return;
+      }
+
+      emptyState.style.display = 'none';
+      container.innerHTML = '';
+      document.getElementById('kpiReceived').innerText = data.length;
+
+      data.forEach(msg => {
+        renderInboxItem(msg.remote_name || 'عميل', msg.remote_phone, msg.message_text, new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), false);
+      });
+    }
+
+    function renderInboxItem(name, phone, text, time, prepend = true) {
+      const container = document.getElementById('inboxContainer');
+      const emptyState = document.getElementById('inboxEmpty');
+      if (emptyState) emptyState.style.display = 'none';
+
+      const card = document.createElement('div');
+      card.className = 'inbox-card';
+      card.innerHTML = `
+        <div class="inbox-header">
+          <div class="sender-name">
+            <i data-lucide="user" style="width: 14px; height: 14px; color: var(--primary);"></i>
+            <span>${name}</span>
+            <span class="sender-phone">(${phone})</span>
+          </div>
+          <span class="inbox-time">${time}</span>
+        </div>
+        <div class="inbox-body">${text}</div>
+      `;
+
+      if (prepend) {
+        container.prepend(card);
+      } else {
+        container.appendChild(card);
+      }
+      lucide.createIcons();
+    }
+
+    function clearInboxUI() {
+      document.getElementById('inboxContainer').innerHTML = `
+        <div class="inbox-empty" id="inboxEmpty">
+          <i data-lucide="inbox" style="width: 36px; height: 36px;"></i>
+          <p>تم تفريغ العرض فقط (البيانات محفوظة سحابياً)...</p>
+        </div>
+      `;
+    }
+
+    async function loadTodaySentCountFromDB(instanceId) {
+      if (!supabaseClient) return;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const { count } = await supabaseClient
+        .from('campaign_logs')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'success')
+        .gte('sent_at', today.toISOString());
+
+      document.getElementById('kpiDailySent').innerText = count || 0;
+    }
+
+    // ==========================================
+    // 8️⃣ محرك إطلاق الحملات
+    // ==========================================
+    async function startSendingCampaign() {
+      if (isCampaignRunning || !currentInstanceRecord || !currentUser || !supabaseClient) {
+        return alert("يرجى التأكد من تسجيل الدخول وتحديد رقم واتساب نشط.");
+      }
+
+      const rawData = document.getElementById('dataInput').value.trim();
+      const minDelay = parseInt(document.getElementById('minDelay').value) || 10;
+      const maxDelay = parseInt(document.getElementById('maxDelay').value) || 20;
+      const seqMinDelay = parseInt(document.getElementById('seqMinDelay').value) || 2;
+      const seqMaxDelay = parseInt(document.getElementById('seqMaxDelay').value) || 5;
+      const batchCount = parseInt(document.getElementById('batchCount').value) || 0;
+      const batchPauseMin = parseInt(document.getElementById('batchPauseMin').value) || 40;
+      const batchPauseMax = parseInt(document.getElementById('batchPauseMax').value) || 90;
+      const dailyLimit = parseInt(document.getElementById('dailyLimit').value) || 0;
+      const simulateTyping = document.getElementById('simulateTyping').checked;
+
+      let singleTemplates = [];
+      let validSequences = [];
+
+      if (currentSendingMode === 'single') {
+        const messageElements = document.querySelectorAll('#singleMessagesSection .msg-text');
+        singleTemplates = Array.from(messageElements).map(el => el.value.trim()).filter(t => t.length > 0);
+        if (singleTemplates.length === 0) return alert("يرجى كتابة نص رسالة واحدة على الأقل.");
+      } else {
+        validSequences = messageSequences.filter(g => g.messages.some(m => m.trim().length > 0));
+        if (validSequences.length === 0) return alert("يرجى كتابة رسائل في مجموعة واحدة على الأقل.");
+      }
+
+      const rows = rawData.split(/\r?\n/).map(line => {
+        const parts = line.split(',').map(p => p.trim());
+        const phone = parts[0] ? parts[0].replace(/[^0-9]/g, '') : '';
+        const name = parts[1] || '';
+        const vars = {};
+        customVars.forEach((v, idx) => { vars[v.name] = parts[idx + 2] || ''; });
+        return { phone, name, vars };
+      }).filter(r => r.phone.length >= 8);
+
+      if (rows.length === 0) return alert("يرجى إدخال أرقام صحيحة.");
+
+      const { data: campaign, error: campErr } = await supabaseClient.from('campaigns').insert([{
+        user_id: currentUser.id,
+        instance_id: currentInstanceRecord.id,
+        mode: currentSendingMode,
+        status: 'running',
+        total_recipients: rows.length
+      }]).select().single();
+
+      if (campErr) return addLog(`خطأ إنشاء الحملة: ${campErr.message}`, 'log-msg-error');
+
+      const recPayload = rows.map(r => ({
+        user_id: currentUser.id,
+        campaign_id: campaign.id,
+        phone: r.phone,
+        name: r.name,
+        variables: r.vars,
+        status: 'pending'
+      }));
+      const { data: savedRecipients } = await supabaseClient.from('campaign_recipients').insert(recPayload).select();
+
+      isCampaignRunning = true;
+      stopCampaignRequested = false;
+      document.getElementById('sendBtn').style.display = 'none';
+      document.getElementById('stopBtn').style.display = 'inline-flex';
+
+      addLog(`🚀 تم إنشاء الحملة السحابية (${campaign.id.substring(0, 8)}) لعدد (${rows.length}) مستلم...`, 'log-msg-info');
+
+      let successCount = 0;
+      let failedCount = 0;
+
+      for (let i = 0; i < rows.length; i++) {
+        if (stopCampaignRequested) {
+          addLog("⏸ تم إيقاف الحملة.", 'log-msg-warning');
+          await supabaseClient.from('campaigns').update({ status: 'stopped' }).eq('id', campaign.id);
+          break;
+        }
+
+        const currentDaily = parseInt(document.getElementById('kpiDailySent').innerText) || 0;
+        if (dailyLimit > 0 && currentDaily >= dailyLimit) {
+          addLog(`⚠️ تم الوصول لحد الإرسال اليومي الأقصى (${dailyLimit}). توقف الإرسال حفاظاً على الرقم.`, 'log-msg-warning');
+          await supabaseClient.from('campaigns').update({ status: 'stopped' }).eq('id', campaign.id);
+          break;
+        }
+
+        const row = rows[i];
+        const recRecord = savedRecipients ? savedRecipients[i] : null;
+        updateProgress(i + 1, rows.length);
+
+        let messagesToSend = [];
+        if (currentSendingMode === 'single') {
+          const template = singleTemplates[Math.floor(Math.random() * singleTemplates.length)];
+          messagesToSend.push(compileMessageTemplate(template, row));
+        } else {
+          const chosenGroup = validSequences[Math.floor(Math.random() * validSequences.length)];
+          chosenGroup.messages.forEach(m => {
+            if (m.trim().length > 0) messagesToSend.push(compileMessageTemplate(m, row));
+          });
+        }
+
+        let isClientSuccess = true;
+        let lastErrorMsg = null;
+
+        for (let mIndex = 0; mIndex < messagesToSend.length; mIndex++) {
+          if (stopCampaignRequested) break;
+          const msgText = messagesToSend[mIndex];
+
+          try {
+            if (simulateTyping) await delayMs(1500);
+
+            const res = await fetch(`${API_BASE}/message/sendText/${encodeURIComponent(currentInstanceRecord.name)}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
+              body: JSON.stringify({ number: row.phone, text: msgText, delay: 1000 })
+            });
+
+            const resData = await res.json();
+            const isExistsFalse = Array.isArray(resData?.response?.message) && resData.response.message.some(m => m.exists === false);
+
+            if (res.ok && !isExistsFalse) {
+              addLog(`✔ [رسالة ${mIndex + 1}/${messagesToSend.length}] أُرسلت إلى (${row.phone})`, 'log-msg-success');
+
+              await supabaseClient.from('campaign_logs').insert([{
+                user_id: currentUser.id,
+                campaign_id: campaign.id,
+                recipient_phone: row.phone,
+                recipient_name: row.name,
+                message_text: msgText,
+                status: 'success'
+              }]);
+            } else {
+              isClientSuccess = false;
+              lastErrorMsg = JSON.stringify(resData);
+              addLog(`✖ فشل إرسال رسالة ${mIndex + 1} إلى (${row.phone})`, 'log-msg-error');
+
+              await supabaseClient.from('campaign_logs').insert([{
+                user_id: currentUser.id,
+                campaign_id: campaign.id,
+                recipient_phone: row.phone,
+                recipient_name: row.name,
+                message_text: msgText,
+                status: 'failed',
+                error_message: lastErrorMsg
+              }]);
+              break;
+            }
+          } catch (err) {
+            isClientSuccess = false;
+            lastErrorMsg = err.message;
+            addLog(`خطأ اتصال أثناء الإرسال للرقم (${row.phone}): ${err.message}`, 'log-msg-error');
+
+            await supabaseClient.from('campaign_logs').insert([{
+              user_id: currentUser.id,
+              campaign_id: campaign.id,
+              recipient_phone: row.phone,
+              recipient_name: row.name,
+              message_text: msgText,
+              status: 'failed',
+              error_message: lastErrorMsg
+            }]);
+            break;
+          }
+
+          if (mIndex < messagesToSend.length - 1 && !stopCampaignRequested) {
+            const innerDelay = Math.floor(Math.random() * (seqMaxDelay - seqMinDelay + 1)) + seqMinDelay;
+            await countdownDelay(innerDelay);
+          }
+        }
+
+        if (recRecord) {
+          await supabaseClient.from('campaign_recipients').update({
+            status: isClientSuccess ? 'sent' : 'failed',
+            message_text: messagesToSend.join(' | '),
+            error_message: lastErrorMsg,
+            sent_at: isClientSuccess ? new Date().toISOString() : null
+          }).eq('id', recRecord.id);
+        }
+
+        if (isClientSuccess) {
+          successCount++;
+          document.getElementById('kpiSuccess').innerText = successCount;
+          document.getElementById('kpiDailySent').innerText = (parseInt(document.getElementById('kpiDailySent').innerText) || 0) + 1;
+        } else {
+          failedCount++;
+          document.getElementById('kpiFailed').innerText = failedCount;
+        }
+
+        if (i < rows.length - 1 && !stopCampaignRequested) {
+          if (batchCount > 0 && (i + 1) % batchCount === 0) {
+            const pauseSec = Math.floor(Math.random() * (batchPauseMax - batchPauseMin + 1)) + batchPauseMin;
+            addLog(`☕ استراحة أمان عشوائية (${pauseSec} ثانية)...`, 'log-msg-warning');
+            await countdownDelay(pauseSec);
+          } else {
+            const randDelay = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
+            addLog(`⏳ انتظار ${randDelay} ثانية قبل المستلم التالي...`, 'log-msg-default');
+            await countdownDelay(randDelay);
+          }
+        }
+      }
+
+      await supabaseClient.from('campaigns').update({
+        status: stopCampaignRequested ? 'stopped' : 'completed',
+        success_count: successCount,
+        failed_count: failedCount
+      }).eq('id', campaign.id);
+
+      addLog(`🏁 انتهت الحملة! (ناجح: ${successCount} | فشل: ${failedCount})`, 'log-msg-success');
+      isCampaignRunning = false;
+      document.getElementById('sendBtn').style.display = 'inline-flex';
+      document.getElementById('stopBtn').style.display = 'none';
+    }
+
+    function stopSendingCampaign() { stopCampaignRequested = true; }
+
+    // ==========================================
+    // 9️⃣ إنشاء الحساب والربط (Instance Creation)
+    // ==========================================
     function openAddAccountModal() {
+      if (!currentUser) return openAuthModal();
       document.getElementById('addAccountModal').style.display = 'flex';
       document.getElementById('createStep').style.display = 'block';
       document.getElementById('qrStep').style.display = 'none';
@@ -2368,7 +1611,7 @@
     async function generateInstanceQR() {
       const nameInput = document.getElementById('newInstanceName');
       const instName = nameInput.value.trim().replace(/[^a-zA-Z0-9_-]/g, '');
-      if (!instName) return alert("يرجى إدخال اسم حساب صالح");
+      if (!instName) return alert("يرجى إدخال اسم حساب إنجليزي صالح");
 
       document.getElementById('createStep').style.display = 'none';
       document.getElementById('qrStep').style.display = 'block';
@@ -2395,14 +1638,35 @@
           img.src = qrBase64.startsWith('data:image') ? qrBase64 : `data:image/png;base64,${qrBase64}`;
           img.style.display = 'block';
           document.getElementById('qrLoader').style.display = 'none';
-          
+
           qrCheckInterval = setInterval(async () => {
             const res = await fetch(`${API_BASE}/instance/connectionState/${encodeURIComponent(instName)}`, { headers: { 'apikey': API_KEY } });
             const st = await res.json();
             if (st.instance?.state === 'open' || st.state === 'open') {
               clearInterval(qrCheckInterval);
+
+              // 1. تفعيل Webhook فوراً
+              await configureInstanceWebhook(instName);
+
+              // 2. تسجيل الرقم في Supabase
+              const { data: newInst } = await supabaseClient
+                .from('instances')
+                .insert([{
+                  user_id: currentUser.id,
+                  name: instName
+                }])
+                .select()
+                .single();
+
+              if (newInst) {
+                await supabaseClient.from('instance_settings').insert([{
+                  user_id: currentUser.id,
+                  instance_id: newInst.id
+                }]);
+              }
+
               closeAddAccountModal();
-              fetchServerInstances();
+              await loadUserInstances();
             }
           }, 3000);
         }
@@ -2411,68 +1675,325 @@
       }
     }
 
-    function downloadExcelTemplate() {
-      const headers = ['Phone', 'Name', ...customVars.map(v => v.name)];
-      const sampleRow = ['201280471390', 'مينا سامح', ...customVars.map(v => v.value || 'قيمة تجريبية')];
-      const wsData = [headers, sampleRow];
-      const ws = XLSX.utils.aoa_to_sheet(wsData);
+    // ==========================================
+    // المتغيرات والمساعدات
+    // ==========================================
+    function compileMessageTemplate(template, row) {
+      let text = template;
+      const clientName = row.name || 'عميلنا العزيز';
+      const clientPhone = row.phone || '';
+
+      text = text.replace(/@wa_name/gi, clientName);
+      text = text.replace(/@name/gi, clientName);
+      text = text.replace(/@phone_name/gi, clientPhone);
+      text = text.replace(/@phone/gi, clientPhone);
+      text = text.replace(/@randomcode/gi, `#${Math.floor(100000 + Math.random() * 900000)}`);
+      text = text.replace(/@invisible/gi, generateInvisibleGhostString(8));
+
+      customVars.forEach(v => {
+        const val = (row.vars && row.vars[v.name] !== undefined && row.vars[v.name] !== '') ? row.vars[v.name] : (v.value || '');
+        text = text.replace(new RegExp(`@${v.name}`, 'gi'), val);
+      });
+
+      if (document.getElementById('autoGhostProtection').checked) {
+        text += generateInvisibleGhostString(4);
+      }
+      return text;
+    }
+
+    function generateInvisibleGhostString(len = 6) {
+      const chars = ['\u200B', '\u200C', '\u200D', '\u2060', '\uFEFF'];
+      let res = '';
+      for (let i = 0; i < len; i++) res += chars[Math.floor(Math.random() * chars.length)];
+      return res;
+    }
+
+    function insertVariableIntoActiveTextarea(varName) {
+      if (!activeTextarea) activeTextarea = document.querySelector('.msg-text') || document.querySelector('.seq-msg-text');
+      if (!activeTextarea) return;
+      const start = activeTextarea.selectionStart;
+      const text = activeTextarea.value;
+      activeTextarea.value = text.substring(0, start) + `@${varName} ` + text.substring(start);
+      activeTextarea.focus();
+    }
+
+    function attachMentionEvents(textarea) {
+      textarea.addEventListener('focus', () => { activeTextarea = textarea; });
+      textarea.addEventListener('keyup', handleMention);
+    }
+
+    const dropdown = document.getElementById('mentionDropdown');
+    function handleMention(e) {
+      activeTextarea = e.target;
+      const text = activeTextarea.value;
+      const cursor = activeTextarea.selectionStart;
+      const lastAt = text.lastIndexOf('@', cursor - 1);
+
+      if (lastAt !== -1 && (cursor - lastAt) <= 25) {
+        const query = text.substring(lastAt + 1, cursor).toLowerCase();
+        const list = [
+          ...defaultVars.map(v => ({ name: v, value: '' })),
+          { name: 'Randomcode', value: '#123456' },
+          { name: 'invisible', value: 'خفي' },
+          ...customVars
+        ].filter(item => item.name.toLowerCase().includes(query));
+
+        if (list.length > 0) {
+          dropdown.innerHTML = '';
+          list.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'mention-item';
+            div.innerHTML = `<span>@${item.name}</span><span class="mention-val">${item.value}</span>`;
+            div.onclick = () => {
+              const before = text.substring(0, lastAt);
+              const after = text.substring(cursor);
+              activeTextarea.value = `${before}@${item.name} ${after}`;
+              dropdown.style.display = 'none';
+              activeTextarea.focus();
+            };
+            dropdown.appendChild(div);
+          });
+          const rect = activeTextarea.getBoundingClientRect();
+          dropdown.style.top = `${window.scrollY + rect.bottom + 4}px`;
+          dropdown.style.left = `${window.scrollX + rect.left + 20}px`;
+          dropdown.style.display = 'block';
+          return;
+        }
+      }
+      dropdown.style.display = 'none';
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!dropdown.contains(e.target) && e.target !== activeTextarea) dropdown.style.display = 'none';
+    });
+
+    // ==========================================
+    // استخراج الداتا
+    // ==========================================
+    async function fetchAvailableGroups(notify = false) {
+      if (!currentInstanceRecord) return;
+      try {
+        const res = await fetch(`${API_BASE}/group/fetchAllGroups/${encodeURIComponent(currentInstanceRecord.name)}?getParticipants=false`, {
+          headers: { 'apikey': API_KEY }
+        });
+        const data = await res.json();
+        const groups = Array.isArray(data) ? data : (data?.groups || []);
+        availableGroups = groups.map(g => ({ id: g.id || g.jid, subject: g.subject || g.name || 'مجموعة' })).filter(g => g.id && g.id.includes('@g.us'));
+        if (notify) addLog(`✔ تم تحديث ${availableGroups.length} مجموعة.`, 'log-msg-success');
+        renderAutomationRules();
+      } catch (err) {}
+    }
+
+    async function extractChatListContacts() {
+      if (!currentInstanceRecord) return alert("اختر رقماً نشطاً");
+      try {
+        const res = await fetch(`${API_BASE}/chat/findChats/${encodeURIComponent(currentInstanceRecord.name)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
+          body: JSON.stringify({ where: {} })
+        });
+        const data = await res.json();
+        const records = Array.isArray(data) ? data : (data?.records || []);
+        const list = [];
+        const seen = new Set();
+        records.forEach(c => {
+          const jid = c.id || c.remoteJid || '';
+          if (jid.endsWith('@s.whatsapp.net') && !jid.includes('@g.us')) {
+            const phone = jid.replace('@s.whatsapp.net', '').replace(/[^0-9]/g, '');
+            if (phone.length >= 8 && !seen.has(phone)) {
+              seen.add(phone);
+              list.push({ phone, name: c.pushName || c.name || `عميل (${phone})`, source: 'Chatlist' });
+            }
+          }
+        });
+        handleExtractionSuccess(list, 'الـ Chatlists');
+      } catch (e) {
+        addLog(`خطأ الاستخراج: ${e.message}`, 'log-msg-error');
+      }
+    }
+
+    async function extractSavedContacts() {
+      if (!currentInstanceRecord) return alert("اختر رقماً نشطاً");
+      try {
+        const res = await fetch(`${API_BASE}/chat/findContacts/${encodeURIComponent(currentInstanceRecord.name)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
+          body: JSON.stringify({ where: {} })
+        });
+        const data = await res.json();
+        const records = Array.isArray(data) ? data : (data?.records || []);
+        const list = [];
+        const seen = new Set();
+        records.forEach(c => {
+          const jid = c.remoteJid || '';
+          if (jid.endsWith('@s.whatsapp.net') && !jid.includes('@g.us')) {
+            const phone = jid.replace('@s.whatsapp.net', '').replace(/[^0-9]/g, '');
+            if (phone.length >= 8 && !seen.has(phone)) {
+              seen.add(phone);
+              list.push({ phone, name: c.pushName || c.name || `عميل (${phone})`, source: 'Contacts' });
+            }
+          }
+        });
+        handleExtractionSuccess(list, 'جهات الاتصال');
+      } catch (e) {
+        addLog(`خطأ الاستخراج: ${e.message}`, 'log-msg-error');
+      }
+    }
+
+    function toggleGroupExtractorUI() {
+      const row = document.getElementById('groupExtractorRow');
+      const select = document.getElementById('extractorGroupSelect');
+      if (row.style.display === 'none' || !row.style.display) {
+        row.style.display = 'flex';
+        select.innerHTML = '<option value="">-- اختر الجروب المراد سحب أرقامه --</option>';
+        availableGroups.forEach(g => { select.innerHTML += `<option value="${g.id}">${g.subject}</option>`; });
+      } else {
+        row.style.display = 'none';
+      }
+    }
+
+    async function extractSelectedGroupMembers() {
+      const groupJid = document.getElementById('extractorGroupSelect').value;
+      if (!groupJid) return alert("اختر مجموعة");
+      try {
+        const res = await fetch(`${API_BASE}/group/findGroupInfos/${encodeURIComponent(currentInstanceRecord.name)}?groupJid=${encodeURIComponent(groupJid)}`, {
+          headers: { 'apikey': API_KEY }
+        });
+        const groupData = await res.json();
+        const participants = groupData.participants || [];
+        const list = [];
+        const seen = new Set();
+        participants.forEach(p => {
+          const raw = p.phoneNumber || p.id || '';
+          const phone = raw.replace(/@.+$/, '').replace(/[^0-9]/g, '');
+          if (phone.length >= 8 && !seen.has(phone)) {
+            seen.add(phone);
+            list.push({ phone, name: `${groupData.subject || 'جروب'} (عضو)`, source: groupData.subject });
+          }
+        });
+        handleExtractionSuccess(list, groupData.subject || 'جروب');
+      } catch (e) {
+        addLog(`خطأ الاستخراج: ${e.message}`, 'log-msg-error');
+      }
+    }
+
+    function handleExtractionSuccess(list, sourceTitle) {
+      lastExtractedData = list;
+      document.getElementById('extractorStatusBadge').innerText = `تم استخراج (${list.length})`;
+      const actionsBar = document.getElementById('extractorActionsBar');
+      actionsBar.style.display = 'flex';
+      document.getElementById('extractorResultText').innerText = `تم استخراج ${list.length} رقم من [${sourceTitle}]`;
+      addLog(`✔ تم استخراج ${list.length} جهة اتصال من [${sourceTitle}] بنجاح.`, 'log-msg-success');
+    }
+
+    function applyExtractedToCampaign() {
+      if (!lastExtractedData || lastExtractedData.length === 0) return;
+      const formatted = lastExtractedData.map(i => `${i.phone}, ${i.name}`).join('\n');
+      const input = document.getElementById('dataInput');
+      input.value = input.value.trim() ? (input.value.trim() + '\n' + formatted) : formatted;
+      updateKpiTotal();
+      addLog(`📋 تم دمج ${lastExtractedData.length} رقم في قائمة الحملة.`, 'log-msg-info');
+    }
+
+    function downloadExtractedExcel() {
+      if (!lastExtractedData || lastExtractedData.length === 0) return;
+      const wsData = [['Phone', 'Name', 'Source'], ...lastExtractedData.map(i => [i.phone, i.name, i.source])];
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Campaign_Data");
-      XLSX.writeFile(wb, "whatsapp_campaign_template.xlsx");
-      addLog("تم تصدير وتحميل قالب Excel بنجاح.", "log-msg-info");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(wsData), "Extracted");
+      XLSX.writeFile(wb, `contacts_${Date.now()}.xlsx`);
     }
 
     document.getElementById('dataFile').addEventListener('change', function(e) {
       const file = e.target.files[0];
       if (!file) return;
-
       document.getElementById('selectedFileName').innerText = file.name;
-      const fileName = file.name.toLowerCase();
+      const reader = new FileReader();
 
-      if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
-        const reader = new FileReader();
+      if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
         reader.onload = function(evt) {
-          const data = new Uint8Array(evt.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
-          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-          const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-          const dataRows = rows.slice(1).filter(r => r.length > 0 && r[0]);
-          const formattedLines = dataRows.map(r => r.join(', '));
-          document.getElementById('dataInput').value = formattedLines.join('\n');
+          const workbook = XLSX.read(new Uint8Array(evt.target.result), { type: 'array' });
+          const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
+          const validRows = rows.slice(1).filter(r => r.length > 0 && r[0]).map(r => r.join(', '));
+          document.getElementById('dataInput').value = validRows.join('\n');
           updateKpiTotal();
-          addLog(`تم استيراد ${dataRows.length} جهة اتصال من ملف الإكسيل.`, "log-msg-info");
+          addLog(`تم استيراد ${validRows.length} جهة اتصال من الإكسيل.`, "log-msg-info");
         };
         reader.readAsArrayBuffer(file);
       } else {
-        const reader = new FileReader();
         reader.onload = function(evt) {
           document.getElementById('dataInput').value = evt.target.result.trim();
           updateKpiTotal();
-          addLog("تمت قراءة البيانات من الملف.", "log-msg-info");
         };
         reader.readAsText(file);
       }
     });
 
+    function downloadExcelTemplate() {
+      const wsData = [
+        ['Phone', 'Name', ...customVars.map(v => v.name)],
+        ['201280471390', 'عميل تجريبي', ...customVars.map(v => v.value || 'قيمة تجريبية')]
+      ];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(wsData), "Template");
+      XLSX.writeFile(wb, "campaign_template.xlsx");
+    }
+
     function updateKpiTotal() {
       const raw = document.getElementById('dataInput').value.trim();
-      if (!raw) {
-        document.getElementById('kpiTotal').innerText = '0';
-        return;
+      document.getElementById('kpiTotal').innerText = raw ? raw.split(/\r?\n/).filter(l => l.trim().length > 0).length : '0';
+    }
+
+    function updateProgress(curr, tot) {
+      if (!tot) return;
+      const pct = Math.round((curr / tot) * 100);
+      document.getElementById('progressBar').style.width = `${pct}%`;
+      document.getElementById('percentText').innerText = `${pct}%`;
+      document.getElementById('progressCount').innerText = `${curr} / ${tot}`;
+    }
+
+    function addLog(text, cls = 'log-msg-default') {
+      const box = document.getElementById('logBox');
+      const line = document.createElement('div');
+      line.className = 'log-line';
+      line.innerHTML = `<span class="log-time">[${new Date().toLocaleTimeString()}]</span><span class="${cls}">${text}</span>`;
+      box.appendChild(line);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    const delayMs = ms => new Promise(r => setTimeout(r, ms));
+    async function countdownDelay(sec) {
+      for (let s = sec; s > 0; s--) {
+        if (stopCampaignRequested) break;
+        await delayMs(1000);
       }
-      const count = raw.split(/\r?\n/).filter(l => l.trim().length > 0).length;
-      document.getElementById('kpiTotal').innerText = count;
+    }
+
+    function addMessageField() {
+      messageCounter++;
+      const container = document.getElementById('messagesContainer');
+      const div = document.createElement('div');
+      div.className = 'msg-item';
+      div.id = `msg-box-${messageCounter}`;
+      div.innerHTML = `
+        <div class="msg-item-header">
+          <span>الرسالة رقم ${messageCounter}</span>
+          <button type="button" class="btn-icon-del" onclick="document.getElementById('${div.id}').remove()">
+            <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+          </button>
+        </div>
+        <textarea class="msg-text" rows="3" placeholder="اكتب نص القالب..."></textarea>
+      `;
+      container.appendChild(div);
+      attachMentionEvents(div.querySelector('textarea'));
+      lucide.createIcons();
     }
 
     document.getElementById('dataInput').addEventListener('input', updateKpiTotal);
-
-    // التشغيل المباشر
-    renderInstanceSelect();
-    fetchServerInstances();
     document.querySelectorAll('.msg-text').forEach(attachMentionEvents);
-    renderVariableBadges();
-    renderAutomationRules();
-    updateKpiTotal();
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initApp();
+    });
   </script>
 </body>
 </html>
