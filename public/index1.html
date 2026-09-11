@@ -652,18 +652,20 @@
     const API_KEY = '9SXCq4YxLGPtkufJKM7u+zv2';
     const WEBHOOK_URL = `${SUPABASE_URL}/functions/v1/whatsapp-webhook`;
 
-    let supabaseClient = null;
+    // إتاحة الكائن في النطاق العام (window)
+    window.supabaseClient = null;
     let realtimeChannel = null;
     let backgroundSyncTimer = null;
 
     function initSupabaseClient() {
       if (!window.supabase || typeof window.supabase.createClient !== "function") return false;
       try {
-        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+        window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
           auth: { persistSession: true, autoRefreshToken: true }
         });
         return true;
       } catch (e) {
+        console.error("Supabase init failed:", e);
         return false;
       }
     }
@@ -695,7 +697,7 @@
     async function initApp() {
       lucide.createIcons();
 
-      if (!isSupabaseReady || !supabaseClient) {
+      if (!isSupabaseReady || !window.supabaseClient) {
         addLog("❌ فشل تحميل مكتبة Supabase! تأكد من الاتصال بالإنترنت.", "log-msg-error");
         openAuthModal();
         return;
@@ -704,7 +706,7 @@
       addLog("جاري التحقق من الاتصال وقراءة بيانات الحساب...", "log-msg-info");
 
       try {
-        const { data, error } = await supabaseClient.auth.getSession();
+        const { data, error } = await window.supabaseClient.auth.getSession();
         if (error) throw error;
 
         const session = data?.session;
@@ -750,7 +752,7 @@
         return;
       }
 
-      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      const { data, error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
       if (error) {
         errBox.innerText = error.message;
       } else {
@@ -773,7 +775,7 @@
         return;
       }
 
-      const { data, error } = await supabaseClient.auth.signUp({ email, password });
+      const { data, error } = await window.supabaseClient.auth.signUp({ email, password });
       if (error) {
         errBox.innerText = error.message;
       } else {
@@ -786,7 +788,7 @@
     }
 
     async function handleAuthLogout() {
-      if (supabaseClient) await supabaseClient.auth.signOut();
+      if (window.supabaseClient) await window.supabaseClient.auth.signOut();
       if (realtimeChannel) realtimeChannel.unsubscribe();
       if (backgroundSyncTimer) clearInterval(backgroundSyncTimer);
       currentUser = null;
@@ -805,9 +807,9 @@
     // 3️⃣ إدارة الأرقام وضمان ربط الـ Webhook
     // ==========================================
     async function loadUserInstances() {
-      if (!currentUser || !supabaseClient) return;
+      if (!currentUser || !window.supabaseClient) return;
       try {
-        const { data, error } = await supabaseClient
+        const { data, error } = await window.supabaseClient
           .from('instances')
           .select('*')
           .order('created_at', { ascending: true });
@@ -873,7 +875,6 @@
       startBackgroundSilentSync(instanceId);
     }
 
-    // تفعيل وضبط الـ Webhook في سيرفر Evolution
     async function configureInstanceWebhook(instanceName, verbose = false) {
       try {
         const payload = {
@@ -884,7 +885,7 @@
             base64: false,
             events: [
               "MESSAGES_UPSERT",
-              "MESSAGES_UPDATE"
+              "messages.upsert"
             ]
           }
         };
@@ -916,11 +917,13 @@
     // 4️⃣ محرك الاستقبال الهجين (Realtime + Fallback)
     // ==========================================
     function setupRealtimeListener(instanceId) {
-      if (realtimeChannel) {
-        supabaseClient.removeChannel(realtimeChannel);
+      if (realtimeChannel && window.supabaseClient) {
+        window.supabaseClient.removeChannel(realtimeChannel);
       }
 
-      realtimeChannel = supabaseClient
+      if (!window.supabaseClient) return;
+
+      realtimeChannel = window.supabaseClient
         .channel(`public:messages:${instanceId}`)
         .on(
           'postgres_changes',
@@ -953,18 +956,17 @@
         });
     }
 
-    // صمام أمان صامت يعمل كل 12 ثانية لجلب أي رسائل فاتت الاتصال
     function startBackgroundSilentSync(instanceId) {
       if (backgroundSyncTimer) clearInterval(backgroundSyncTimer);
       backgroundSyncTimer = setInterval(() => {
         syncInboxSilent(false);
-      }, 12000);
+      }, 10000);
     }
 
     async function syncInboxSilent(notify = false) {
-      if (!currentInstanceRecord || !supabaseClient) return;
+      if (!currentInstanceRecord || !window.supabaseClient) return;
       try {
-        const { data } = await supabaseClient
+        const { data } = await window.supabaseClient
           .from('messages')
           .select('*')
           .eq('instance_id', currentInstanceRecord.id)
@@ -998,8 +1000,8 @@
     // 5️⃣ الإعدادات، المتغيرات وقواعد الأوتوميشن
     // ==========================================
     async function loadInstanceSettingsFromDB(instanceId) {
-      if (!supabaseClient) return;
-      const { data } = await supabaseClient
+      if (!window.supabaseClient) return;
+      const { data } = await window.supabaseClient
         .from('instance_settings')
         .select('*')
         .eq('instance_id', instanceId)
@@ -1018,7 +1020,7 @@
     }
 
     async function saveInstanceSettingsToDB() {
-      if (!currentInstanceRecord || !currentUser || !supabaseClient) return;
+      if (!currentInstanceRecord || !currentUser || !window.supabaseClient) return;
       const settingsPayload = {
         user_id: currentUser.id,
         instance_id: currentInstanceRecord.id,
@@ -1033,12 +1035,12 @@
         updated_at: new Date().toISOString()
       };
 
-      await supabaseClient.from('instance_settings').upsert(settingsPayload, { onConflict: 'instance_id' });
+      await window.supabaseClient.from('instance_settings').upsert(settingsPayload, { onConflict: 'instance_id' });
     }
 
     async function loadCustomVariablesFromDB(instanceId) {
-      if (!supabaseClient) return;
-      const { data } = await supabaseClient
+      if (!window.supabaseClient) return;
+      const { data } = await window.supabaseClient
         .from('custom_variables')
         .select('*')
         .eq('instance_id', instanceId);
@@ -1048,7 +1050,7 @@
     }
 
     async function addCustomVariable() {
-      if (!currentInstanceRecord || !currentUser || !supabaseClient) return alert("اختر حساباً أولاً");
+      if (!currentInstanceRecord || !currentUser || !window.supabaseClient) return alert("اختر حساباً أولاً");
       const nameInput = document.getElementById('newVarName');
       const valInput = document.getElementById('newVarVal');
       const name = nameInput.value.trim().replace(/[^\p{L}\p{M}0-9_\-]/gu, '');
@@ -1056,7 +1058,7 @@
 
       if (!name) return alert("يرجى إدخال اسم متغير صالح");
 
-      const { data, error } = await supabaseClient.from('custom_variables').insert([{
+      const { data, error } = await window.supabaseClient.from('custom_variables').insert([{
         user_id: currentUser.id,
         instance_id: currentInstanceRecord.id,
         name: name,
@@ -1073,8 +1075,8 @@
 
     async function removeCustomVariable(index) {
       const variable = customVars[index];
-      if (variable?.id && supabaseClient) {
-        await supabaseClient.from('custom_variables').delete().eq('id', variable.id);
+      if (variable?.id && window.supabaseClient) {
+        await window.supabaseClient.from('custom_variables').delete().eq('id', variable.id);
       }
       customVars.splice(index, 1);
       renderVariableBadges();
@@ -1121,8 +1123,8 @@
     // 6️⃣ مجموعات الرسائل (Sequences)
     // ==========================================
     async function loadSequencesFromDB(instanceId) {
-      if (!supabaseClient) return;
-      const { data } = await supabaseClient
+      if (!window.supabaseClient) return;
+      const { data } = await window.supabaseClient
         .from('message_sequences')
         .select('*')
         .eq('instance_id', instanceId);
@@ -1192,16 +1194,16 @@
     }
 
     async function syncSequenceGroup(gIdx) {
-      if (!currentInstanceRecord || !currentUser || !supabaseClient) return;
+      if (!currentInstanceRecord || !currentUser || !window.supabaseClient) return;
       const group = messageSequences[gIdx];
 
       if (group.id && !String(group.id).startsWith('temp-')) {
-        await supabaseClient.from('message_sequences').update({
+        await window.supabaseClient.from('message_sequences').update({
           name: group.name,
           messages: group.messages
         }).eq('id', group.id);
       } else {
-        const { data } = await supabaseClient.from('message_sequences').insert([{
+        const { data } = await window.supabaseClient.from('message_sequences').insert([{
           user_id: currentUser.id,
           instance_id: currentInstanceRecord.id,
           name: group.name,
@@ -1221,8 +1223,8 @@
 
     async function removeSequenceGroup(gIdx) {
       const group = messageSequences[gIdx];
-      if (group.id && !String(group.id).startsWith('temp-') && supabaseClient) {
-        await supabaseClient.from('message_sequences').delete().eq('id', group.id);
+      if (group.id && !String(group.id).startsWith('temp-') && window.supabaseClient) {
+        await window.supabaseClient.from('message_sequences').delete().eq('id', group.id);
       }
       messageSequences.splice(gIdx, 1);
       renderSequenceGroups();
@@ -1249,8 +1251,8 @@
     // 7️⃣ قواعد الأوتوميشن
     // ==========================================
     async function loadAutomationRulesFromDB(instanceId) {
-      if (!supabaseClient) return;
-      const { data } = await supabaseClient
+      if (!window.supabaseClient) return;
+      const { data } = await window.supabaseClient
         .from('automation_rules')
         .select('*')
         .eq('instance_id', instanceId);
@@ -1331,8 +1333,8 @@
     }
 
     async function addAutomationRule() {
-      if (!currentInstanceRecord || !currentUser || !supabaseClient) return;
-      const { data } = await supabaseClient.from('automation_rules').insert([{
+      if (!currentInstanceRecord || !currentUser || !window.supabaseClient) return;
+      const { data } = await window.supabaseClient.from('automation_rules').insert([{
         user_id: currentUser.id,
         instance_id: currentInstanceRecord.id,
         keyword: 'جديد',
@@ -1356,8 +1358,8 @@
     async function updateRule(idx, field, val) {
       autoRules[idx][field] = val;
       const rule = autoRules[idx];
-      if (rule.id && supabaseClient) {
-        await supabaseClient.from('automation_rules').update({
+      if (rule.id && window.supabaseClient) {
+        await window.supabaseClient.from('automation_rules').update({
           keyword: rule.keyword,
           match_type: rule.matchType,
           action: rule.action,
@@ -1369,8 +1371,8 @@
 
     async function deleteRule(idx) {
       const rule = autoRules[idx];
-      if (rule.id && supabaseClient) {
-        await supabaseClient.from('automation_rules').delete().eq('id', rule.id);
+      if (rule.id && window.supabaseClient) {
+        await window.supabaseClient.from('automation_rules').delete().eq('id', rule.id);
       }
       autoRules.splice(idx, 1);
       renderAutomationRules();
@@ -1380,8 +1382,8 @@
     // 8️⃣ صندوق الوارد المباشر
     // ==========================================
     async function loadInboxMessagesFromDB(instanceId) {
-      if (!supabaseClient) return;
-      const { data } = await supabaseClient
+      if (!window.supabaseClient) return;
+      const { data } = await window.supabaseClient
         .from('messages')
         .select('*')
         .eq('instance_id', instanceId)
@@ -1452,11 +1454,11 @@
     }
 
     async function loadTodaySentCountFromDB(instanceId) {
-      if (!supabaseClient) return;
+      if (!window.supabaseClient) return;
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      const { count } = await supabaseClient
+      const { count } = await window.supabaseClient
         .from('campaign_logs')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'success')
@@ -1469,7 +1471,7 @@
     // 9️⃣ محرك إطلاق الحملات
     // ==========================================
     async function startSendingCampaign() {
-      if (isCampaignRunning || !currentInstanceRecord || !currentUser || !supabaseClient) {
+      if (isCampaignRunning || !currentInstanceRecord || !currentUser || !window.supabaseClient) {
         return alert("يرجى التأكد من تسجيل الدخول وتحديد رقم واتساب نشط.");
       }
 
@@ -1507,7 +1509,7 @@
 
       if (rows.length === 0) return alert("يرجى إدخال أرقام صحيحة.");
 
-      const { data: campaign, error: campErr } = await supabaseClient.from('campaigns').insert([{
+      const { data: campaign, error: campErr } = await window.supabaseClient.from('campaigns').insert([{
         user_id: currentUser.id,
         instance_id: currentInstanceRecord.id,
         mode: currentSendingMode,
@@ -1525,7 +1527,7 @@
         variables: r.vars,
         status: 'pending'
       }));
-      const { data: savedRecipients } = await supabaseClient.from('campaign_recipients').insert(recPayload).select();
+      const { data: savedRecipients } = await window.supabaseClient.from('campaign_recipients').insert(recPayload).select();
 
       isCampaignRunning = true;
       stopCampaignRequested = false;
@@ -1540,14 +1542,14 @@
       for (let i = 0; i < rows.length; i++) {
         if (stopCampaignRequested) {
           addLog("⏸ تم إيقاف الحملة.", 'log-msg-warning');
-          await supabaseClient.from('campaigns').update({ status: 'stopped' }).eq('id', campaign.id);
+          await window.supabaseClient.from('campaigns').update({ status: 'stopped' }).eq('id', campaign.id);
           break;
         }
 
         const currentDaily = parseInt(document.getElementById('kpiDailySent').innerText) || 0;
         if (dailyLimit > 0 && currentDaily >= dailyLimit) {
           addLog(`⚠️ تم الوصول لحد الإرسال اليومي الأقصى (${dailyLimit}). توقف الإرسال حفاظاً على الرقم.`, 'log-msg-warning');
-          await supabaseClient.from('campaigns').update({ status: 'stopped' }).eq('id', campaign.id);
+          await window.supabaseClient.from('campaigns').update({ status: 'stopped' }).eq('id', campaign.id);
           break;
         }
 
@@ -1588,7 +1590,7 @@
             if (res.ok && !isExistsFalse) {
               addLog(`✔ [رسالة ${mIndex + 1}/${messagesToSend.length}] أُرسلت إلى (${row.phone})`, 'log-msg-success');
 
-              await supabaseClient.from('campaign_logs').insert([{
+              await window.supabaseClient.from('campaign_logs').insert([{
                 user_id: currentUser.id,
                 campaign_id: campaign.id,
                 recipient_phone: row.phone,
@@ -1601,7 +1603,7 @@
               lastErrorMsg = JSON.stringify(resData);
               addLog(`✖ فشل إرسال رسالة ${mIndex + 1} إلى (${row.phone})`, 'log-msg-error');
 
-              await supabaseClient.from('campaign_logs').insert([{
+              await window.supabaseClient.from('campaign_logs').insert([{
                 user_id: currentUser.id,
                 campaign_id: campaign.id,
                 recipient_phone: row.phone,
@@ -1617,7 +1619,7 @@
             lastErrorMsg = err.message;
             addLog(`خطأ اتصال أثناء الإرسال للرقم (${row.phone}): ${err.message}`, 'log-msg-error');
 
-            await supabaseClient.from('campaign_logs').insert([{
+            await window.supabaseClient.from('campaign_logs').insert([{
               user_id: currentUser.id,
               campaign_id: campaign.id,
               recipient_phone: row.phone,
@@ -1636,7 +1638,7 @@
         }
 
         if (recRecord) {
-          await supabaseClient.from('campaign_recipients').update({
+          await window.supabaseClient.from('campaign_recipients').update({
             status: isClientSuccess ? 'sent' : 'failed',
             message_text: messagesToSend.join(' | '),
             error_message: lastErrorMsg,
@@ -1666,7 +1668,7 @@
         }
       }
 
-      await supabaseClient.from('campaigns').update({
+      await window.supabaseClient.from('campaigns').update({
         status: stopCampaignRequested ? 'stopped' : 'completed',
         success_count: successCount,
         failed_count: failedCount
@@ -1733,18 +1735,16 @@
             if (st.instance?.state === 'open' || st.state === 'open') {
               clearInterval(qrCheckInterval);
 
-              // تفعيل الـ Webhook فوراً
               await configureInstanceWebhook(instName);
 
-              // حفظ الرقم في Supabase
-              const { data: newInst } = await supabaseClient
+              const { data: newInst } = await window.supabaseClient
                 .from('instances')
                 .insert([{ user_id: currentUser.id, name: instName }])
                 .select()
                 .single();
 
               if (newInst) {
-                await supabaseClient.from('instance_settings').insert([{
+                await window.supabaseClient.from('instance_settings').insert([{
                   user_id: currentUser.id,
                   instance_id: newInst.id
                 }]);
