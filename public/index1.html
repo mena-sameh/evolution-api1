@@ -262,7 +262,7 @@
         <div class="brand-logo"><i data-lucide="zap"></i></div>
         <div class="brand-title">
           <h1>EvoFlow Campaign Engine</h1>
-          <p id="userStatusBanner">لوحة التحكم السحابية | Realtime Engine</p>
+          <p id="userStatusBanner">لوحة التحكم السحابية | محرك المزامنة الفوري</p>
         </div>
       </div>
 
@@ -497,7 +497,7 @@
           <div class="card-title">
             <div class="card-title-left">
               <i data-lucide="mail" style="color: var(--accent);"></i>
-              <span>صندوق الوارد المباشر (Realtime Engine)</span>
+              <span>صندوق الوارد المباشر (Direct Live Inbox)</span>
             </div>
             <div style="display: flex; gap: 6px;">
               <button type="button" class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="syncInboxSilent(true)">
@@ -521,7 +521,7 @@
           <div class="card-title">
             <div class="card-title-left">
               <i data-lucide="bot" style="color: var(--primary);"></i>
-              <span>قواعد الأوتوميشن الذكية (تعمل 24/7 سحابياً)</span>
+              <span>قواعد الأوتوميشن الذكية (رد تلقائي فوري)</span>
             </div>
             <div style="display: flex; gap: 8px;">
               <button type="button" class="btn btn-secondary" style="padding: 4px 10px; font-size: 12px;" onclick="fetchAvailableGroups(true)">
@@ -644,7 +644,7 @@
 
   <script>
     // ==========================================
-    // 1️⃣ إعدادات السيرفر السحابي
+    // 1️⃣ إعدادات السيرفر وقاعدة البيانات
     // ==========================================
     const SUPABASE_URL = "https://daxhdliuwtswcrrxcqqe.supabase.co";
     const SUPABASE_KEY = "sb_publishable_4NplfHevmJpBHl9s064d1Q_Ov9le3Vl";
@@ -652,7 +652,6 @@
     const API_KEY = '9SXCq4YxLGPtkufJKM7u+zv2';
     const WEBHOOK_URL = `${SUPABASE_URL}/functions/v1/whatsapp-webhook`;
 
-    // إتاحة الكائن في النطاق العام (window)
     window.supabaseClient = null;
     let realtimeChannel = null;
     let backgroundSyncTimer = null;
@@ -665,7 +664,7 @@
         });
         return true;
       } catch (e) {
-        console.error("Supabase init failed:", e);
+        console.error("خطأ تهيئة Supabase:", e);
         return false;
       }
     }
@@ -688,8 +687,22 @@
     let qrCheckInterval = null;
     let messageCounter = 1;
     let renderedMessageIds = new Set();
+    let processedMessageKeys = new Set();
 
     const defaultVars = ['wa_name', 'phone_name', 'name', 'phone'];
+
+    // استخراج النص من أي هيكل رسالة
+    function extractTextFromMsg(m) {
+      if (!m) return "";
+      return (
+        m.conversation ||
+        m.extendedTextMessage?.text ||
+        m.imageMessage?.caption ||
+        m.videoMessage?.caption ||
+        m.documentMessage?.caption ||
+        ""
+      );
+    }
 
     // ==========================================
     // 2️⃣ بدء التطبيق والمصادقة
@@ -730,7 +743,7 @@
       const banner = document.getElementById('userStatusBanner');
       const authBtn = document.getElementById('authButton');
       if (currentUser) {
-        banner.innerText = `حساب: ${currentUser.email} | سحابي نشط (24/7 Realtime)`;
+        banner.innerText = `حساب: ${currentUser.email} | متصل ونشط`;
         authBtn.innerHTML = `<i data-lucide="log-out" style="width: 14px; height: 14px;"></i> خروج`;
         authBtn.onclick = handleAuthLogout;
       } else {
@@ -856,10 +869,8 @@
     }
 
     async function loadAllInstanceData(instanceId) {
-      // 1. مزامنة الـ Webhook مع السيرفر
       await configureInstanceWebhook(currentInstanceRecord.name);
 
-      // 2. جلب البيانات الأولية
       await Promise.all([
         loadInstanceSettingsFromDB(instanceId),
         loadCustomVariablesFromDB(instanceId),
@@ -870,7 +881,6 @@
         fetchAvailableGroups()
       ]);
 
-      // 3. تشغيل الاستماع المزدوج (Realtime + Fallback Sync)
       setupRealtimeListener(instanceId);
       startBackgroundSilentSync(instanceId);
     }
@@ -885,7 +895,7 @@
             base64: false,
             events: [
               "MESSAGES_UPSERT",
-              "messages.upsert"
+              "MESSAGES_UPDATE"
             ]
           }
         };
@@ -914,7 +924,7 @@
     }
 
     // ==========================================
-    // 4️⃣ محرك الاستقبال الهجين (Realtime + Fallback)
+    // 4️⃣ محرك الاستقبال المباشر والمزامنة اللحظية
     // ==========================================
     function setupRealtimeListener(instanceId) {
       if (realtimeChannel && window.supabaseClient) {
@@ -949,51 +959,146 @@
             }
           }
         )
-        .subscribe((status) => {
-          if (status === 'SUBSCRIBED') {
-            console.log('✔ Realtime connection active');
-          }
-        });
+        .subscribe();
     }
 
     function startBackgroundSilentSync(instanceId) {
       if (backgroundSyncTimer) clearInterval(backgroundSyncTimer);
+      // فحص سريع ومباشر كل ثانيتين لسحب أي رسائل واردة فوراً
       backgroundSyncTimer = setInterval(() => {
         syncInboxSilent(false);
-      }, 10000);
+      }, 2000);
     }
 
     async function syncInboxSilent(notify = false) {
-      if (!currentInstanceRecord || !window.supabaseClient) return;
+      if (!currentInstanceRecord || !window.supabaseClient || !currentUser) return;
       try {
-        const { data } = await window.supabaseClient
-          .from('messages')
-          .select('*')
-          .eq('instance_id', currentInstanceRecord.id)
-          .order('created_at', { ascending: false })
-          .limit(20);
+        const res = await fetch(`${API_BASE}/chat/findMessages/${encodeURIComponent(currentInstanceRecord.name)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "apikey": API_KEY },
+          body: JSON.stringify({ where: {}, take: 20 })
+        });
 
-        if (data && data.length > 0) {
-          let newFound = 0;
-          data.reverse().forEach(msg => {
-            if (msg.direction === 'incoming' && !renderedMessageIds.has(msg.id)) {
-              renderedMessageIds.add(msg.id);
-              renderInboxItem(
-                msg.remote_name || 'عميل',
-                msg.remote_phone,
-                msg.message_text,
-                new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                true
-              );
-              newFound++;
-            }
-          });
-          if (newFound > 0) {
-            document.getElementById('kpiReceived').innerText = (parseInt(document.getElementById('kpiReceived').innerText) || 0) + newFound;
+        if (!res.ok) return;
+
+        const data = await res.json();
+        const records = data?.messages?.records || data?.records || (Array.isArray(data) ? data : []);
+
+        let newFound = 0;
+
+        for (const item of records.reverse()) {
+          const key = item.key || {};
+          if (key.fromMe) continue;
+
+          const remoteJid = key.remoteJid || "";
+          if (remoteJid.includes("@g.us") || remoteJid.includes("broadcast")) continue;
+
+          const msgId = key.id || item.id;
+          if (!msgId || processedMessageKeys.has(msgId)) continue;
+          processedMessageKeys.add(msgId);
+
+          const phone = remoteJid.replace("@s.whatsapp.net", "").replace(/[^0-9]/g, "");
+          const senderName = item.pushName || "عميل";
+          const text = extractTextFromMsg(item.message);
+
+          if (!text.trim()) continue;
+
+          // 1. عرض الرسالة في صندوق الوارد
+          if (!renderedMessageIds.has(msgId)) {
+            renderedMessageIds.add(msgId);
+            renderInboxItem(
+              senderName,
+              phone,
+              text,
+              new Date(item.messageTimestamp ? item.messageTimestamp * 1000 : Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              true
+            );
+            newFound++;
           }
+
+          // 2. حفظها في جدول Supabase
+          await window.supabaseClient.from("messages").insert([{
+            user_id: currentUser.id,
+            instance_id: currentInstanceRecord.id,
+            remote_phone: phone,
+            remote_name: senderName,
+            direction: "incoming",
+            message_text: text,
+            evolution_message_id: msgId,
+            status: "received"
+          }]);
+
+          // 3. تطبيق قواعد الأوتوميشن فوراً
+          triggerAutomationLocally(remoteJid, phone, text);
         }
-        if (notify) addLog("✔ تم تحديث صندوق الوارد ومطابقة البيانات.", "log-msg-info");
-      } catch (e) {}
+
+        if (newFound > 0) {
+          const kpi = document.getElementById('kpiReceived');
+          if (kpi) kpi.innerText = (parseInt(kpi.innerText) || 0) + newFound;
+          addLog(`📥 تم استلام وعرض (${newFound}) رسالة جديدة.`, "log-msg-success");
+        } else if (notify) {
+          addLog("✔ تم فحص الرسائل ومطابقة البيانات بنجاح.", "log-msg-info");
+        }
+      } catch (e) {
+        console.warn("Direct sync warning:", e);
+      }
+    }
+
+    // محرك الرد الآلي اللحظي
+    async function triggerAutomationLocally(remoteJid, phone, text) {
+      if (!autoRules || autoRules.length === 0 || !currentInstanceRecord || !currentUser) return;
+      const cleanMsg = text.trim().toLowerCase();
+
+      for (const rule of autoRules) {
+        const targetKey = (rule.keyword || '').trim().toLowerCase();
+        if (!targetKey) continue;
+
+        const isMatched = (rule.matchType === 'exact')
+          ? (cleanMsg === targetKey)
+          : cleanMsg.includes(targetKey);
+
+        if (isMatched) {
+          addLog(`⚡ تشغيل أوتوميشن [${rule.keyword}] للرقم (${phone})`, 'log-msg-info');
+          let isSuccess = false;
+
+          try {
+            if (rule.action === 'reply_text' && rule.value) {
+              const target = remoteJid.endsWith('@lid') ? remoteJid : phone;
+              const res = await fetch(`${API_BASE}/message/sendText/${encodeURIComponent(currentInstanceRecord.name)}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
+                body: JSON.stringify({ number: target, text: rule.value, delay: 1000 })
+              });
+              isSuccess = res.ok;
+            } else if (rule.action === 'add_to_group' && rule.value) {
+              const res = await fetch(`${API_BASE}/group/updateParticipant/${encodeURIComponent(currentInstanceRecord.name)}?groupJid=${encodeURIComponent(rule.value)}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
+                body: JSON.stringify({ action: 'add', participants: [`${phone}@s.whatsapp.net`] })
+              });
+              isSuccess = res.ok;
+            }
+
+            await window.supabaseClient.from('automation_logs').insert([{
+              user_id: currentUser.id,
+              instance_id: currentInstanceRecord.id,
+              rule_id: rule.id,
+              sender_phone: phone,
+              incoming_message: text,
+              executed_action: rule.action,
+              action_payload: rule.value,
+              status: isSuccess ? 'success' : 'failed'
+            }]);
+
+            if (isSuccess) {
+              addLog(`✔ تم إرسال الرد الآلي للعميل (${phone}) بنجاح.`, 'log-msg-success');
+            }
+          } catch (err) {
+            console.error("خطأ تنفيذ الأوتوميشن:", err);
+          }
+          break;
+        }
+      }
     }
 
     // ==========================================
@@ -1407,6 +1512,7 @@
 
       data.forEach(msg => {
         renderedMessageIds.add(msg.id);
+        if (msg.evolution_message_id) processedMessageKeys.add(msg.evolution_message_id);
         renderInboxItem(
           msg.remote_name || 'عميل',
           msg.remote_phone,
@@ -1448,7 +1554,7 @@
       document.getElementById('inboxContainer').innerHTML = `
         <div class="inbox-empty" id="inboxEmpty">
           <i data-lucide="inbox" style="width: 36px; height: 36px;"></i>
-          <p>تم تفريغ العرض فقط (البيانات محفوظة ومستمرة سحابياً)...</p>
+          <p>تم تفريغ العرض فقط (البيانات محفوظة سحابياً)...</p>
         </div>
       `;
     }
