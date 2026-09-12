@@ -3,15 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EvoFlow Enterprise | لوحة تحكم الحملات والأوتوميشن السحابية</title>
-
+  <title>EvoFlow Enterprise | منصة الأوتوميشن السحابية والذكاء الاصطناعي</title>
   <!-- Supabase JS Client v2 -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <!-- SheetJS لمعالجة ملفات Excel -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <!-- Lucide Icons للأيقونات -->
   <script src="https://unpkg.com/lucide@latest"></script>
-
   <style>
     :root {
       --bg-base: #f8fafc;
@@ -27,24 +25,20 @@
       --text-muted: #475569;
       --text-subtle: #94a3b8;
       --danger: #e11d48;
-      --danger-bg: #fff1f2;
-      --warning: #d97706;
       --success: #059669;
       --success-bg: #ecfdf5;
       --radius-sm: 8px;
       --radius-md: 12px;
       --radius-lg: 16px;
       --shadow-saas: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05), 0 0 0 1px var(--border-subtle);
-      --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+      --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
       --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, system-ui, sans-serif;
       background-color: var(--bg-base);
-      background-image: 
-        radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.05) 0px, transparent 50%),
-        radial-gradient(at 100% 100%, rgba(2, 132, 199, 0.04) 0px, transparent 50%);
+      background-image: radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.04) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(2, 132, 199, 0.04) 0px, transparent 50%);
       color: var(--text-main);
       min-height: 100vh;
       padding: 30px 20px;
@@ -52,81 +46,63 @@
       flex-direction: column;
       align-items: center;
     }
-    .app-container { width: 100%; max-width: 1260px; display: flex; flex-direction: column; gap: 24px; }
+    .app-container { width: 100%; max-width: 1300px; display: flex; flex-direction: column; gap: 24px; }
     .saas-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 16px 24px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-saas);
-      flex-wrap: wrap;
-      gap: 16px;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 18px 24px; background: var(--bg-surface); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg); box-shadow: var(--shadow-saas); flex-wrap: wrap; gap: 16px;
     }
     .brand-section { display: flex; align-items: center; gap: 14px; }
     .brand-logo {
-      width: 44px; height: 44px; border-radius: 10px;
-      background: linear-gradient(135deg, var(--primary), #0284c7);
-      display: flex; align-items: center; justify-content: center;
-      color: #fff; box-shadow: 0 4px 12px var(--primary-glow);
+      width: 46px; height: 46px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: flex; align-items: center; justify-content: center; color: #fff; box-shadow: 0 4px 12px var(--primary-glow);
     }
     .brand-title h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
     .brand-title p { font-size: 12px; color: var(--text-muted); }
     .instance-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .instance-select {
-      background: #ffffff; border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-sm); color: var(--text-main);
-      padding: 8px 12px; font-size: 13px; font-weight: 600; cursor: pointer;
+      background: #ffffff; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);
+      color: var(--text-main); padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer;
     }
     .btn-add-account {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 8px 14px; background: #ecfdf5; color: var(--primary);
-      border: 1px solid #a7f3d0; border-radius: var(--radius-sm);
-      font-size: 13px; font-weight: 600; cursor: pointer; transition: var(--transition);
+      display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px;
+      background: #ecfdf5; color: var(--primary); border: 1px solid #a7f3d0;
+      border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; transition: var(--transition);
     }
     .btn-add-account:hover { background: var(--primary); color: #ffffff; }
     .status-badge {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 6px 14px; border-radius: 20px; font-size: 12px;
-      font-weight: 600; background: var(--success-bg); color: var(--primary);
-      border: 1px solid rgba(5, 150, 105, 0.2);
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px;
+      border-radius: 20px; font-size: 12px; font-weight: 600; background: var(--success-bg);
+      color: var(--primary); border: 1px solid rgba(5, 150, 105, 0.2);
     }
     .status-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--primary); box-shadow: 0 0 8px var(--primary);
-      animation: pulse 2s infinite;
+      width: 8px; height: 8px; border-radius: 50%; background: var(--primary);
+      box-shadow: 0 0 8px var(--primary); animation: pulse 2s infinite;
     }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(0.85); }
-    }
-    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+    @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.85); } }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; }
     .kpi-card {
-      background: var(--bg-surface); border: 1px solid var(--border-subtle);
-      padding: 18px 20px; border-radius: var(--radius-md); box-shadow: var(--shadow-saas);
-      display: flex; align-items: center; justify-content: space-between; transition: var(--transition);
+      background: var(--bg-surface); border: 1px solid var(--border-subtle); padding: 18px 20px;
+      border-radius: var(--radius-md); box-shadow: var(--shadow-saas); display: flex; align-items: center;
+      justify-content: space-between; transition: var(--transition);
     }
     .kpi-card:hover { box-shadow: var(--shadow-hover); }
     .kpi-data span { font-size: 12px; color: var(--text-muted); font-weight: 600; }
     .kpi-data h3 { font-size: 24px; font-weight: 700; margin-top: 4px; }
     .kpi-icon {
-      width: 44px; height: 44px; border-radius: 10px; display: flex;
-      align-items: center; justify-content: center; background: var(--bg-surface-elevated);
-      color: var(--primary); border: 1px solid var(--border-subtle);
+      width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center;
+      justify-content: center; background: var(--bg-surface-elevated); color: var(--primary); border: 1px solid var(--border-subtle);
     }
     .dashboard-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
     @media (max-width: 1024px) { .dashboard-layout { grid-template-columns: 1fr; } }
     .saas-card {
-      background: var(--bg-surface); border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-saas);
-      display: flex; flex-direction: column; gap: 20px;
+      background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg);
+      padding: 24px; box-shadow: var(--shadow-saas); display: flex; flex-direction: column; gap: 20px;
     }
     .card-title {
-      font-size: 16px; font-weight: 700; color: var(--text-main);
-      display: flex; align-items: center; justify-content: space-between;
-      border-bottom: 1px solid var(--border-subtle); padding-bottom: 12px;
+      font-size: 15px; font-weight: 700; color: var(--text-main); display: flex; align-items: center;
+      justify-content: space-between; border-bottom: 1px solid var(--border-subtle); padding-bottom: 12px;
     }
     .card-title-left { display: flex; align-items: center; gap: 10px; }
     .card-title i { color: var(--primary); }
@@ -137,20 +113,19 @@
       color: var(--text-main); padding: 10px 12px; font-size: 13px; font-family: inherit; transition: var(--transition);
     }
     input:focus, textarea:focus, select:focus { outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--primary-glow); }
-    .var-manager-box {
-      background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: var(--radius-md);
-      padding: 14px; display: flex; flex-direction: column; gap: 12px;
+    .box-container { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+    .item-row-card {
+      background: #ffffff; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);
+      padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 12px;
     }
+    .var-manager-box { background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; gap: 12px; }
     .var-badges-container { display: flex; flex-wrap: wrap; gap: 8px; }
-    .v-badge {
-      display: inline-flex; align-items: center; gap: 6px; font-size: 12px;
-      font-weight: 600; padding: 5px 12px; border-radius: 6px; cursor: pointer;
-    }
+    .v-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 6px; cursor: pointer; }
     .v-badge.fixed { border: 1px solid #bae6fd; background: #f0f9ff; color: #0369a1; }
     .v-badge.special { border: 1px solid #fde68a; background: #fefce8; color: #b45309; }
     .v-badge.ghost { border: 1px solid #e9d5ff; background: #faf5ff; color: #7e22ce; }
     .v-badge.custom { border: 1px solid #a7f3d0; background: #ecfdf5; color: #047857; }
-    .v-badge .del-btn { cursor: pointer; color: var(--danger); margin-right: 4px; }
+    .v-badge .del-btn { cursor: pointer; color: var(--danger); }
     .var-input-container { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: center; }
     .file-dropzone {
       border: 2px dashed #cbd5e1; border-radius: var(--radius-md); padding: 16px;
@@ -164,26 +139,18 @@
     .inbox-empty { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-subtle); gap: 8px; }
     .inbox-card {
       background: #ffffff; border: 1px solid var(--border-subtle); border-right: 4px solid var(--primary);
-      border-radius: var(--radius-sm); padding: 12px 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.03);
-      display: flex; flex-direction: column; gap: 6px; animation: fadeIn 0.3s ease;
+      border-radius: var(--radius-sm); padding: 12px 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 6px;
     }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
     .inbox-header { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
     .sender-name { font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 6px; }
     .sender-phone { font-size: 11px; color: var(--text-muted); font-family: monospace; direction: ltr; }
     .inbox-time { font-size: 11px; color: var(--text-subtle); }
     .inbox-body { font-size: 13px; color: var(--text-muted); line-height: 1.5; word-break: break-word; }
     .msg-list { display: flex; flex-direction: column; gap: 12px; }
-    .msg-item {
-      background: #f8fafc; border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
-      padding: 14px; display: flex; flex-direction: column; gap: 10px;
-    }
+    .msg-item { background: #f8fafc; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
     .msg-item-header { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 700; color: var(--primary); }
-    .btn-icon-del { background: transparent; border: none; color: var(--danger); cursor: pointer; }
-    .sequence-group-card {
-      background: #ffffff; border: 1px solid #cbd5e1; border-right: 4px solid var(--accent);
-      border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; gap: 12px;
-    }
+    .btn-icon-del { background: transparent; border: none; color: var(--danger); cursor: pointer; padding: 4px; }
+    .sequence-group-card { background: #ffffff; border: 1px solid #cbd5e1; border-right: 4px solid var(--accent); border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; gap: 12px; }
     .sequence-group-header { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 700; color: var(--accent); }
     .mention-dropdown {
       position: absolute; background: #ffffff; border: 1px solid #cbd5e1; border-radius: var(--radius-sm);
@@ -191,10 +158,10 @@
     }
     .mention-item { padding: 9px 14px; font-size: 13px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; }
     .mention-item:hover { background: #ecfdf5; color: var(--primary); font-weight: 700; }
-    .mention-val { font-size: 11px; color: var(--text-muted); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .mention-val { font-size: 11px; color: var(--text-muted); }
     .btn {
-      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-      padding: 10px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; transition: var(--transition); border: none;
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 16px;
+      border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; transition: var(--transition); border: none;
     }
     .btn-primary { background: var(--primary); color: #ffffff; box-shadow: 0 4px 12px var(--primary-glow); }
     .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
@@ -202,15 +169,12 @@
     .btn-secondary:hover { background: #f8fafc; }
     .btn-danger { background: var(--danger); color: #fff; }
     .btn-outline-dashed { background: #f0fdf4; border: 1px dashed var(--primary); color: var(--primary); width: 100%; }
-    .progress-wrapper {
-      background: #f8fafc; border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
-      padding: 14px; display: flex; flex-direction: column; gap: 8px;
-    }
+    .progress-wrapper { background: #f8fafc; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; gap: 8px; }
     .progress-bar-bg { height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
     .progress-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--primary), var(--accent)); transition: width 0.3s ease; }
     .terminal-console {
-      background: #0f172a; border: 1px solid #1e293b; border-radius: var(--radius-md);
-      height: 200px; padding: 12px; overflow-y: auto; font-family: 'Fira Code', 'Consolas', monospace; font-size: 12px; display: flex; flex-direction: column; gap: 6px;
+      background: #0f172a; border: 1px solid #1e293b; border-radius: var(--radius-md); height: 200px;
+      padding: 12px; overflow-y: auto; font-family: 'Fira Code', 'Consolas', monospace; font-size: 12px; display: flex; flex-direction: column; gap: 6px;
     }
     .log-line { display: flex; gap: 8px; line-height: 1.4; }
     .log-time { color: #64748b; min-width: 65px; }
@@ -222,7 +186,6 @@
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .toggle-row { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px; }
     .toggle-row input { accent-color: var(--primary); width: 16px; height: 16px; }
-    .shield-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
     .auto-rule-card { background: #f8fafc; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
     .auto-rule-row { display: grid; grid-template-columns: 1fr 1fr 2fr auto; gap: 10px; align-items: flex-end; }
     @media (max-width: 900px) { .auto-rule-row { grid-template-columns: 1fr; } }
@@ -246,34 +209,27 @@
     .modal-header { display: flex; justify-content: space-between; align-items: center; }
     .modal-header h3 { font-size: 18px; font-weight: 700; }
     .close-modal-btn { background: none; border: none; cursor: pointer; color: var(--text-muted); }
-    .qr-container {
-      background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: var(--radius-md);
-      padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 250px;
-    }
+    .qr-container { background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: var(--radius-md); padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 250px; }
     .qr-container img { max-width: 220px; border-radius: 8px; }
   </style>
 </head>
 <body>
-
   <div class="app-container">
     <!-- Header -->
     <header class="saas-header">
       <div class="brand-section">
         <div class="brand-logo"><i data-lucide="zap"></i></div>
         <div class="brand-title">
-          <h1>EvoFlow Campaign Engine</h1>
-          <p id="userStatusBanner">لوحة التحكم السحابية | محرك المزامنة الفوري</p>
+          <h1>EvoFlow Enterprise</h1>
+          <p id="userStatusBanner">محرك الحملات والأوتوميشن السحابي المدعوم بالذكاء الاصطناعي</p>
         </div>
       </div>
-
       <div class="instance-controls">
         <label style="font-size: 13px; font-weight: 600;">الحساب النشط:</label>
         <select id="activeInstanceSelect" class="instance-select" onchange="switchInstance()"></select>
-        
         <button type="button" class="btn btn-secondary" onclick="forceFixWebhook()" title="إعادة ربط الـ Webhook وإصلاح الاتصال" style="padding: 7px 10px; font-size: 12px;">
           <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i> فحص الـ Webhook
         </button>
-
         <button type="button" class="btn-add-account" onclick="openAddAccountModal()">
           <i data-lucide="plus-circle" style="width: 16px; height: 16px;"></i>
           <span>إضافة رقم</span>
@@ -283,7 +239,7 @@
         </button>
         <div class="status-badge">
           <span class="status-dot"></span>
-          <span id="currentStatusText">الحساب: جارٍ التحميل...</span>
+          <span id="currentStatusText">جاري التحقق...</span>
         </div>
       </div>
     </header>
@@ -320,7 +276,7 @@
       </div>
       <div class="kpi-card">
         <div class="kpi-data">
-          <span>عمليات الفشل / غير مسجل</span>
+          <span>عمليات الفشل</span>
           <h3 id="kpiFailed" style="color: var(--danger);">0</h3>
         </div>
         <div class="kpi-icon"><i data-lucide="alert-triangle"></i></div>
@@ -334,7 +290,7 @@
         <div class="card-title">
           <div class="card-title-left">
             <i data-lucide="file-spreadsheet"></i>
-            <span>بيانات المستلمين والمستندات</span>
+            <span>إدارة الحملات والبيانات والمخزون</span>
           </div>
         </div>
 
@@ -343,11 +299,10 @@
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <label style="font-size: 13px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 6px;">
               <i data-lucide="database-zap" style="width: 16px; height: 16px;"></i>
-              استخراج الـ Data المتقدمة
+              استخراج الـ Data المتقدمة من واتساب
             </label>
             <span id="extractorStatusBadge" style="font-size: 11px; color: var(--text-muted);">جاهز للاستخراج</span>
           </div>
-
           <div class="extractor-btn-grid">
             <button type="button" class="btn btn-secondary" onclick="extractChatListContacts()" style="font-size: 12px; padding: 8px 10px;">
               <i data-lucide="messages-square" style="width: 15px; height: 15px;"></i> استخراج الـ Chatlists
@@ -359,7 +314,6 @@
               <i data-lucide="users-2" style="width: 15px; height: 15px;"></i> استخراج من جروب
             </button>
           </div>
-
           <div id="groupExtractorRow" style="display: none; gap: 8px; align-items: center;">
             <select id="extractorGroupSelect" style="flex: 2; font-size: 12px;">
               <option value="">-- اختر الجروب المراد سحب أرقامه --</option>
@@ -368,7 +322,6 @@
               سحب الأرقام
             </button>
           </div>
-
           <div id="extractorActionsBar" style="display: none; justify-content: space-between; align-items: center; background: #ecfdf5; padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid #a7f3d0;">
             <span id="extractorResultText" style="font-size: 12px; font-weight: 700; color: var(--primary);">تم استخراج 0 رقم</span>
             <div style="display: flex; gap: 6px;">
@@ -382,20 +335,49 @@
           </div>
         </div>
 
+        <!-- إدارة المنتجات -->
+        <div class="box-container">
+          <label style="font-size: 13px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 6px;">
+            <i data-lucide="package" style="width: 16px; height: 16px;"></i>
+            إدارة المنتجات (تستخدم لردود الذكاء الاصطناعي)
+          </label>
+          <div id="productsListContainer" style="display: flex; flex-direction: column; gap: 6px; max-height: 140px; overflow-y: auto;"></div>
+          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 6px;">
+            <input type="text" id="newProdName" placeholder="اسم المنتج">
+            <input type="number" id="newProdPrice" placeholder="السعر (ج.م)">
+          </div>
+          <textarea id="newProdDetails" rows="2" placeholder="تفاصيل ومميزات المنتج..."></textarea>
+          <button type="button" class="btn btn-secondary" onclick="addProductToCloud()">+ إضافة منتج جديد</button>
+        </div>
+
+        <!-- أسعار الشحن حسب المحافظة -->
+        <div class="box-container">
+          <label style="font-size: 13px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 6px;">
+            <i data-lucide="truck" style="width: 16px; height: 16px;"></i>
+            خدمات الشحن حسب المحافظة
+          </label>
+          <div id="shippingListContainer" style="display: flex; flex-direction: column; gap: 6px; max-height: 120px; overflow-y: auto;"></div>
+          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 6px;">
+            <input type="text" id="newGovName" placeholder="اسم المحافظة (مثال: القاهرة)">
+            <input type="number" id="newGovCost" placeholder="تكلفة الشحن">
+          </div>
+          <button type="button" class="btn btn-secondary" onclick="addShippingRateToCloud()">+ إضافة سعر شحن لمحافظة</button>
+        </div>
+
         <!-- صندوق إدارة المتغيرات (Supabase) -->
         <div class="var-manager-box">
-          <label style="font-size: 12px; font-weight: 700;">المتغيرات المحفوظة سحابياً (اضغط عليها أو اكتب @ في الرسالة):</label>
+          <label style="font-size: 12px; font-weight: 700;">المتغيرات المحفوظة سحابياً (اكتب @ في أي رسالة للإدراج):</label>
           <div class="var-badges-container" id="varTagList"></div>
           <div class="var-input-container">
             <input type="text" id="newVarName" placeholder="اسم المتغير (مثال: خصم)">
-            <input type="text" id="newVarVal" placeholder="قيمة المتغير الافتراضية">
+            <input type="text" id="newVarVal" placeholder="القيمة الافتراضية">
             <button type="button" class="btn btn-secondary" onclick="addCustomVariable()">+ إضافة سحابية</button>
           </div>
         </div>
 
         <div class="form-group">
           <div style="display: flex; justify-content: space-between; align-items: center;">
-            <label>استيراد ملف البيانات:</label>
+            <label>استيراد ملف البيانات (Excel / CSV):</label>
             <button type="button" class="btn btn-secondary" style="padding: 4px 10px; font-size: 12px;" onclick="downloadExcelTemplate()">
               <i data-lucide="download"></i> تحميل قالب Excel
             </button>
@@ -409,26 +391,26 @@
         </div>
 
         <div class="form-group">
-          <label>الأرقام والقيم المباشرة (رقم, اسم, متغير1, متغير2...):</label>
-          <textarea id="dataInput" rows="3" placeholder="201280471390, مينا, استشارة, 2500"></textarea>
+          <label>قائمة الأرقام والقيم المباشرة (رقم, اسم, متغير1...):</label>
+          <textarea id="dataInput" rows="3" placeholder="201280471390, مينا, منتج أ, 1500"></textarea>
         </div>
 
         <!-- خيارات الحماية والـ Warm-up -->
-        <div class="shield-box">
-          <span style="font-size: 13px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 6px;">
+        <div class="box-container">
+          <label style="font-size: 13px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 6px;">
             <i data-lucide="shield-check" style="width: 16px; height: 16px;"></i>
             خيارات الحماية المتطورة من الحظر
-          </span>
+          </label>
           <label class="toggle-row">
             <input type="checkbox" id="simulateTyping" checked onchange="saveInstanceSettingsToDB()">
-            <span><b>محاكاة الكتابة:</b> إرسال مؤشر (يكتب الآن...) لعدة ثوانٍ قبل الإرسال</span>
+            <span><b>محاكاة الكتابة:</b> إظهار (يكتب الآن...) لعدة ثوانٍ قبل الإرسال</span>
           </label>
           <label class="toggle-row">
             <input type="checkbox" id="autoGhostProtection" checked onchange="saveInstanceSettingsToDB()">
-            <span><b>حقن أحرف غير مرئية تلقائياً:</b> كسر تشابه الـ Hash بين الرسائل</span>
+            <span><b>حقن أحرف مخفية تلقائياً:</b> لكسر بصمة الـ Hash ومنع الحظر</span>
           </label>
           <div class="form-group" style="margin-top: 6px;">
-            <label style="font-size: 12px;"><b>حد الإرسال اليومي (Daily Warm-up):</b></label>
+            <label style="font-size: 12px;"><b>حد الإرسال اليومي الأقصى (Warm-up Limit):</b></label>
             <input type="number" id="dailyLimit" value="50" min="0" onchange="saveInstanceSettingsToDB()">
           </div>
         </div>
@@ -447,7 +429,7 @@
 
         <div class="form-row" id="seqDelayRow" style="display: none; background: #f0f9ff; padding: 10px; border-radius: var(--radius-sm); border: 1px solid #bae6fd;">
           <div class="form-group" style="grid-column: span 2;">
-            <label style="color: #0369a1;">الفاصل الزمني بين رسائل المجموعة للعميل نفسه (ثواني):</label>
+            <label style="color: #0369a1;">الفاصل بين رسائل المجموعة للعميل (ثواني):</label>
             <div style="display: flex; gap: 8px;">
               <input type="number" id="seqMinDelay" value="2" min="1">
               <input type="number" id="seqMaxDelay" value="5" min="1">
@@ -457,15 +439,15 @@
 
         <div class="form-row" style="background: #f8fafc; padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
           <div class="form-group" style="grid-column: span 2;">
-            <label>توقف مؤقت بعد كل (عدد رسائل X):</label>
+            <label>استراحة أمان بعد كل (عدد رسائل X):</label>
             <input type="number" id="batchCount" value="15" min="0" onchange="saveInstanceSettingsToDB()">
           </div>
           <div class="form-group">
-            <label>أقل مدة توقف (ثواني):</label>
+            <label>أقل مدة استراحة (ثواني):</label>
             <input type="number" id="batchPauseMin" value="40" min="1" onchange="saveInstanceSettingsToDB()">
           </div>
           <div class="form-group">
-            <label>أقصى مدة توقف (ثواني):</label>
+            <label>أقصى مدة استراحة (ثواني):</label>
             <input type="number" id="batchPauseMax" value="90" min="1" onchange="saveInstanceSettingsToDB()">
           </div>
         </div>
@@ -492,7 +474,7 @@
 
       <!-- Left Side -->
       <div style="display: flex; flex-direction: column; gap: 24px;">
-        <!-- صندوق الوارد المباشر (Supabase Messages) -->
+        <!-- صندوق الوارد المباشر -->
         <div class="saas-card">
           <div class="card-title">
             <div class="card-title-left">
@@ -501,11 +483,9 @@
             </div>
             <div style="display: flex; gap: 6px;">
               <button type="button" class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="syncInboxSilent(true)">
-                <i data-lucide="refresh-cw" style="width: 12px; height: 12px;"></i> تحديث فوري
+                <i data-lucide="refresh-cw" style="width: 12px; height: 12px;"></i> تحديث
               </button>
-              <button type="button" class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="clearInboxUI()">
-                تفريغ العرض
-              </button>
+              <button type="button" class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="clearInboxUI()">تفريغ</button>
             </div>
           </div>
           <div class="inbox-container" id="inboxContainer">
@@ -516,19 +496,46 @@
           </div>
         </div>
 
-        <!-- محرك الأوتوميشن السحابي -->
+        <!-- إعدادات شخصية الرد الذكي وجوجل جيميناي -->
+        <div class="saas-card">
+          <div class="card-title">
+            <div class="card-title-left">
+              <i data-lucide="sparkles" style="color: var(--primary);"></i>
+              <span>شخصية الرد الذكي وربط Google Gemini API</span>
+            </div>
+            <button type="button" class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;" onclick="saveAiSettingsToCloud()">
+              <i data-lucide="save" style="width: 14px; height: 14px;"></i> حفظ الإعدادات
+            </button>
+          </div>
+          <div class="box-container">
+            <div class="form-group">
+              <label>مفتاح Google Gemini API Key:</label>
+              <input type="password" id="geminiApiKeyInput" placeholder="AIzaSy...">
+            </div>
+            <div class="form-group">
+              <label>شخصية الرد في العمل (AI Business Persona):</label>
+              <textarea id="botPersonaInput" rows="4" placeholder="حدد نبرة وشخصية البوت عندما يُسأل عن تفاصيل العمل (مثال: أنت موظف مبيعات محترف وودود في شركة EvoFlow، تجيب العملاء بلغة طبيعية كأنك بشر، وعندما يسألك أحد عن المنتجات أو الأسعار أو مصاريف الشحن للمحافظات، استخدم الداتا الرسمية المتاحة بدقة)..."></textarea>
+            </div>
+            <label class="toggle-row">
+              <input type="checkbox" id="enableAiAutoReply" checked>
+              <span><b>تفعيل الرد التلقائي بـ Gemini AI:</b> محادثة العملاء بسياق بشري وذكاء اصطناعي مستند لداتا المنتجات والشحن</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- محرك الأوتوميشن السحابي (القواعد اليدوية) -->
         <div class="saas-card">
           <div class="card-title">
             <div class="card-title-left">
               <i data-lucide="bot" style="color: var(--primary);"></i>
-              <span>قواعد الأوتوميشن الذكية (رد تلقائي فوري)</span>
+              <span>قواعد الأوتوميشن الذكية (الكلمات المفتاحية)</span>
             </div>
             <div style="display: flex; gap: 8px;">
               <button type="button" class="btn btn-secondary" style="padding: 4px 10px; font-size: 12px;" onclick="fetchAvailableGroups(true)">
-                <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i> تحديث الجروبات
+                <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i> الجروبات
               </button>
               <button type="button" class="btn btn-secondary" style="padding: 4px 10px; font-size: 12px;" onclick="addAutomationRule()">
-                <i data-lucide="plus"></i> إضافة قاعدة
+                <i data-lucide="plus"></i> إضافة
               </button>
             </div>
           </div>
@@ -540,45 +547,38 @@
           <div class="card-title">
             <div class="card-title-left">
               <i data-lucide="message-square"></i>
-              <span>نماذج ومجموعات الرسائل (Sequences)</span>
+              <span>قوالب ومجموعات الرسائل (Sequences)</span>
             </div>
           </div>
           <div class="mode-switch-container">
-            <button type="button" class="mode-btn active" id="singleModeBtn" onclick="switchMessageMode('single')">
-              رسالة فردية (تبديل عشوائي)
-            </button>
-            <button type="button" class="mode-btn" id="groupModeBtn" onclick="switchMessageMode('sequence')">
-              إرسال مجموعة رسائل متتالية
-            </button>
+            <button type="button" class="mode-btn active" id="singleModeBtn" onclick="switchMessageMode('single')">رسالة فردية (عشوائي)</button>
+            <button type="button" class="mode-btn" id="groupModeBtn" onclick="switchMessageMode('sequence')">مجموعة رسائل متتالية</button>
           </div>
-
           <div id="singleMessagesSection" class="form-group">
-            <label>قائمة نماذج الرسائل (اكتب @ لاختيار المتغيرات):</label>
+            <label>قائمة قوالب الرسائل (اكتب @ للاختيار):</label>
             <div class="msg-list" id="messagesContainer">
               <div class="msg-item" id="msg-box-1">
                 <div class="msg-item-header">
                   <span>الرسالة رقم 1</span>
                 </div>
-                <textarea class="msg-text" rows="3" placeholder="اكتب نص الرسالة هنا...">مَرْحَبًا @name، طلبك رقم: @Randomcode. @invisible</textarea>
+                <textarea class="msg-text" rows="3" placeholder="اكتب نص الرسالة...">أهلاً بك ya @name، طلبك رقم @Randomcode. @invisible</textarea>
               </div>
             </div>
             <button type="button" class="btn btn-outline-dashed" onclick="addMessageField()" style="margin-top: 6px;">
               <i data-lucide="plus-circle"></i> إضافة قالب رسالة إضافي
             </button>
           </div>
-
           <div id="sequenceMessagesSection" class="form-group" style="display: none;">
             <label>مجموعات الرسائل المتتالية المحفوظة سحابياً:</label>
             <div id="sequenceGroupsContainer" style="display: flex; flex-direction: column; gap: 14px;"></div>
             <button type="button" class="btn btn-outline-dashed" onclick="addNewSequenceGroup()" style="margin-top: 6px;">
-              <i data-lucide="folder-plus"></i> إضافة مجموعة رسائل جديدة
+              <i data-lucide="folder-plus"></i> إضافة مجموعة جديدة
             </button>
           </div>
-
           <div class="terminal-console" id="logBox">
             <div class="log-line">
               <span class="log-time">[00:00:00]</span>
-              <span class="log-msg-info">جاري تهيئة النظام السحابي...</span>
+              <span class="log-msg-info">جاري تهيئة نظام EvoFlow Enterprise السحابي...</span>
             </div>
           </div>
         </div>
@@ -612,7 +612,7 @@
     </div>
   </div>
 
-  <!-- Modal إضافة رقم / Instance -->
+  <!-- Modal إضافة رقم واتساب -->
   <div class="modal-overlay" id="addAccountModal">
     <div class="modal-card">
       <div class="modal-header">
@@ -622,7 +622,7 @@
       <div id="createStep">
         <div class="form-group" style="text-align: right;">
           <label>اسم الحساب / الرقم (بالإنجليزية وبدون مسافات):</label>
-          <input type="text" id="newInstanceName" placeholder="مثال: support_cairo">
+          <input type="text" id="newInstanceName" placeholder="مثال: sales_cairo">
         </div>
         <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 12px;" onclick="generateInstanceQR()">
           <i data-lucide="qr-code"></i> توليد QR Code وحفظ الرقم
@@ -632,7 +632,7 @@
         <div class="qr-container">
           <img id="qrCodeImage" src="" alt="WhatsApp QR Code" style="display: none;">
           <div id="qrLoader">
-            <p style="font-size: 13px; color: var(--text-muted);">جاري الاتصال بالسيرفر وتوليد الكود...</p>
+            <p style="font-size: 13px; color: var(--text-muted);">جاري الاتصال بسيرفر Evolution وتوليد الكود...</p>
           </div>
         </div>
         <div style="font-size: 13px; color: var(--text-muted); margin-top: 8px;" id="qrStatusText">
@@ -655,6 +655,7 @@
     window.supabaseClient = null;
     let realtimeChannel = null;
     let backgroundSyncTimer = null;
+    const sessionStartTime = Date.now(); // لتحديد وقت بدء الجلسة ومعالجة الرسائل الجديدة فقط
 
     function initSupabaseClient() {
       if (!window.supabase || typeof window.supabase.createClient !== "function") return false;
@@ -671,7 +672,7 @@
 
     const isSupabaseReady = initSupabaseClient();
 
-    // Application State
+    // App State
     let currentUser = null;
     let currentInstanceRecord = null;
     let instanceList = [];
@@ -679,6 +680,9 @@
     let messageSequences = [];
     let autoRules = [];
     let availableGroups = [];
+    let productsList = [];
+    let shippingRates = [];
+    let aiSettings = { geminiApiKey: '', botPersona: '', enabled: true };
     let lastExtractedData = [];
     let activeTextarea = null;
     let isCampaignRunning = false;
@@ -686,12 +690,64 @@
     let currentSendingMode = 'single';
     let qrCheckInterval = null;
     let messageCounter = 1;
+    
     let renderedMessageIds = new Set();
     let processedMessageKeys = new Set();
+    let conversationMemory = {};
+
+    // ==========================================
+    // Gemini Protection / Rate Limiting
+    // ==========================================
+    // أقصى عدد Requests لـ Gemini في الدقيقة
+    const GEMINI_MAX_REQUESTS_PER_MINUTE = 20;
+    // مدة تجميع رسائل نفس العميل قبل إرسالها لـ Gemini
+    const GEMINI_DEBOUNCE_MS = 2500;
+    // أقصى عدد رسائل نحفظها في Context العميل
+    const GEMINI_MEMORY_LIMIT = 6;
+    // Queue واحدة لكل طلبات Gemini
+    let geminiRequestQueue = Promise.resolve();
+    // timestamps لكل Requests Gemini
+    let geminiRequestTimestamps = [];
+    // Timers لتجميع رسائل كل عميل
+    const geminiDebounceTimers = {};
+    // الرسائل المنتظرة لكل عميل
+    const geminiPendingMessages = {};
+    // لمنع أكثر من Request لنفس العميل في نفس الوقت
+    const geminiActivePhones = new Set();
+
+    function cleanupGeminiRateLimit() {
+      const now = Date.now();
+      geminiRequestTimestamps = geminiRequestTimestamps.filter(
+        timestamp => now - timestamp < 60000
+      );
+    }
+
+    async function waitForGeminiRateLimit() {
+      while (true) {
+        cleanupGeminiRateLimit();
+
+        if (geminiRequestTimestamps.length < GEMINI_MAX_REQUESTS_PER_MINUTE) {
+          geminiRequestTimestamps.push(Date.now());
+          return;
+        }
+
+        const oldestRequest = geminiRequestTimestamps[0];
+        const waitTime = Math.max(
+          1000,
+          60000 - (Date.now() - oldestRequest) + 100
+        );
+
+        addLog(
+          `⏳ تم الوصول لحد Gemini: ${GEMINI_MAX_REQUESTS_PER_MINUTE} طلب/دقيقة — انتظار ${Math.ceil(waitTime / 1000)} ثانية`,
+          'log-msg-warning'
+        );
+
+        await delayMs(waitTime);
+      }
+    }
 
     const defaultVars = ['wa_name', 'phone_name', 'name', 'phone'];
 
-    // استخراج النص من أي هيكل رسالة
     function extractTextFromMsg(m) {
       if (!m) return "";
       return (
@@ -705,23 +761,22 @@
     }
 
     // ==========================================
-    // 2️⃣ بدء التطبيق والمصادقة
+    // 2️⃣ تهيئة التطبيق والمصادقة
     // ==========================================
     async function initApp() {
       lucide.createIcons();
-
       if (!isSupabaseReady || !window.supabaseClient) {
-        addLog("❌ فشل تحميل مكتبة Supabase! تأكد من الاتصال بالإنترنت.", "log-msg-error");
+        document.getElementById('currentStatusText').innerText = 'خطأ في Supabase';
+        addLog("❌ فشل الاتصال بقاعدة البيانات Supabase!", "log-msg-error");
         openAuthModal();
         return;
       }
 
-      addLog("جاري التحقق من الاتصال وقراءة بيانات الحساب...", "log-msg-info");
-
       try {
+        document.getElementById('currentStatusText').innerText = 'جاري التحقق...';
         const { data, error } = await window.supabaseClient.auth.getSession();
         if (error) throw error;
-
+        
         const session = data?.session;
         if (session?.user) {
           currentUser = session.user;
@@ -731,10 +786,12 @@
         } else {
           updateUserUI();
           openAuthModal();
+          document.getElementById('currentStatusText').innerText = 'يرجى تسجيل الدخول';
           addLog("⚠️ لم يتم تسجيل الدخول، يرجى تسجيل الدخول للبدء.", "log-msg-warning");
         }
       } catch (err) {
-        addLog(`تنبيه: يرجى تسجيل الدخول للمتابعة.`, "log-msg-warning");
+        document.getElementById('currentStatusText').innerText = 'خطأ مصادقة';
+        addLog(`تنبيه: ${err.message}`, "log-msg-warning");
         openAuthModal();
       }
     }
@@ -743,11 +800,11 @@
       const banner = document.getElementById('userStatusBanner');
       const authBtn = document.getElementById('authButton');
       if (currentUser) {
-        banner.innerText = `حساب: ${currentUser.email} | متصل ونشط`;
+        banner.innerText = `حساب: ${currentUser.email} | متصل سحابياً`;
         authBtn.innerHTML = `<i data-lucide="log-out" style="width: 14px; height: 14px;"></i> خروج`;
         authBtn.onclick = handleAuthLogout;
       } else {
-        banner.innerText = `غير مسجل | يرجى الدخول`;
+        banner.innerText = `غير مسجل الدخول`;
         authBtn.innerHTML = `<i data-lucide="log-in" style="width: 14px; height: 14px;"></i> دخول`;
         authBtn.onclick = openAuthModal;
       }
@@ -759,20 +816,15 @@
       const password = document.getElementById('authPassword').value.trim();
       const errBox = document.getElementById('authErrorMsg');
       errBox.innerText = '';
-
-      if (!email || !password) {
-        errBox.innerText = 'يرجى إدخال البريد وكلمة المرور';
-        return;
-      }
+      if (!email || !password) return errBox.innerText = 'أدخل البريد وكلمة المرور';
 
       const { data, error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
-      if (error) {
-        errBox.innerText = error.message;
-      } else {
+      if (error) errBox.innerText = error.message;
+      else {
         currentUser = data.user;
         closeAuthModal();
         updateUserUI();
-        addLog(`✔ تم تسجيل الدخول بنجاح: ${currentUser.email}`, 'log-msg-success');
+        addLog(`✔ تم تسجيل الدخول: ${currentUser.email}`, 'log-msg-success');
         await loadUserInstances();
       }
     }
@@ -782,16 +834,11 @@
       const password = document.getElementById('authPassword').value.trim();
       const errBox = document.getElementById('authErrorMsg');
       errBox.innerText = '';
-
-      if (!email || !password) {
-        errBox.innerText = 'يرجى إدخال البريد وكلمة المرور';
-        return;
-      }
+      if (!email || !password) return errBox.innerText = 'أدخل البريد وكلمة المرور';
 
       const { data, error } = await window.supabaseClient.auth.signUp({ email, password });
-      if (error) {
-        errBox.innerText = error.message;
-      } else {
+      if (error) errBox.innerText = error.message;
+      else {
         alert("تم إنشاء الحساب بنجاح!");
         currentUser = data.user;
         closeAuthModal();
@@ -808,7 +855,7 @@
       currentInstanceRecord = null;
       instanceList = [];
       document.getElementById('activeInstanceSelect').innerHTML = '';
-      document.getElementById('currentStatusText').innerText = 'الحساب: غير مسجل';
+      document.getElementById('currentStatusText').innerText = 'غير مسجل';
       updateUserUI();
       openAuthModal();
     }
@@ -817,25 +864,20 @@
     function closeAuthModal() { document.getElementById('authModal').style.display = 'none'; }
 
     // ==========================================
-    // 3️⃣ إدارة الأرقام وضمان ربط الـ Webhook
+    // 3️⃣ إدارة الحسابات والـ Webhook
     // ==========================================
     async function loadUserInstances() {
       if (!currentUser || !window.supabaseClient) return;
       try {
-        const { data, error } = await window.supabaseClient
-          .from('instances')
-          .select('*')
-          .order('created_at', { ascending: true });
-
+        const { data, error } = await window.supabaseClient.from('instances').select('*').order('created_at', { ascending: true });
         if (error) throw error;
-
         instanceList = data || [];
         const select = document.getElementById('activeInstanceSelect');
         select.innerHTML = '';
 
         if (instanceList.length === 0) {
-          document.getElementById('currentStatusText').innerText = 'لا يوجد أرقام مضافة';
-          addLog("لا يوجد أرقام مسجلة بحسابك حالياً. اضغط 'إضافة رقم' لربط واتساب.", 'log-msg-info');
+          document.getElementById('currentStatusText').innerText = 'لا يوجد أرقام';
+          addLog("لا توجد أرقام مسجلة. اضغط 'إضافة رقم' لربط واتساب.", 'log-msg-info');
           return;
         }
 
@@ -849,7 +891,6 @@
         currentInstanceRecord = instanceList[0];
         select.value = currentInstanceRecord.id;
         document.getElementById('currentStatusText').innerText = `الحساب: ${currentInstanceRecord.name}`;
-
         await loadAllInstanceData(currentInstanceRecord.id);
       } catch (err) {
         addLog(`خطأ في جلب الأرقام: ${err.message}`, 'log-msg-error');
@@ -860,7 +901,6 @@
       const select = document.getElementById('activeInstanceSelect');
       const instId = select.value;
       currentInstanceRecord = instanceList.find(i => i.id === instId);
-
       if (currentInstanceRecord) {
         document.getElementById('currentStatusText').innerText = `الحساب: ${currentInstanceRecord.name}`;
         addLog(`تم التبديل للحساب: [${currentInstanceRecord.name}]`, 'log-msg-info');
@@ -870,17 +910,18 @@
 
     async function loadAllInstanceData(instanceId) {
       await configureInstanceWebhook(currentInstanceRecord.name);
-
       await Promise.all([
         loadInstanceSettingsFromDB(instanceId),
         loadCustomVariablesFromDB(instanceId),
         loadSequencesFromDB(instanceId),
         loadAutomationRulesFromDB(instanceId),
+        loadProductsFromDB(instanceId),
+        loadShippingRatesFromDB(instanceId),
+        loadAiSettingsFromDB(instanceId),
         loadInboxMessagesFromDB(instanceId),
         loadTodaySentCountFromDB(instanceId),
         fetchAvailableGroups()
       ]);
-
       setupRealtimeListener(instanceId);
       startBackgroundSilentSync(instanceId);
     }
@@ -893,106 +934,434 @@
             url: WEBHOOK_URL,
             byEvents: false,
             base64: false,
-            events: [
-              "MESSAGES_UPSERT",
-              "MESSAGES_UPDATE"
-            ]
+            events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE"]
           }
         };
-
         const res = await fetch(`${API_BASE}/webhook/set/${encodeURIComponent(instanceName)}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
           body: JSON.stringify(payload)
         });
-
-        if (res.ok) {
-          if (verbose) addLog(`✔ تم تأكيد وتفعيل الـ Webhook بنجاح للحساب [${instanceName}]`, 'log-msg-success');
-        } else {
-          if (verbose) addLog(`⚠️ تحذير: استجاب السيرفر بكود ${res.status} أثناء ربط الـ Webhook`, 'log-msg-warning');
-        }
+        if (res.ok && verbose) addLog(`✔ تم ربط وتفعيل الـ Webhook بنجاح لـ [${instanceName}]`, 'log-msg-success');
       } catch (err) {
-        if (verbose) addLog(`خطأ اتصال بالـ Webhook: ${err.message}`, 'log-msg-error');
+        if (verbose) addLog(`خطأ ربط الـ Webhook: ${err.message}`, 'log-msg-error');
       }
     }
 
     async function forceFixWebhook() {
-      if (!currentInstanceRecord) return alert("يرجى اختيار رقم نشط أولاً");
-      addLog(`جاري فحص وإعادة ضبط الـ Webhook لـ [${currentInstanceRecord.name}]...`, 'log-msg-info');
+      if (!currentInstanceRecord) return alert("اختر رقم واتساب نشط أولاً");
       await configureInstanceWebhook(currentInstanceRecord.name, true);
       await syncInboxSilent(true);
     }
 
     // ==========================================
-    // 4️⃣ محرك الاستقبال المباشر والمزامنة اللحظية
+    // 4️⃣ إدارة المنتجات، الشحن وشخصية الذكاء الاصطناعي
     // ==========================================
-    function setupRealtimeListener(instanceId) {
-      if (realtimeChannel && window.supabaseClient) {
-        window.supabaseClient.removeChannel(realtimeChannel);
+    async function loadProductsFromDB(instanceId) {
+      if (!window.supabaseClient) return;
+      const { data } = await window.supabaseClient.from('products').select('*').eq('instance_id', instanceId);
+      productsList = data || [];
+      renderProductsList();
+    }
+
+    async function addProductToCloud() {
+      if (!currentInstanceRecord || !currentUser || !window.supabaseClient) return alert("اختر حساباً أولاً");
+      const name = document.getElementById('newProdName').value.trim();
+      const price = parseFloat(document.getElementById('newProdPrice').value) || 0;
+      const details = document.getElementById('newProdDetails').value.trim();
+      if (!name) return alert("يرجى إدخال اسم المنتج");
+
+      const { data, error } = await window.supabaseClient.from('products').insert([{
+        user_id: currentUser.id,
+        instance_id: currentInstanceRecord.id,
+        name, price, details
+      }]).select().single();
+
+      if (!error && data) {
+        productsList.push(data);
+        document.getElementById('newProdName').value = '';
+        document.getElementById('newProdPrice').value = '';
+        document.getElementById('newProdDetails').value = '';
+        renderProductsList();
+        addLog(`✔ تم إضافة المنتج [${name}] بنجاح`, 'log-msg-success');
+      }
+    }
+
+    async function deleteProduct(id) {
+      if (!window.supabaseClient) return;
+      await window.supabaseClient.from('products').delete().eq('id', id);
+      productsList = productsList.filter(p => p.id !== id);
+      renderProductsList();
+    }
+
+    function renderProductsList() {
+      const container = document.getElementById('productsListContainer');
+      container.innerHTML = '';
+      if (productsList.length === 0) {
+        container.innerHTML = '<span style="font-size: 11px; color: var(--text-subtle);">لا توجد منتجات مسجلة.</span>';
+        return;
+      }
+      productsList.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'item-row-card';
+        div.innerHTML = `
+          <div><b>${p.name}</b> - <span style="color:var(--primary);">${p.price} ج.م</span><br><small style="color:var(--text-muted);">${p.details || ''}</small></div>
+          <button type="button" class="btn-icon-del" onclick="deleteProduct('${p.id}')"><i data-lucide="trash" style="width:14px;height:14px;"></i></button>
+        `;
+        container.appendChild(div);
+      });
+      lucide.createIcons();
+    }
+
+    async function loadShippingRatesFromDB(instanceId) {
+      if (!window.supabaseClient) return;
+      const { data } = await window.supabaseClient.from('shipping_rates').select('*').eq('instance_id', instanceId);
+      shippingRates = data || [];
+      renderShippingList();
+    }
+
+    async function addShippingRateToCloud() {
+      if (!currentInstanceRecord || !currentUser || !window.supabaseClient) return alert("اختر حساباً أولاً");
+      const governorate = document.getElementById('newGovName').value.trim();
+      const shipping_cost = parseFloat(document.getElementById('newGovCost').value) || 0;
+      if (!governorate) return alert("أدخل اسم المحافظة");
+
+      const { data, error } = await window.supabaseClient.from('shipping_rates').insert([{
+        user_id: currentUser.id,
+        instance_id: currentInstanceRecord.id,
+        governorate, shipping_cost
+      }]).select().single();
+
+      if (!error && data) {
+        shippingRates.push(data);
+        document.getElementById('newGovName').value = '';
+        document.getElementById('newGovCost').value = '';
+        renderShippingList();
+        addLog(`✔ تم إضافة شحن محافظة [${governorate}] بنجاح`, 'log-msg-success');
+      }
+    }
+
+    async function deleteShippingRate(id) {
+      if (!window.supabaseClient) return;
+      await window.supabaseClient.from('shipping_rates').delete().eq('id', id);
+      shippingRates = shippingRates.filter(s => s.id !== id);
+      renderShippingList();
+    }
+
+    function renderShippingList() {
+      const container = document.getElementById('shippingListContainer');
+      container.innerHTML = '';
+      if (shippingRates.length === 0) {
+        container.innerHTML = '<span style="font-size: 11px; color: var(--text-subtle);">لا توجد أسعار شحن مسجلة.</span>';
+        return;
+      }
+      shippingRates.forEach(s => {
+        const div = document.createElement('div');
+        div.className = 'item-row-card';
+        div.innerHTML = `
+          <div><b>${s.governorate}</b>: <span style="color:var(--accent);">${s.shipping_cost} ج.م</span></div>
+          <button type="button" class="btn-icon-del" onclick="deleteShippingRate('${s.id}')"><i data-lucide="trash" style="width:14px;height:14px;"></i></button>
+        `;
+        container.appendChild(div);
+      });
+      lucide.createIcons();
+    }
+
+    async function loadAiSettingsFromDB(instanceId) {
+      if (!window.supabaseClient) return;
+      const { data } = await window.supabaseClient.from('ai_settings').select('*').eq('instance_id', instanceId).maybeSingle();
+      if (data) {
+        aiSettings = {
+          geminiApiKey: data.gemini_api_key || '',
+          botPersona: data.bot_persona || '',
+          enabled: data.enabled ?? true
+        };
+        document.getElementById('geminiApiKeyInput').value = aiSettings.geminiApiKey;
+        document.getElementById('botPersonaInput').value = aiSettings.botPersona;
+        document.getElementById('enableAiAutoReply').checked = aiSettings.enabled;
+      } else {
+        aiSettings = { geminiApiKey: '', botPersona: 'أنت مساعد مبيعات ذكي وودود.', enabled: true };
+        document.getElementById('botPersonaInput').value = aiSettings.botPersona;
+      }
+    }
+
+    async function saveAiSettingsToCloud() {
+      if (!currentInstanceRecord || !currentUser || !window.supabaseClient) return alert("اختر حساباً أولاً");
+      const geminiApiKey = document.getElementById('geminiApiKeyInput').value.trim();
+      const botPersona = document.getElementById('botPersonaInput').value.trim();
+      const enabled = document.getElementById('enableAiAutoReply').checked;
+
+      const payload = {
+        user_id: currentUser.id,
+        instance_id: currentInstanceRecord.id,
+        gemini_api_key: geminiApiKey,
+        bot_persona: botPersona,
+        enabled: enabled,
+        updated_at: new Date().toISOString()
+      };
+
+      const { error } = await window.supabaseClient.from('ai_settings').upsert(payload, { onConflict: 'instance_id' });
+      if (error) alert(`خطأ الحفظ: ${error.message}`);
+      else {
+        aiSettings = { geminiApiKey, botPersona, enabled };
+        addLog('✔ تم حفظ إعدادات الذكاء الاصطناعي وشخصية الرد بنجاح.', 'log-msg-success');
+      }
+    }
+
+    // محرك Google Gemini AI المحدث بحد الذاكرة GEMINI_MEMORY_LIMIT ومحرك Rate Limit
+    async function askGeminiAi(phone, incomingText) {
+      if (!aiSettings.enabled || !aiSettings.geminiApiKey) return null;
+
+      if (!conversationMemory[phone]) {
+        conversationMemory[phone] = [];
       }
 
+      conversationMemory[phone].push({
+        role: 'user',
+        parts: [{ text: incomingText }]
+      });
+
+      // الاحتفاظ بآخر عدد محدود من الرسائل فقط
+      while (conversationMemory[phone].length > GEMINI_MEMORY_LIMIT) {
+        conversationMemory[phone].shift();
+      }
+
+      const productsContext = productsList
+        .map(p => `- المنتج: ${p.name} | السعر: ${p.price} ج.م | التفاصيل: ${p.details}`)
+        .join('\n');
+
+      const shippingContext = shippingRates
+        .map(s => `- محافظة ${s.governorate}: تكلفة الشحن ${s.shipping_cost} ج.م`)
+        .join('\n');
+
+      const systemInstruction = `${aiSettings.botPersona || 'أنت مساعد مبيعات ذكي.'}
+
+البيانات المتاحة للعمل:
+
+المنتجات:${productsContext}
+
+أسعار الشحن:${shippingContext}`;
+
+      try {
+        // ==========================================
+        // Gemini Rate Limit
+        // ==========================================
+        await waitForGeminiRateLimit();
+
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${aiSettings.geminiApiKey}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              system_instruction: {
+                parts: [{ text: systemInstruction }]
+              },
+              contents: conversationMemory[phone]
+            })
+          }
+        );
+
+        const data = await res.json();
+        console.log("Gemini API Full Response:", data);
+
+        if (data.error) {
+          addLog(
+            `✖ خطأ من سيرفر جيميناي: ${data.error.message}`,
+            'log-msg-error'
+          );
+          return null;
+        }
+
+        const replyText =
+          data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
+
+        if (!replyText) {
+          addLog(
+            `⚠️ استجابة فارغة أو محظورة أمنياً من جيميناي`,
+            'log-msg-warning'
+          );
+          return null;
+        }
+
+        conversationMemory[phone].push({
+          role: 'model',
+          parts: [{ text: replyText }]
+        });
+
+        while (conversationMemory[phone].length > GEMINI_MEMORY_LIMIT) {
+          conversationMemory[phone].shift();
+        }
+
+        return replyText;
+
+      } catch (err) {
+        console.error("Gemini Fetch Exception:", err);
+        addLog(
+          `✖ استثناء في اتصال Gemini: ${err.message}`,
+          'log-msg-error'
+        );
+        return null;
+      }
+    }
+
+    // تجميع الرسائل المتتالية للعميل (Debounce)
+    function queueGeminiMessage(remoteJid, phone, text) {
+      if (!aiSettings.enabled || !aiSettings.geminiApiKey) {
+        return;
+      }
+
+      if (!geminiPendingMessages[phone]) {
+        geminiPendingMessages[phone] = [];
+      }
+
+      geminiPendingMessages[phone].push(text);
+
+      if (geminiDebounceTimers[phone]) {
+        clearTimeout(geminiDebounceTimers[phone]);
+      }
+
+      geminiDebounceTimers[phone] = setTimeout(async () => {
+        delete geminiDebounceTimers[phone];
+        const messages = geminiPendingMessages[phone] || [];
+        delete geminiPendingMessages[phone];
+
+        if (!messages.length) {
+          return;
+        }
+
+        const combinedText = messages.join('\n');
+
+        await enqueueGeminiRequest(
+          remoteJid,
+          phone,
+          combinedText
+        );
+
+      }, GEMINI_DEBOUNCE_MS);
+    }
+
+    // Queue حقيقية لطلبات Gemini
+    function enqueueGeminiRequest(remoteJid, phone, text) {
+      geminiRequestQueue = geminiRequestQueue
+        .then(async () => {
+          if (geminiActivePhones.has(phone)) {
+            return;
+          }
+
+          geminiActivePhones.add(phone);
+
+          try {
+            addLog(
+              `✨ جاري تجهيز رد Gemini للعميل (${phone})...`,
+              'log-msg-info'
+            );
+
+            const aiReply = await askGeminiAi(phone, text);
+
+            if (!aiReply) {
+              return;
+            }
+
+            const target = remoteJid.includes('@')
+              ? remoteJid
+              : phone;
+
+            const res = await fetch(
+              `${API_BASE}/message/sendText/${encodeURIComponent(currentInstanceRecord.name)}`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'apikey': API_KEY
+                },
+                body: JSON.stringify({
+                  number: target,
+                  text: aiReply,
+                  delay: 1000
+                })
+              }
+            );
+
+            const resData = await res.json();
+
+            if (res.ok) {
+              addLog(
+                `✔ تم إرسال رد Gemini للعميل (${phone})`,
+                'log-msg-success'
+              );
+            } else {
+              addLog(
+                `✖ فشل إرسال رد Gemini: ${JSON.stringify(resData)}`,
+                'log-msg-error'
+              );
+            }
+
+          } catch (err) {
+            console.error("Gemini Queue Error:", err);
+            addLog(
+              `✖ خطأ في Queue Gemini: ${err.message}`,
+              'log-msg-error'
+            );
+          } finally {
+            geminiActivePhones.delete(phone);
+          }
+
+        })
+        .catch(err => {
+          console.error("Gemini Queue Fatal Error:", err);
+        });
+
+      return geminiRequestQueue;
+    }
+
+    // ==========================================
+    // 5️⃣ الاستقبال اللحظي والرد الآلي (Realtime & AI Automation)
+    // ==========================================
+    function setupRealtimeListener(instanceId) {
+      if (realtimeChannel && window.supabaseClient) window.supabaseClient.removeChannel(realtimeChannel);
       if (!window.supabaseClient) return;
 
-      realtimeChannel = window.supabaseClient
-        .channel(`public:messages:${instanceId}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'messages',
-            filter: `instance_id=eq.${instanceId}`
-          },
-          (payload) => {
-            const msg = payload.new;
-            if (msg && msg.direction === 'incoming' && !renderedMessageIds.has(msg.id)) {
-              renderedMessageIds.add(msg.id);
-              renderInboxItem(
-                msg.remote_name || 'عميل',
-                msg.remote_phone,
-                msg.message_text,
-                new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                true
-              );
-              document.getElementById('kpiReceived').innerText = (parseInt(document.getElementById('kpiReceived').innerText) || 0) + 1;
-              addLog(`📥 رسالة فورية جديدة من (${msg.remote_phone})`, 'log-msg-success');
-            }
+      realtimeChannel = window.supabaseClient.channel(`public:messages:${instanceId}`).on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages', filter: `instance_id=eq.${instanceId}` },
+        (payload) => {
+          const msg = payload.new;
+          const msgTime = new Date(msg.created_at).getTime();
+          if (msg && msg.direction === 'incoming' && msgTime >= sessionStartTime && !renderedMessageIds.has(msg.id)) {
+            renderedMessageIds.add(msg.id);
+            renderInboxItem(msg.remote_name || 'عميل', msg.remote_phone, msg.message_text, new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), true);
+            document.getElementById('kpiReceived').innerText = (parseInt(document.getElementById('kpiReceived').innerText) || 0) + 1;
+            addLog(`📥 رسالة فورية جديدة من (${msg.remote_phone})`, 'log-msg-success');
           }
-        )
-        .subscribe();
+        }
+      ).subscribe();
     }
 
     function startBackgroundSilentSync(instanceId) {
       if (backgroundSyncTimer) clearInterval(backgroundSyncTimer);
-      // فحص سريع ومباشر كل ثانيتين لسحب أي رسائل واردة فوراً
-      backgroundSyncTimer = setInterval(() => {
-        syncInboxSilent(false);
-      }, 2000);
+      backgroundSyncTimer = setInterval(() => { syncInboxSilent(false); }, 3000);
     }
 
     async function syncInboxSilent(notify = false) {
       if (!currentInstanceRecord || !window.supabaseClient || !currentUser) return;
       try {
         const res = await fetch(`${API_BASE}/chat/findMessages/${encodeURIComponent(currentInstanceRecord.name)}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "apikey": API_KEY },
+          method: "POST", headers: { "Content-Type": "application/json", "apikey": API_KEY },
           body: JSON.stringify({ where: {}, take: 20 })
         });
-
         if (!res.ok) return;
-
         const data = await res.json();
         const records = data?.messages?.records || data?.records || (Array.isArray(data) ? data : []);
 
         let newFound = 0;
-
         for (const item of records.reverse()) {
           const key = item.key || {};
           if (key.fromMe) continue;
-
           const remoteJid = key.remoteJid || "";
           if (remoteJid.includes("@g.us") || remoteJid.includes("broadcast")) continue;
-
           const msgId = key.id || item.id;
           if (!msgId || processedMessageKeys.has(msgId)) continue;
           processedMessageKeys.add(msgId);
@@ -1000,23 +1369,17 @@
           const phone = remoteJid.replace("@s.whatsapp.net", "").replace(/[^0-9]/g, "");
           const senderName = item.pushName || "عميل";
           const text = extractTextFromMsg(item.message);
-
           if (!text.trim()) continue;
 
-          // 1. عرض الرسالة في صندوق الوارد
+          const msgTimestamp = item.messageTimestamp ? item.messageTimestamp * 1000 : Date.now();
+          if (msgTimestamp < sessionStartTime) continue;
+
           if (!renderedMessageIds.has(msgId)) {
             renderedMessageIds.add(msgId);
-            renderInboxItem(
-              senderName,
-              phone,
-              text,
-              new Date(item.messageTimestamp ? item.messageTimestamp * 1000 : Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-              true
-            );
+            renderInboxItem(senderName, phone, text, new Date(msgTimestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), true);
             newFound++;
           }
 
-          // 2. حفظها في جدول Supabase
           await window.supabaseClient.from("messages").insert([{
             user_id: currentUser.id,
             instance_id: currentInstanceRecord.id,
@@ -1028,90 +1391,67 @@
             status: "received"
           }]);
 
-          // 3. تطبيق قواعد الأوتوميشن فوراً
-          triggerAutomationLocally(remoteJid, phone, text);
+          await processIncomingMessageAutomation(remoteJid, phone, text);
         }
 
         if (newFound > 0) {
-          const kpi = document.getElementById('kpiReceived');
-          if (kpi) kpi.innerText = (parseInt(kpi.innerText) || 0) + newFound;
-          addLog(`📥 تم استلام وعرض (${newFound}) رسالة جديدة.`, "log-msg-success");
+          document.getElementById('kpiReceived').innerText = (parseInt(document.getElementById('kpiReceived').innerText) || 0) + newFound;
+          addLog(`📥 تم استلام وعرض (${newFound}) رسالة جديدة وتفعيل الرد الآلي لها.`, "log-msg-success");
         } else if (notify) {
-          addLog("✔ تم فحص الرسائل ومطابقة البيانات بنجاح.", "log-msg-info");
+          addLog("✔ تم فحص صندوق الوارد بنجاح.", "log-msg-info");
         }
       } catch (e) {
-        console.warn("Direct sync warning:", e);
+        console.warn("Sync warning:", e);
       }
     }
 
-    // محرك الرد الآلي اللحظي
-    async function triggerAutomationLocally(remoteJid, phone, text) {
-      if (!autoRules || autoRules.length === 0 || !currentInstanceRecord || !currentUser) return;
+    async function processIncomingMessageAutomation(remoteJid, phone, text) {
+      let replied = false;
       const cleanMsg = text.trim().toLowerCase();
 
       for (const rule of autoRules) {
         const targetKey = (rule.keyword || '').trim().toLowerCase();
         if (!targetKey) continue;
-
-        const isMatched = (rule.matchType === 'exact')
-          ? (cleanMsg === targetKey)
-          : cleanMsg.includes(targetKey);
-
-        if (isMatched) {
-          addLog(`⚡ تشغيل أوتوميشن [${rule.keyword}] للرقم (${phone})`, 'log-msg-info');
+        const matched = (rule.matchType === 'exact') ? (cleanMsg === targetKey) : cleanMsg.includes(targetKey);
+        if (matched) {
           let isSuccess = false;
-
           try {
+            const target = remoteJid.includes('@') ? remoteJid : phone;
             if (rule.action === 'reply_text' && rule.value) {
-              const target = remoteJid.endsWith('@lid') ? remoteJid : phone;
               const res = await fetch(`${API_BASE}/message/sendText/${encodeURIComponent(currentInstanceRecord.name)}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
                 body: JSON.stringify({ number: target, text: rule.value, delay: 1000 })
               });
               isSuccess = res.ok;
             } else if (rule.action === 'add_to_group' && rule.value) {
               const res = await fetch(`${API_BASE}/group/updateParticipant/${encodeURIComponent(currentInstanceRecord.name)}?groupJid=${encodeURIComponent(rule.value)}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
                 body: JSON.stringify({ action: 'add', participants: [`${phone}@s.whatsapp.net`] })
               });
               isSuccess = res.ok;
             }
-
-            await window.supabaseClient.from('automation_logs').insert([{
-              user_id: currentUser.id,
-              instance_id: currentInstanceRecord.id,
-              rule_id: rule.id,
-              sender_phone: phone,
-              incoming_message: text,
-              executed_action: rule.action,
-              action_payload: rule.value,
-              status: isSuccess ? 'success' : 'failed'
-            }]);
-
-            if (isSuccess) {
-              addLog(`✔ تم إرسال الرد الآلي للعميل (${phone}) بنجاح.`, 'log-msg-success');
-            }
-          } catch (err) {
-            console.error("خطأ تنفيذ الأوتوميشن:", err);
-          }
+            if (isSuccess) replied = true;
+          } catch (err) { console.error("Rule Error:", err); }
           break;
         }
+      }
+
+      if (!replied && aiSettings.enabled && aiSettings.geminiApiKey) {
+        queueGeminiMessage(
+          remoteJid,
+          phone,
+          text
+        );
+        return;
       }
     }
 
     // ==========================================
-    // 5️⃣ الإعدادات، المتغيرات وقواعد الأوتوميشن
+    // 6️⃣ إعدادات المتغيرات وقواعد الأوتوميشن
     // ==========================================
     async function loadInstanceSettingsFromDB(instanceId) {
       if (!window.supabaseClient) return;
-      const { data } = await window.supabaseClient
-        .from('instance_settings')
-        .select('*')
-        .eq('instance_id', instanceId)
-        .maybeSingle();
-
+      const { data } = await window.supabaseClient.from('instance_settings').select('*').eq('instance_id', instanceId).maybeSingle();
       if (data) {
         document.getElementById('dailyLimit').value = data.daily_limit ?? 50;
         document.getElementById('minDelay').value = data.min_delay_seconds ?? 10;
@@ -1126,7 +1466,7 @@
 
     async function saveInstanceSettingsToDB() {
       if (!currentInstanceRecord || !currentUser || !window.supabaseClient) return;
-      const settingsPayload = {
+      await window.supabaseClient.from('instance_settings').upsert({
         user_id: currentUser.id,
         instance_id: currentInstanceRecord.id,
         daily_limit: parseInt(document.getElementById('dailyLimit').value) || 0,
@@ -1138,18 +1478,12 @@
         simulate_typing: document.getElementById('simulateTyping').checked,
         invisible_characters: document.getElementById('autoGhostProtection').checked,
         updated_at: new Date().toISOString()
-      };
-
-      await window.supabaseClient.from('instance_settings').upsert(settingsPayload, { onConflict: 'instance_id' });
+      }, { onConflict: 'instance_id' });
     }
 
     async function loadCustomVariablesFromDB(instanceId) {
       if (!window.supabaseClient) return;
-      const { data } = await window.supabaseClient
-        .from('custom_variables')
-        .select('*')
-        .eq('instance_id', instanceId);
-
+      const { data } = await window.supabaseClient.from('custom_variables').select('*').eq('instance_id', instanceId);
       customVars = (data || []).map(v => ({ id: v.id, name: v.name, value: v.default_value }));
       renderVariableBadges();
     }
@@ -1160,29 +1494,22 @@
       const valInput = document.getElementById('newVarVal');
       const name = nameInput.value.trim().replace(/[^\p{L}\p{M}0-9_\-]/gu, '');
       const val = valInput.value.trim();
-
-      if (!name) return alert("يرجى إدخال اسم متغير صالح");
+      if (!name) return alert("أدخل اسم متغير صحيح");
 
       const { data, error } = await window.supabaseClient.from('custom_variables').insert([{
-        user_id: currentUser.id,
-        instance_id: currentInstanceRecord.id,
-        name: name,
-        default_value: val
+        user_id: currentUser.id, instance_id: currentInstanceRecord.id, name: name, default_value: val
       }]).select().single();
 
       if (!error && data) {
         customVars.push({ id: data.id, name: data.name, value: data.default_value });
-        nameInput.value = '';
-        valInput.value = '';
+        nameInput.value = ''; valInput.value = '';
         renderVariableBadges();
       }
     }
 
     async function removeCustomVariable(index) {
       const variable = customVars[index];
-      if (variable?.id && window.supabaseClient) {
-        await window.supabaseClient.from('custom_variables').delete().eq('id', variable.id);
-      }
+      if (variable?.id) await window.supabaseClient.from('custom_variables').delete().eq('id', variable.id);
       customVars.splice(index, 1);
       renderVariableBadges();
     }
@@ -1190,7 +1517,6 @@
     function renderVariableBadges() {
       const container = document.getElementById('varTagList');
       container.innerHTML = '';
-
       defaultVars.forEach(v => {
         const badge = document.createElement('div');
         badge.className = 'v-badge fixed';
@@ -1198,47 +1524,32 @@
         badge.onclick = () => insertVariableIntoActiveTextarea(v);
         container.appendChild(badge);
       });
-
       const randomBadge = document.createElement('div');
       randomBadge.className = 'v-badge special';
-      randomBadge.innerHTML = `@Randomcode <small style="font-weight: normal; margin-right: 4px;">(#123456)</small>`;
+      randomBadge.innerHTML = `@Randomcode`;
       randomBadge.onclick = () => insertVariableIntoActiveTextarea('Randomcode');
       container.appendChild(randomBadge);
-
       const ghostBadge = document.createElement('div');
       ghostBadge.className = 'v-badge ghost';
-      ghostBadge.innerHTML = `@invisible <small style="font-weight: normal; margin-right: 4px;">(مخفي)</small>`;
+      ghostBadge.innerHTML = `@invisible`;
       ghostBadge.onclick = () => insertVariableIntoActiveTextarea('invisible');
       container.appendChild(ghostBadge);
-
       customVars.forEach((item, index) => {
         const badge = document.createElement('div');
         badge.className = 'v-badge custom';
-        badge.innerHTML = `
-          <span onclick="insertVariableIntoActiveTextarea('${item.name}')">@${item.name}</span>
-          ${item.value ? `<span style="opacity: 0.8; font-size: 11px;">(${item.value})</span>` : ''}
-          <i data-lucide="x" class="del-btn" style="width: 14px; height: 14px;" onclick="removeCustomVariable(${index})"></i>
-        `;
+        badge.innerHTML = `<span onclick="insertVariableIntoActiveTextarea('${item.name}')">@${item.name}</span> <i data-lucide="x" class="del-btn" onclick="removeCustomVariable(${index})"></i>`;
         container.appendChild(badge);
       });
       lucide.createIcons();
     }
 
     // ==========================================
-    // 6️⃣ مجموعات الرسائل (Sequences)
+    // 7️⃣ مجموعات وقوالب الرسائل (Sequences)
     // ==========================================
     async function loadSequencesFromDB(instanceId) {
       if (!window.supabaseClient) return;
-      const { data } = await window.supabaseClient
-        .from('message_sequences')
-        .select('*')
-        .eq('instance_id', instanceId);
-
-      if (data && data.length > 0) {
-        messageSequences = data.map(s => ({ id: s.id, name: s.name, messages: s.messages || [''] }));
-      } else {
-        messageSequences = [{ id: 'temp-1', name: 'المجموعة 1', messages: ['مساء الخير @wa_name'] }];
-      }
+      const { data } = await window.supabaseClient.from('message_sequences').select('*').eq('instance_id', instanceId);
+      messageSequences = (data && data.length > 0) ? data.map(s => ({ id: s.id, name: s.name, messages: s.messages || [''] })) : [{ id: 'temp-1', name: 'المجموعة 1', messages: ['مرحباً @wa_name'] }];
       renderSequenceGroups();
     }
 
@@ -1257,43 +1568,33 @@
       const container = document.getElementById('sequenceGroupsContainer');
       if (!container) return;
       container.innerHTML = '';
-
       messageSequences.forEach((group, gIdx) => {
         const gCard = document.createElement('div');
         gCard.className = 'sequence-group-card';
-
         let messagesHtml = '';
         group.messages.forEach((msg, mIdx) => {
           messagesHtml += `
             <div style="display: flex; flex-direction: column; gap: 4px; background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid var(--border-subtle);">
-              <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: var(--text-muted);">
+              <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700;">
                 <span>الرسالة ${mIdx + 1}</span>
-                ${group.messages.length > 1 ? `<i data-lucide="trash" style="width: 13px; height: 13px; cursor: pointer; color: var(--danger);" onclick="removeMessageFromSequence(${gIdx}, ${mIdx})"></i>` : ''}
+                ${group.messages.length > 1 ? `<i data-lucide="trash" style="cursor: pointer; color: var(--danger);" onclick="removeMessageFromSequence(${gIdx}, ${mIdx})"></i>` : ''}
               </div>
-              <textarea class="seq-msg-text" rows="2" placeholder="اكتب نص الرسالة..." onchange="updateSequenceMessageText(${gIdx}, ${mIdx}, this.value)">${msg}</textarea>
+              <textarea class="seq-msg-text" rows="2" onchange="updateSequenceMessageText(${gIdx}, ${mIdx}, this.value)">${msg}</textarea>
             </div>
           `;
         });
-
         gCard.innerHTML = `
           <div class="sequence-group-header">
             <span>${group.name}</span>
             <div style="display: flex; gap: 8px; align-items: center;">
-              <button type="button" class="btn btn-secondary" style="padding: 3px 8px; font-size: 11px;" onclick="addMessageToSequence(${gIdx})">
-                <i data-lucide="plus" style="width: 12px; height: 12px;"></i> إضافة رسالة تالية
-              </button>
-              ${messageSequences.length > 1 ? `
-                <button type="button" class="btn-icon-del" onclick="removeSequenceGroup(${gIdx})">
-                  <i data-lucide="trash-2" style="width: 15px; height: 15px;"></i>
-                </button>
-              ` : ''}
+              <button type="button" class="btn btn-secondary" style="padding: 3px 8px; font-size: 11px;" onclick="addMessageToSequence(${gIdx})">+ رسالة</button>
+              <button type="button" class="btn-icon-del" onclick="removeSequenceGroup(${gIdx})"><i data-lucide="trash-2"></i></button>
             </div>
           </div>
           <div style="display: flex; flex-direction: column; gap: 8px;">${messagesHtml}</div>
         `;
         container.appendChild(gCard);
       });
-
       document.querySelectorAll('.seq-msg-text').forEach(attachMentionEvents);
       lucide.createIcons();
     }
@@ -1301,74 +1602,40 @@
     async function syncSequenceGroup(gIdx) {
       if (!currentInstanceRecord || !currentUser || !window.supabaseClient) return;
       const group = messageSequences[gIdx];
-
       if (group.id && !String(group.id).startsWith('temp-')) {
-        await window.supabaseClient.from('message_sequences').update({
-          name: group.name,
-          messages: group.messages
-        }).eq('id', group.id);
+        await window.supabaseClient.from('message_sequences').update({ name: group.name, messages: group.messages }).eq('id', group.id);
       } else {
         const { data } = await window.supabaseClient.from('message_sequences').insert([{
-          user_id: currentUser.id,
-          instance_id: currentInstanceRecord.id,
-          name: group.name,
-          messages: group.messages
+          user_id: currentUser.id, instance_id: currentInstanceRecord.id, name: group.name, messages: group.messages
         }]).select().single();
         if (data) group.id = data.id;
       }
     }
 
     async function addNewSequenceGroup() {
-      const newNum = messageSequences.length + 1;
-      const newGroup = { id: `temp-${Date.now()}`, name: `المجموعة ${newNum}`, messages: [''] };
-      messageSequences.push(newGroup);
+      messageSequences.push({ id: `temp-${Date.now()}`, name: `المجموعة ${messageSequences.length + 1}`, messages: [''] });
       await syncSequenceGroup(messageSequences.length - 1);
       renderSequenceGroups();
     }
 
     async function removeSequenceGroup(gIdx) {
       const group = messageSequences[gIdx];
-      if (group.id && !String(group.id).startsWith('temp-') && window.supabaseClient) {
-        await window.supabaseClient.from('message_sequences').delete().eq('id', group.id);
-      }
+      if (group.id && !String(group.id).startsWith('temp-')) await window.supabaseClient.from('message_sequences').delete().eq('id', group.id);
       messageSequences.splice(gIdx, 1);
       renderSequenceGroups();
     }
 
-    function addMessageToSequence(gIdx) {
-      messageSequences[gIdx].messages.push('');
-      syncSequenceGroup(gIdx);
-      renderSequenceGroups();
-    }
-
-    function removeMessageFromSequence(gIdx, mIdx) {
-      messageSequences[gIdx].messages.splice(mIdx, 1);
-      syncSequenceGroup(gIdx);
-      renderSequenceGroups();
-    }
-
-    function updateSequenceMessageText(gIdx, mIdx, val) {
-      messageSequences[gIdx].messages[mIdx] = val;
-      syncSequenceGroup(gIdx);
-    }
+    function addMessageToSequence(gIdx) { messageSequences[gIdx].messages.push(''); syncSequenceGroup(gIdx); renderSequenceGroups(); }
+    function removeMessageFromSequence(gIdx, mIdx) { messageSequences[gIdx].messages.splice(mIdx, 1); syncSequenceGroup(gIdx); renderSequenceGroups(); }
+    function updateSequenceMessageText(gIdx, mIdx, val) { messageSequences[gIdx].messages[mIdx] = val; syncSequenceGroup(gIdx); }
 
     // ==========================================
-    // 7️⃣ قواعد الأوتوميشن
+    // 8️⃣ قواعد الأوتوميشن اليدوية وصندوق الوارد
     // ==========================================
     async function loadAutomationRulesFromDB(instanceId) {
       if (!window.supabaseClient) return;
-      const { data } = await window.supabaseClient
-        .from('automation_rules')
-        .select('*')
-        .eq('instance_id', instanceId);
-
-      autoRules = (data || []).map(r => ({
-        id: r.id,
-        keyword: r.keyword,
-        matchType: r.match_type,
-        action: r.action,
-        value: r.action_value
-      }));
+      const { data } = await window.supabaseClient.from('automation_rules').select('*').eq('instance_id', instanceId);
+      autoRules = (data || []).map(r => ({ id: r.id, keyword: r.keyword, matchType: r.match_type, action: r.action, value: r.action_value }));
       renderAutomationRules();
     }
 
@@ -1376,60 +1643,21 @@
       const container = document.getElementById('automationRulesContainer');
       if (!container) return;
       container.innerHTML = '';
-
-      if (autoRules.length === 0) {
-        container.innerHTML = `<p style="font-size: 12px; color: var(--text-subtle); text-align: center; padding: 10px;">لا توجد قواعد مضافة سحابياً.</p>`;
-        return;
-      }
+      if (autoRules.length === 0) { container.innerHTML = `<p style="font-size: 12px; color: var(--text-subtle); text-align: center;">لا توجد قواعد أوتوميشن مضافة.</p>`; return; }
 
       autoRules.forEach((rule, idx) => {
         const card = document.createElement('div');
         card.className = 'auto-rule-card';
-
-        let valueFieldHtml = '';
-        if (rule.action === 'add_to_group') {
-          let optionsHtml = `<option value="">-- اختر الجروب المطلوب --</option>`;
-          availableGroups.forEach(g => {
-            const isSelected = rule.value === g.id ? 'selected' : '';
-            optionsHtml += `<option value="${g.id}" ${isSelected}>${g.subject}</option>`;
-          });
-          valueFieldHtml = `
-            <select onchange="updateRule(${idx}, 'value', this.value)" style="width: 58%; font-size: 12px; padding: 6px 8px;">
-              ${optionsHtml}
-            </select>
-          `;
-        } else {
-          valueFieldHtml = `
-            <input type="text" value="${rule.value || ''}" placeholder="نص رسالة الرد..." onchange="updateRule(${idx}, 'value', this.value)" style="width: 58%; font-size: 12px; padding: 6px 10px;">
-          `;
-        }
+        let valueFieldHtml = rule.action === 'add_to_group' ?
+          `<select onchange="updateRule(${idx}, 'value', this.value)" style="width: 58%; font-size: 12px; padding: 6px;"><option value="">-- اختر الجروب --</option>${availableGroups.map(g => `<option value="${g.id}" ${rule.value===g.id?'selected':''}>${g.subject}</option>`).join('')}</select>` :
+          `<input type="text" value="${rule.value || ''}" placeholder="نص الرد..." onchange="updateRule(${idx}, 'value', this.value)" style="width: 58%; font-size: 12px; padding: 6px 10px;">`;
 
         card.innerHTML = `
           <div class="auto-rule-row">
-            <div>
-              <label style="font-size: 11px; font-weight: 700;">الكلمة المفتاحية:</label>
-              <input type="text" value="${rule.keyword}" placeholder="مثال: خصم" onchange="updateRule(${idx}, 'keyword', this.value)" style="padding: 6px 10px; font-size: 12px; width: 100%;">
-            </div>
-            <div>
-              <label style="font-size: 11px; font-weight: 700;">نوع الفحص:</label>
-              <select onchange="updateRule(${idx}, 'matchType', this.value)" style="padding: 6px 8px; font-size: 12px; width: 100%;">
-                <option value="exact" ${rule.matchType === 'exact' ? 'selected' : ''}>تطابق تام (Exact)</option>
-                <option value="contains" ${rule.matchType === 'contains' ? 'selected' : ''}>تحتوي على (Contains)</option>
-              </select>
-            </div>
-            <div>
-              <label style="font-size: 11px; font-weight: 700;">الإجراء والقيمة:</label>
-              <div style="display: flex; gap: 6px;">
-                <select onchange="updateRule(${idx}, 'action', this.value)" style="padding: 6px 8px; font-size: 12px; width: 42%;">
-                  <option value="reply_text" ${rule.action === 'reply_text' ? 'selected' : ''}>إرسال رد نصي</option>
-                  <option value="add_to_group" ${rule.action === 'add_to_group' ? 'selected' : ''}>إضافة لجروب</option>
-                </select>
-                ${valueFieldHtml}
-              </div>
-            </div>
-            <button type="button" class="btn-icon-del" onclick="deleteRule(${idx})">
-              <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
-            </button>
+            <div><label style="font-size: 11px;">الكلمة المفتاحية:</label><input type="text" value="${rule.keyword}" onchange="updateRule(${idx}, 'keyword', this.value)" style="padding: 6px; font-size: 12px; width: 100%;"></div>
+            <div><label style="font-size: 11px;">نوع المطابقة:</label><select onchange="updateRule(${idx}, 'matchType', this.value)" style="padding: 6px; font-size: 12px; width: 100%;"><option value="exact" ${rule.matchType==='exact'?'selected':''}>تطابق تام</option><option value="contains" ${rule.matchType==='contains'?'selected':''}>تحتوي على</option></select></div>
+            <div><label style="font-size: 11px;">الإجراء:</label><div style="display: flex; gap: 6px;"><select onchange="updateRule(${idx}, 'action', this.value)" style="padding: 6px; font-size: 12px; width: 42%;"><option value="reply_text" ${rule.action==='reply_text'?'selected':''}>رد نصي</option><option value="add_to_group" ${rule.action==='add_to_group'?'selected':''}>إضافة لجروب</option></select>${valueFieldHtml}</div></div>
+            <button type="button" class="btn-icon-del" onclick="deleteRule(${idx})"><i data-lucide="trash-2"></i></button>
           </div>
         `;
         container.appendChild(card);
@@ -1440,86 +1668,38 @@
     async function addAutomationRule() {
       if (!currentInstanceRecord || !currentUser || !window.supabaseClient) return;
       const { data } = await window.supabaseClient.from('automation_rules').insert([{
-        user_id: currentUser.id,
-        instance_id: currentInstanceRecord.id,
-        keyword: 'جديد',
-        match_type: 'exact',
-        action: 'reply_text',
-        action_value: 'أهلاً بك! تم استلام رسالتك تلقائياً.'
+        user_id: currentUser.id, instance_id: currentInstanceRecord.id, keyword: 'السعر', match_type: 'contains', action: 'reply_text', action_value: 'أهلاً بك! تفضل بالاستفسار.'
       }]).select().single();
-
-      if (data) {
-        autoRules.push({
-          id: data.id,
-          keyword: data.keyword,
-          matchType: data.match_type,
-          action: data.action,
-          value: data.action_value
-        });
-        renderAutomationRules();
-      }
+      if (data) { autoRules.push({ id: data.id, keyword: data.keyword, matchType: data.match_type, action: data.action, value: data.action_value }); renderAutomationRules(); }
     }
 
     async function updateRule(idx, field, val) {
       autoRules[idx][field] = val;
       const rule = autoRules[idx];
-      if (rule.id && window.supabaseClient) {
-        await window.supabaseClient.from('automation_rules').update({
-          keyword: rule.keyword,
-          match_type: rule.matchType,
-          action: rule.action,
-          action_value: rule.value
-        }).eq('id', rule.id);
-      }
+      if (rule.id) await window.supabaseClient.from('automation_rules').update({ keyword: rule.keyword, match_type: rule.matchType, action: rule.action, action_value: rule.value }).eq('id', rule.id);
       if (field === 'action') renderAutomationRules();
     }
 
     async function deleteRule(idx) {
       const rule = autoRules[idx];
-      if (rule.id && window.supabaseClient) {
-        await window.supabaseClient.from('automation_rules').delete().eq('id', rule.id);
-      }
+      if (rule.id) await window.supabaseClient.from('automation_rules').delete().eq('id', rule.id);
       autoRules.splice(idx, 1);
       renderAutomationRules();
     }
 
-    // ==========================================
-    // 8️⃣ صندوق الوارد المباشر
-    // ==========================================
     async function loadInboxMessagesFromDB(instanceId) {
       if (!window.supabaseClient) return;
-      const { data } = await window.supabaseClient
-        .from('messages')
-        .select('*')
-        .eq('instance_id', instanceId)
-        .order('created_at', { ascending: false })
-        .limit(30);
-
+      const { data } = await window.supabaseClient.from('messages').select('*').eq('instance_id', instanceId).order('created_at', { ascending: false }).limit(30);
       const container = document.getElementById('inboxContainer');
       const emptyState = document.getElementById('inboxEmpty');
-
       renderedMessageIds.clear();
 
-      if (!data || data.length === 0) {
-        emptyState.style.display = 'flex';
-        document.getElementById('kpiReceived').innerText = '0';
-        return;
-      }
-
-      emptyState.style.display = 'none';
-      container.innerHTML = '';
-      document.getElementById('kpiReceived').innerText = data.length;
-
+      if (!data || data.length === 0) { emptyState.style.display = 'flex'; document.getElementById('kpiReceived').innerText = '0'; return; }
+      emptyState.style.display = 'none'; container.innerHTML = ''; document.getElementById('kpiReceived').innerText = data.length;
       data.forEach(msg => {
         renderedMessageIds.add(msg.id);
         if (msg.evolution_message_id) processedMessageKeys.add(msg.evolution_message_id);
-        renderInboxItem(
-          msg.remote_name || 'عميل',
-          msg.remote_phone,
-          msg.message_text,
-          new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          false
-        );
+        renderInboxItem(msg.remote_name || 'عميل', msg.remote_phone, msg.message_text, new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), false);
       });
     }
 
@@ -1527,82 +1707,36 @@
       const container = document.getElementById('inboxContainer');
       const emptyState = document.getElementById('inboxEmpty');
       if (emptyState) emptyState.style.display = 'none';
-
       const card = document.createElement('div');
       card.className = 'inbox-card';
-      card.innerHTML = `
-        <div class="inbox-header">
-          <div class="sender-name">
-            <i data-lucide="user" style="width: 14px; height: 14px; color: var(--primary);"></i>
-            <span>${name}</span>
-            <span class="sender-phone">(${phone})</span>
-          </div>
-          <span class="inbox-time">${time}</span>
-        </div>
-        <div class="inbox-body">${text}</div>
-      `;
-
-      if (prepend) {
-        container.prepend(card);
-      } else {
-        container.appendChild(card);
-      }
+      card.innerHTML = `<div class="inbox-header"><div class="sender-name"><i data-lucide="user" style="width:14px;height:14px;"></i><span>${name}</span> <span class="sender-phone">(${phone})</span></div><span class="inbox-time">${time}</span></div><div class="inbox-body">${text}</div>`;
+      if (prepend) container.prepend(card); else container.appendChild(card);
       lucide.createIcons();
     }
 
-    function clearInboxUI() {
-      document.getElementById('inboxContainer').innerHTML = `
-        <div class="inbox-empty" id="inboxEmpty">
-          <i data-lucide="inbox" style="width: 36px; height: 36px;"></i>
-          <p>تم تفريغ العرض فقط (البيانات محفوظة سحابياً)...</p>
-        </div>
-      `;
-    }
+    function clearInboxUI() { document.getElementById('inboxContainer').innerHTML = `<div class="inbox-empty" id="inboxEmpty"><i data-lucide="inbox"></i><p>تم تفريغ العرض...</p></div>`; }
 
     async function loadTodaySentCountFromDB(instanceId) {
       if (!window.supabaseClient) return;
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      const { count } = await window.supabaseClient
-        .from('campaign_logs')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'success')
-        .gte('sent_at', today.toISOString());
-
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const { count } = await window.supabaseClient.from('campaign_logs').select('*', { count: 'exact', head: true }).eq('status', 'success').gte('sent_at', today.toISOString());
       document.getElementById('kpiDailySent').innerText = count || 0;
     }
 
     // ==========================================
-    // 9️⃣ محرك إطلاق الحملات
+    // 9️⃣ إطلاق الحملات وإدارة أرقام واتساب
     // ==========================================
     async function startSendingCampaign() {
-      if (isCampaignRunning || !currentInstanceRecord || !currentUser || !window.supabaseClient) {
-        return alert("يرجى التأكد من تسجيل الدخول وتحديد رقم واتساب نشط.");
-      }
-
+      if (isCampaignRunning || !currentInstanceRecord || !currentUser) return alert("اختر رقم واتساب نشط أولاً.");
       const rawData = document.getElementById('dataInput').value.trim();
+      if (!rawData) return alert("أدخل بيانات المستلمين.");
       const minDelay = parseInt(document.getElementById('minDelay').value) || 10;
       const maxDelay = parseInt(document.getElementById('maxDelay').value) || 20;
-      const seqMinDelay = parseInt(document.getElementById('seqMinDelay').value) || 2;
-      const seqMaxDelay = parseInt(document.getElementById('seqMaxDelay').value) || 5;
-      const batchCount = parseInt(document.getElementById('batchCount').value) || 0;
-      const batchPauseMin = parseInt(document.getElementById('batchPauseMin').value) || 40;
-      const batchPauseMax = parseInt(document.getElementById('batchPauseMax').value) || 90;
-      const dailyLimit = parseInt(document.getElementById('dailyLimit').value) || 0;
       const simulateTyping = document.getElementById('simulateTyping').checked;
 
-      let singleTemplates = [];
-      let validSequences = [];
-
-      if (currentSendingMode === 'single') {
-        const messageElements = document.querySelectorAll('#singleMessagesSection .msg-text');
-        singleTemplates = Array.from(messageElements).map(el => el.value.trim()).filter(t => t.length > 0);
-        if (singleTemplates.length === 0) return alert("يرجى كتابة نص رسالة واحدة على الأقل.");
-      } else {
-        validSequences = messageSequences.filter(g => g.messages.some(m => m.trim().length > 0));
-        if (validSequences.length === 0) return alert("يرجى كتابة رسائل في مجموعة واحدة على الأقل.");
-      }
+      let singleTemplates = document.querySelectorAll('#singleMessagesSection .msg-text');
+      let templates = Array.from(singleTemplates).map(el => el.value.trim()).filter(t => t.length > 0);
+      if (templates.length === 0) return alert("أدخل قالب رسالة واحد على الأقل.");
 
       const rows = rawData.split(/\r?\n/).map(line => {
         const parts = line.split(',').map(p => p.trim());
@@ -1613,226 +1747,70 @@
         return { phone, name, vars };
       }).filter(r => r.phone.length >= 8);
 
-      if (rows.length === 0) return alert("يرجى إدخال أرقام صحيحة.");
-
-      const { data: campaign, error: campErr } = await window.supabaseClient.from('campaigns').insert([{
-        user_id: currentUser.id,
-        instance_id: currentInstanceRecord.id,
-        mode: currentSendingMode,
-        status: 'running',
-        total_recipients: rows.length
+      const { data: campaign } = await window.supabaseClient.from('campaigns').insert([{
+        user_id: currentUser.id, instance_id: currentInstanceRecord.id, mode: 'single', status: 'running', total_recipients: rows.length
       }]).select().single();
-
-      if (campErr) return addLog(`خطأ إنشاء الحملة: ${campErr.message}`, 'log-msg-error');
-
-      const recPayload = rows.map(r => ({
-        user_id: currentUser.id,
-        campaign_id: campaign.id,
-        phone: r.phone,
-        name: r.name,
-        variables: r.vars,
-        status: 'pending'
-      }));
-      const { data: savedRecipients } = await window.supabaseClient.from('campaign_recipients').insert(recPayload).select();
 
       isCampaignRunning = true;
       stopCampaignRequested = false;
       document.getElementById('sendBtn').style.display = 'none';
       document.getElementById('stopBtn').style.display = 'inline-flex';
 
-      addLog(`🚀 تم إنشاء الحملة السحابية (${campaign.id.substring(0, 8)}) لعدد (${rows.length}) مستلم...`, 'log-msg-info');
-
-      let successCount = 0;
-      let failedCount = 0;
-
+      let successCount = 0; let failedCount = 0;
       for (let i = 0; i < rows.length; i++) {
-        if (stopCampaignRequested) {
-          addLog("⏸ تم إيقاف الحملة.", 'log-msg-warning');
-          await window.supabaseClient.from('campaigns').update({ status: 'stopped' }).eq('id', campaign.id);
-          break;
-        }
-
-        const currentDaily = parseInt(document.getElementById('kpiDailySent').innerText) || 0;
-        if (dailyLimit > 0 && currentDaily >= dailyLimit) {
-          addLog(`⚠️ تم الوصول لحد الإرسال اليومي الأقصى (${dailyLimit}). توقف الإرسال حفاظاً على الرقم.`, 'log-msg-warning');
-          await window.supabaseClient.from('campaigns').update({ status: 'stopped' }).eq('id', campaign.id);
-          break;
-        }
-
+        if (stopCampaignRequested) break;
         const row = rows[i];
-        const recRecord = savedRecipients ? savedRecipients[i] : null;
         updateProgress(i + 1, rows.length);
+        const template = templates[Math.floor(Math.random() * templates.length)];
+        const msgText = compileMessageTemplate(template, row);
 
-        let messagesToSend = [];
-        if (currentSendingMode === 'single') {
-          const template = singleTemplates[Math.floor(Math.random() * singleTemplates.length)];
-          messagesToSend.push(compileMessageTemplate(template, row));
-        } else {
-          const chosenGroup = validSequences[Math.floor(Math.random() * validSequences.length)];
-          chosenGroup.messages.forEach(m => {
-            if (m.trim().length > 0) messagesToSend.push(compileMessageTemplate(m, row));
+        try {
+          if (simulateTyping) await delayMs(1500);
+          const res = await fetch(`${API_BASE}/message/sendText/${encodeURIComponent(currentInstanceRecord.name)}`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
+            body: JSON.stringify({ number: row.phone, text: msgText, delay: 1000 })
           });
-        }
-
-        let isClientSuccess = true;
-        let lastErrorMsg = null;
-
-        for (let mIndex = 0; mIndex < messagesToSend.length; mIndex++) {
-          if (stopCampaignRequested) break;
-          const msgText = messagesToSend[mIndex];
-
-          try {
-            if (simulateTyping) await delayMs(1500);
-
-            const res = await fetch(`${API_BASE}/message/sendText/${encodeURIComponent(currentInstanceRecord.name)}`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
-              body: JSON.stringify({ number: row.phone, text: msgText, delay: 1000 })
-            });
-
-            const resData = await res.json();
-            const isExistsFalse = Array.isArray(resData?.response?.message) && resData.response.message.some(m => m.exists === false);
-
-            if (res.ok && !isExistsFalse) {
-              addLog(`✔ [رسالة ${mIndex + 1}/${messagesToSend.length}] أُرسلت إلى (${row.phone})`, 'log-msg-success');
-
-              await window.supabaseClient.from('campaign_logs').insert([{
-                user_id: currentUser.id,
-                campaign_id: campaign.id,
-                recipient_phone: row.phone,
-                recipient_name: row.name,
-                message_text: msgText,
-                status: 'success'
-              }]);
-            } else {
-              isClientSuccess = false;
-              lastErrorMsg = JSON.stringify(resData);
-              addLog(`✖ فشل إرسال رسالة ${mIndex + 1} إلى (${row.phone})`, 'log-msg-error');
-
-              await window.supabaseClient.from('campaign_logs').insert([{
-                user_id: currentUser.id,
-                campaign_id: campaign.id,
-                recipient_phone: row.phone,
-                recipient_name: row.name,
-                message_text: msgText,
-                status: 'failed',
-                error_message: lastErrorMsg
-              }]);
-              break;
-            }
-          } catch (err) {
-            isClientSuccess = false;
-            lastErrorMsg = err.message;
-            addLog(`خطأ اتصال أثناء الإرسال للرقم (${row.phone}): ${err.message}`, 'log-msg-error');
-
-            await window.supabaseClient.from('campaign_logs').insert([{
-              user_id: currentUser.id,
-              campaign_id: campaign.id,
-              recipient_phone: row.phone,
-              recipient_name: row.name,
-              message_text: msgText,
-              status: 'failed',
-              error_message: lastErrorMsg
-            }]);
-            break;
-          }
-
-          if (mIndex < messagesToSend.length - 1 && !stopCampaignRequested) {
-            const innerDelay = Math.floor(Math.random() * (seqMaxDelay - seqMinDelay + 1)) + seqMinDelay;
-            await countdownDelay(innerDelay);
-          }
-        }
-
-        if (recRecord) {
-          await window.supabaseClient.from('campaign_recipients').update({
-            status: isClientSuccess ? 'sent' : 'failed',
-            message_text: messagesToSend.join(' | '),
-            error_message: lastErrorMsg,
-            sent_at: isClientSuccess ? new Date().toISOString() : null
-          }).eq('id', recRecord.id);
-        }
-
-        if (isClientSuccess) {
-          successCount++;
-          document.getElementById('kpiSuccess').innerText = successCount;
-          document.getElementById('kpiDailySent').innerText = (parseInt(document.getElementById('kpiDailySent').innerText) || 0) + 1;
-        } else {
-          failedCount++;
-          document.getElementById('kpiFailed').innerText = failedCount;
-        }
-
-        if (i < rows.length - 1 && !stopCampaignRequested) {
-          if (batchCount > 0 && (i + 1) % batchCount === 0) {
-            const pauseSec = Math.floor(Math.random() * (batchPauseMax - batchPauseMin + 1)) + batchPauseMin;
-            addLog(`☕ استراحة أمان عشوائية (${pauseSec} ثانية)...`, 'log-msg-warning');
-            await countdownDelay(pauseSec);
+          if (res.ok) {
+            successCount++;
+            document.getElementById('kpiSuccess').innerText = successCount;
+            await window.supabaseClient.from('campaign_logs').insert([{ user_id: currentUser.id, campaign_id: campaign.id, recipient_phone: row.phone, message_text: msgText, status: 'success' }]);
           } else {
-            const randDelay = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
-            addLog(`⏳ انتظار ${randDelay} ثانية قبل المستلم التالي...`, 'log-msg-default');
-            await countdownDelay(randDelay);
+            failedCount++;
+            document.getElementById('kpiFailed').innerText = failedCount;
           }
-        }
+        } catch (err) { failedCount++; }
+
+        if (i < rows.length - 1 && !stopCampaignRequested) await delayMs((Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay) * 1000);
       }
 
-      await window.supabaseClient.from('campaigns').update({
-        status: stopCampaignRequested ? 'stopped' : 'completed',
-        success_count: successCount,
-        failed_count: failedCount
-      }).eq('id', campaign.id);
-
-      addLog(`🏁 انتهت الحملة! (ناجح: ${successCount} | فشل: ${failedCount})`, 'log-msg-success');
+      await window.supabaseClient.from('campaigns').update({ status: 'completed', success_count: successCount, failed_count: failedCount }).eq('id', campaign.id);
       isCampaignRunning = false;
       document.getElementById('sendBtn').style.display = 'inline-flex';
       document.getElementById('stopBtn').style.display = 'none';
+      addLog("🏁 انتهت الحملة بنجاح.", "log-msg-success");
     }
 
     function stopSendingCampaign() { stopCampaignRequested = true; }
 
-    // ==========================================
-    // 🔟 إنشاء الحساب والربط (QR Code)
-    // ==========================================
-    function openAddAccountModal() {
-      if (!currentUser) return openAuthModal();
-      document.getElementById('addAccountModal').style.display = 'flex';
-      document.getElementById('createStep').style.display = 'block';
-      document.getElementById('qrStep').style.display = 'none';
-      document.getElementById('newInstanceName').value = '';
-    }
-
-    function closeAddAccountModal() {
-      document.getElementById('addAccountModal').style.display = 'none';
-      if (qrCheckInterval) clearInterval(qrCheckInterval);
-    }
+    function openAddAccountModal() { document.getElementById('addAccountModal').style.display = 'flex'; }
+    function closeAddAccountModal() { document.getElementById('addAccountModal').style.display = 'none'; if (qrCheckInterval) clearInterval(qrCheckInterval); }
 
     async function generateInstanceQR() {
-      const nameInput = document.getElementById('newInstanceName');
-      const instName = nameInput.value.trim().replace(/[^a-zA-Z0-9_-]/g, '');
-      if (!instName) return alert("يرجى إدخال اسم حساب إنجليزي صالح");
-
+      const instName = document.getElementById('newInstanceName').value.trim().replace(/[^a-zA-Z0-9_-]/g, '');
+      if (!instName) return alert("أدخل اسماً إنجليزياً صالحاً");
       document.getElementById('createStep').style.display = 'none';
       document.getElementById('qrStep').style.display = 'block';
-      document.getElementById('qrLoader').style.display = 'block';
-      document.getElementById('qrCodeImage').style.display = 'none';
 
       try {
         const createRes = await fetch(`${API_BASE}/instance/create`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
+          method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
           body: JSON.stringify({ instanceName: instName, qrcode: true, integration: 'WHATSAPP-BAILEYS' })
         });
         const createData = await createRes.json();
         let qrBase64 = createData.qrcode?.base64;
-
-        if (!qrBase64) {
-          const connectRes = await fetch(`${API_BASE}/instance/connect/${encodeURIComponent(instName)}`, { headers: { 'apikey': API_KEY } });
-          const connectData = await connectRes.json();
-          qrBase64 = connectData.base64 || connectData.code;
-        }
-
         if (qrBase64) {
-          const img = document.getElementById('qrCodeImage');
-          img.src = qrBase64.startsWith('data:image') ? qrBase64 : `data:image/png;base64,${qrBase64}`;
-          img.style.display = 'block';
+          document.getElementById('qrCodeImage').src = qrBase64;
+          document.getElementById('qrCodeImage').style.display = 'block';
           document.getElementById('qrLoader').style.display = 'none';
 
           qrCheckInterval = setInterval(async () => {
@@ -1840,258 +1818,85 @@
             const st = await res.json();
             if (st.instance?.state === 'open' || st.state === 'open') {
               clearInterval(qrCheckInterval);
-
               await configureInstanceWebhook(instName);
-
-              const { data: newInst } = await window.supabaseClient
-                .from('instances')
-                .insert([{ user_id: currentUser.id, name: instName }])
-                .select()
-                .single();
-
-              if (newInst) {
-                await window.supabaseClient.from('instance_settings').insert([{
-                  user_id: currentUser.id,
-                  instance_id: newInst.id
-                }]);
-              }
-
+              await window.supabaseClient.from('instances').insert([{ user_id: currentUser.id, name: instName }]);
               closeAddAccountModal();
               await loadUserInstances();
             }
           }, 3000);
         }
-      } catch (err) {
-        document.getElementById('qrStatusText').innerText = `خطأ: ${err.message}`;
-      }
+      } catch (err) { alert(err.message); }
     }
 
-    // ==========================================
-    // معالجة القوالب والمتغيرات
-    // ==========================================
     function compileMessageTemplate(template, row) {
       let text = template;
       const clientName = row.name || 'عميلنا العزيز';
-      const clientPhone = row.phone || '';
-
-      text = text.replace(/@wa_name/gi, clientName);
-      text = text.replace(/@name/gi, clientName);
-      text = text.replace(/@phone_name/gi, clientPhone);
-      text = text.replace(/@phone/gi, clientPhone);
+      text = text.replace(/@wa_name/gi, clientName).replace(/@name/gi, clientName).replace(/@phone/gi, row.phone);
       text = text.replace(/@randomcode/gi, `#${Math.floor(100000 + Math.random() * 900000)}`);
-      text = text.replace(/@invisible/gi, generateInvisibleGhostString(8));
-
-      customVars.forEach(v => {
-        const val = (row.vars && row.vars[v.name] !== undefined && row.vars[v.name] !== '') ? row.vars[v.name] : (v.value || '');
-        text = text.replace(new RegExp(`@${v.name}`, 'gi'), val);
-      });
-
-      if (document.getElementById('autoGhostProtection').checked) {
-        text += generateInvisibleGhostString(4);
-      }
+      text = text.replace(/@invisible/gi, '\u200B\u200C\u200D');
+      customVars.forEach(v => { text = text.replace(new RegExp(`@${v.name}`, 'gi'), row.vars?.[v.name] || v.value || ''); });
       return text;
     }
 
-    function generateInvisibleGhostString(len = 6) {
-      const chars = ['\u200B', '\u200C', '\u200D', '\u2060', '\uFEFF'];
-      let res = '';
-      for (let i = 0; i < len; i++) res += chars[Math.floor(Math.random() * chars.length)];
-      return res;
-    }
-
     function insertVariableIntoActiveTextarea(varName) {
-      if (!activeTextarea) activeTextarea = document.querySelector('.msg-text') || document.querySelector('.seq-msg-text');
+      if (!activeTextarea) activeTextarea = document.querySelector('.msg-text');
       if (!activeTextarea) return;
       const start = activeTextarea.selectionStart;
-      const text = activeTextarea.value;
-      activeTextarea.value = text.substring(0, start) + `@${varName} ` + text.substring(start);
+      activeTextarea.value = activeTextarea.value.substring(0, start) + `@${varName} ` + activeTextarea.value.substring(start);
       activeTextarea.focus();
     }
 
-    function attachMentionEvents(textarea) {
-      textarea.addEventListener('focus', () => { activeTextarea = textarea; });
-      textarea.addEventListener('keyup', handleMention);
-    }
+    function attachMentionEvents(t) { t.addEventListener('focus', () => { activeTextarea = t; }); }
 
-    const dropdown = document.getElementById('mentionDropdown');
-    function handleMention(e) {
-      activeTextarea = e.target;
-      const text = activeTextarea.value;
-      const cursor = activeTextarea.selectionStart;
-      const lastAt = text.lastIndexOf('@', cursor - 1);
-
-      if (lastAt !== -1 && (cursor - lastAt) <= 25) {
-        const query = text.substring(lastAt + 1, cursor).toLowerCase();
-        const list = [
-          ...defaultVars.map(v => ({ name: v, value: '' })),
-          { name: 'Randomcode', value: '#123456' },
-          { name: 'invisible', value: 'خفي' },
-          ...customVars
-        ].filter(item => item.name.toLowerCase().includes(query));
-
-        if (list.length > 0) {
-          dropdown.innerHTML = '';
-          list.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'mention-item';
-            div.innerHTML = `<span>@${item.name}</span><span class="mention-val">${item.value}</span>`;
-            div.onclick = () => {
-              const before = text.substring(0, lastAt);
-              const after = text.substring(cursor);
-              activeTextarea.value = `${before}@${item.name} ${after}`;
-              dropdown.style.display = 'none';
-              activeTextarea.focus();
-            };
-            dropdown.appendChild(div);
-          });
-          const rect = activeTextarea.getBoundingClientRect();
-          dropdown.style.top = `${window.scrollY + rect.bottom + 4}px`;
-          dropdown.style.left = `${window.scrollX + rect.left + 20}px`;
-          dropdown.style.display = 'block';
-          return;
-        }
-      }
-      dropdown.style.display = 'none';
-    }
-
-    document.addEventListener('click', (e) => {
-      if (!dropdown.contains(e.target) && e.target !== activeTextarea) dropdown.style.display = 'none';
-    });
-
-    // ==========================================
-    // استخراج جهات الاتصال والمجموعات
-    // ==========================================
-    async function fetchAvailableGroups(notify = false) {
+    async function fetchAvailableGroups() {
       if (!currentInstanceRecord) return;
       try {
-        const res = await fetch(`${API_BASE}/group/fetchAllGroups/${encodeURIComponent(currentInstanceRecord.name)}?getParticipants=false`, {
-          headers: { 'apikey': API_KEY }
-        });
+        const res = await fetch(`${API_BASE}/group/fetchAllGroups/${encodeURIComponent(currentInstanceRecord.name)}?getParticipants=false`, { headers: { 'apikey': API_KEY } });
         const data = await res.json();
-        const groups = Array.isArray(data) ? data : (data?.groups || []);
-        availableGroups = groups.map(g => ({ id: g.id || g.jid, subject: g.subject || g.name || 'مجموعة' })).filter(g => g.id && g.id.includes('@g.us'));
-        if (notify) addLog(`✔ تم تحديث ${availableGroups.length} مجموعة.`, 'log-msg-success');
-        renderAutomationRules();
-      } catch (err) {}
+        availableGroups = (Array.isArray(data) ? data : (data?.groups || [])).map(g => ({ id: g.id || g.jid, subject: g.subject || g.name })).filter(g => g.id?.includes('@g.us'));
+      } catch (e) {}
     }
 
     async function extractChatListContacts() {
-      if (!currentInstanceRecord) return alert("اختر رقماً نشطاً");
-      try {
-        const res = await fetch(`${API_BASE}/chat/findChats/${encodeURIComponent(currentInstanceRecord.name)}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
-          body: JSON.stringify({ where: {} })
-        });
-        const data = await res.json();
-        const records = Array.isArray(data) ? data : (data?.records || []);
-        const list = [];
-        const seen = new Set();
-        records.forEach(c => {
-          const jid = c.id || c.remoteJid || '';
-          if (jid.endsWith('@s.whatsapp.net') && !jid.includes('@g.us')) {
-            const phone = jid.replace('@s.whatsapp.net', '').replace(/[^0-9]/g, '');
-            if (phone.length >= 8 && !seen.has(phone)) {
-              seen.add(phone);
-              list.push({ phone, name: c.pushName || c.name || `عميل (${phone})`, source: 'Chatlist' });
-            }
-          }
-        });
-        handleExtractionSuccess(list, 'الـ Chatlists');
-      } catch (e) {
-        addLog(`خطأ الاستخراج: ${e.message}`, 'log-msg-error');
-      }
+      if (!currentInstanceRecord) return;
+      const res = await fetch(`${API_BASE}/chat/findChats/${encodeURIComponent(currentInstanceRecord.name)}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': API_KEY }, body: JSON.stringify({ where: {} }) });
+      const data = await res.json();
+      lastExtractedData = (Array.isArray(data) ? data : (data?.records || [])).filter(c => c.id?.endsWith('@s.whatsapp.net')).map(c => ({ phone: c.id.replace('@s.whatsapp.net',''), name: c.pushName || 'عميل' }));
+      document.getElementById('extractorActionsBar').style.display = 'flex';
+      document.getElementById('extractorResultText').innerText = `تم استخراج ${lastExtractedData.length} رقم`;
     }
 
     async function extractSavedContacts() {
-      if (!currentInstanceRecord) return alert("اختر رقماً نشطاً");
-      try {
-        const res = await fetch(`${API_BASE}/chat/findContacts/${encodeURIComponent(currentInstanceRecord.name)}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
-          body: JSON.stringify({ where: {} })
-        });
-        const data = await res.json();
-        const records = Array.isArray(data) ? data : (data?.records || []);
-        const list = [];
-        const seen = new Set();
-        records.forEach(c => {
-          const jid = c.remoteJid || '';
-          if (jid.endsWith('@s.whatsapp.net') && !jid.includes('@g.us')) {
-            const phone = jid.replace('@s.whatsapp.net', '').replace(/[^0-9]/g, '');
-            if (phone.length >= 8 && !seen.has(phone)) {
-              seen.add(phone);
-              list.push({ phone, name: c.pushName || c.name || `عميل (${phone})`, source: 'Contacts' });
-            }
-          }
-        });
-        handleExtractionSuccess(list, 'جهات الاتصال');
-      } catch (e) {
-        addLog(`خطأ الاستخراج: ${e.message}`, 'log-msg-error');
-      }
+      if (!currentInstanceRecord) return;
+      const res = await fetch(`${API_BASE}/chat/findContacts/${encodeURIComponent(currentInstanceRecord.name)}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': API_KEY }, body: JSON.stringify({ where: {} }) });
+      const data = await res.json();
+      lastExtractedData = (Array.isArray(data) ? data : (data?.records || [])).filter(c => c.remoteJid?.endsWith('@s.whatsapp.net')).map(c => ({ phone: c.remoteJid.replace('@s.whatsapp.net',''), name: c.pushName || 'عميل' }));
+      document.getElementById('extractorActionsBar').style.display = 'flex';
+      document.getElementById('extractorResultText').innerText = `تم استخراج ${lastExtractedData.length} رقم`;
     }
 
-    function toggleGroupExtractorUI() {
-      const row = document.getElementById('groupExtractorRow');
-      const select = document.getElementById('extractorGroupSelect');
-      if (row.style.display === 'none' || !row.style.display) {
-        row.style.display = 'flex';
-        select.innerHTML = '<option value="">-- اختر الجروب المراد سحب أرقامه --</option>';
-        availableGroups.forEach(g => { select.innerHTML += `<option value="${g.id}">${g.subject}</option>`; });
-      } else {
-        row.style.display = 'none';
-      }
-    }
-
+    function toggleGroupExtractorUI() { const r = document.getElementById('groupExtractorRow'); r.style.display = r.style.display === 'none' ? 'flex' : 'none'; }
     async function extractSelectedGroupMembers() {
-      const groupJid = document.getElementById('extractorGroupSelect').value;
-      if (!groupJid) return alert("اختر مجموعة");
-      try {
-        const res = await fetch(`${API_BASE}/group/findGroupInfos/${encodeURIComponent(currentInstanceRecord.name)}?groupJid=${encodeURIComponent(groupJid)}`, {
-          headers: { 'apikey': API_KEY }
-        });
-        const groupData = await res.json();
-        const participants = groupData.participants || [];
-        const list = [];
-        const seen = new Set();
-        participants.forEach(p => {
-          const raw = p.phoneNumber || p.id || '';
-          const phone = raw.replace(/@.+$/, '').replace(/[^0-9]/g, '');
-          if (phone.length >= 8 && !seen.has(phone)) {
-            seen.add(phone);
-            list.push({ phone, name: `${groupData.subject || 'جروب'} (عضو)`, source: groupData.subject });
-          }
-        });
-        handleExtractionSuccess(list, groupData.subject || 'جروب');
-      } catch (e) {
-        addLog(`خطأ الاستخراج: ${e.message}`, 'log-msg-error');
-      }
-    }
-
-    function handleExtractionSuccess(list, sourceTitle) {
-      lastExtractedData = list;
-      document.getElementById('extractorStatusBadge').innerText = `تم استخراج (${list.length})`;
-      const actionsBar = document.getElementById('extractorActionsBar');
-      actionsBar.style.display = 'flex';
-      document.getElementById('extractorResultText').innerText = `تم استخراج ${list.length} رقم من [${sourceTitle}]`;
-      addLog(`✔ تم استخراج ${list.length} جهة اتصال من [${sourceTitle}] بنجاح.`, 'log-msg-success');
+      const jid = document.getElementById('extractorGroupSelect').value;
+      if (!jid) return;
+      const res = await fetch(`${API_BASE}/group/findGroupInfos/${encodeURIComponent(currentInstanceRecord.name)}?groupJid=${encodeURIComponent(jid)}`, { headers: { 'apikey': API_KEY } });
+      const gData = await res.json();
+      lastExtractedData = (gData.participants || []).map(p => ({ phone: (p.phoneNumber || p.id).replace(/@.+$/, ''), name: 'عضو جروب' }));
+      document.getElementById('extractorActionsBar').style.display = 'flex';
+      document.getElementById('extractorResultText').innerText = `تم استخراج ${lastExtractedData.length} رقم`;
     }
 
     function applyExtractedToCampaign() {
-      if (!lastExtractedData || lastExtractedData.length === 0) return;
       const formatted = lastExtractedData.map(i => `${i.phone}, ${i.name}`).join('\n');
       const input = document.getElementById('dataInput');
-      input.value = input.value.trim() ? (input.value.trim() + '\n' + formatted) : formatted;
-      updateKpiTotal();
-      addLog(`📋 تم دمج ${lastExtractedData.length} رقم في قائمة الحملة.`, 'log-msg-info');
+      input.value = input.value ? input.value + '\n' + formatted : formatted;
+      document.getElementById('kpiTotal').innerText = input.value.split('\n').length;
     }
 
     function downloadExtractedExcel() {
-      if (!lastExtractedData || lastExtractedData.length === 0) return;
-      const wsData = [['Phone', 'Name', 'Source'], ...lastExtractedData.map(i => [i.phone, i.name, i.source])];
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(wsData), "Extracted");
-      XLSX.writeFile(wb, `contacts_${Date.now()}.xlsx`);
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Phone', 'Name'], ...lastExtractedData.map(i => [i.phone, i.name])]), "Extracted");
+      XLSX.writeFile(wb, "contacts.xlsx");
     }
 
     document.getElementById('dataFile').addEventListener('change', function(e) {
@@ -2099,43 +1904,22 @@
       if (!file) return;
       document.getElementById('selectedFileName').innerText = file.name;
       const reader = new FileReader();
-
-      if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-        reader.onload = function(evt) {
-          const workbook = XLSX.read(new Uint8Array(evt.target.result), { type: 'array' });
-          const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
-          const validRows = rows.slice(1).filter(r => r.length > 0 && r[0]).map(r => r.join(', '));
-          document.getElementById('dataInput').value = validRows.join('\n');
-          updateKpiTotal();
-          addLog(`تم استيراد ${validRows.length} جهة اتصال من الإكسيل.`, "log-msg-info");
-        };
-        reader.readAsArrayBuffer(file);
-      } else {
-        reader.onload = function(evt) {
-          document.getElementById('dataInput').value = evt.target.result.trim();
-          updateKpiTotal();
-        };
-        reader.readAsText(file);
-      }
+      reader.onload = function(evt) {
+        const wb = XLSX.utils.read(new Uint8Array(evt.target.result), { type: 'array' });
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
+        document.getElementById('dataInput').value = rows.slice(1).map(r => r.join(', ')).join('\n');
+        document.getElementById('kpiTotal').innerText = rows.length - 1;
+      };
+      reader.readAsArrayBuffer(file);
     });
 
     function downloadExcelTemplate() {
-      const wsData = [
-        ['Phone', 'Name', ...customVars.map(v => v.name)],
-        ['201280471390', 'عميل تجريبي', ...customVars.map(v => v.value || 'قيمة تجريبية')]
-      ];
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(wsData), "Template");
-      XLSX.writeFile(wb, "campaign_template.xlsx");
-    }
-
-    function updateKpiTotal() {
-      const raw = document.getElementById('dataInput').value.trim();
-      document.getElementById('kpiTotal').innerText = raw ? raw.split(/\r?\n/).filter(l => l.trim().length > 0).length : '0';
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Phone', 'Name'], ['201280471390', 'عميل']]), "Template");
+      XLSX.writeFile(wb, "template.xlsx");
     }
 
     function updateProgress(curr, tot) {
-      if (!tot) return;
       const pct = Math.round((curr / tot) * 100);
       document.getElementById('progressBar').style.width = `${pct}%`;
       document.getElementById('percentText').innerText = `${pct}%`;
@@ -2151,40 +1935,14 @@
       box.scrollTop = box.scrollHeight;
     }
 
-    const delayMs = ms => new Promise(r => setTimeout(r, ms));
-    async function countdownDelay(sec) {
-      for (let s = sec; s > 0; s--) {
-        if (stopCampaignRequested) break;
-        await delayMs(1000);
-      }
-    }
+    const delayMs = ms => new Date(Date.now() + ms);
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-    function addMessageField() {
-      messageCounter++;
-      const container = document.getElementById('messagesContainer');
-      const div = document.createElement('div');
-      div.className = 'msg-item';
-      div.id = `msg-box-${messageCounter}`;
-      div.innerHTML = `
-        <div class="msg-item-header">
-          <span>الرسالة رقم ${messageCounter}</span>
-          <button type="button" class="btn-icon-del" onclick="document.getElementById('${div.id}').remove()">
-            <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
-          </button>
-        </div>
-        <textarea class="msg-text" rows="3" placeholder="اكتب نص القالب..."></textarea>
-      `;
-      container.appendChild(div);
-      attachMentionEvents(div.querySelector('textarea'));
-      lucide.createIcons();
-    }
-
-    document.getElementById('dataInput').addEventListener('input', updateKpiTotal);
-    document.querySelectorAll('.msg-text').forEach(attachMentionEvents);
-
-    window.addEventListener('DOMContentLoaded', () => {
-      initApp();
+    document.getElementById('dataInput').addEventListener('input', () => {
+      document.getElementById('kpiTotal').innerText = document.getElementById('dataInput').value.trim().split(/\r?\n/).filter(l => l.trim()).length;
     });
+
+    window.addEventListener('DOMContentLoaded', initApp);
   </script>
 </body>
 </html>
